@@ -1,15 +1,17 @@
-import { useEffect, useState } from "react";
-import AppointmentStateSelect from "../components/AppointmentStateSelect";
+import { useEffect, useMemo, useState } from "react";
+import AppointmentTable from "../components/appointments/AppointmentTable";
+import FilterTabs from "../components/appointments/FilterTabs";
+import SummaryCards from "../components/appointments/SummaryCards";
 import {
   fetchAppointments,
   updateAppointmentState,
 } from "../services/appointmentService";
 
-function formatDisplay(value, fallback = "—") {
-  if (value === null || value === undefined || value === "") {
-    return fallback;
-  }
-  return String(value);
+function normalizeState(state) {
+  const normalized = typeof state === "string" ? state.toUpperCase() : "";
+  return ["PENDING", "CONFIRMED", "CANCELLED"].includes(normalized)
+    ? normalized
+    : "PENDING";
 }
 
 export default function AppointmentsPage() {
@@ -18,6 +20,23 @@ export default function AppointmentsPage() {
   const [error, setError] = useState(null);
   const [actionError, setActionError] = useState(null);
   const [savingIds, setSavingIds] = useState(() => new Set());
+  const [filter, setFilter] = useState("ALL");
+
+  const todayLabel = useMemo(
+    () =>
+      new Date().toLocaleDateString("es-ES", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      }),
+    []
+  );
+
+  const filteredAppointments = useMemo(() => {
+    if (filter === "ALL") return appointments;
+    return appointments.filter((a) => normalizeState(a.state) === filter);
+  }, [appointments, filter]);
 
   async function handleStateChange(appointmentId, nextState) {
     setActionError(null);
@@ -95,16 +114,18 @@ export default function AppointmentsPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-100/80">
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50">
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         <header className="mb-8">
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
-            Appointments
+            Citas de Hoy
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Overview of scheduled visits from the admin API.
-          </p>
+          <p className="mt-2 capitalize text-slate-500 sm:text-base">{todayLabel}</p>
         </header>
+
+        {!loading && !error && (
+          <SummaryCards appointments={appointments} />
+        )}
 
         <section className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm sm:p-8">
           {loading && (
@@ -150,69 +171,14 @@ export default function AppointmentsPage() {
           )}
 
           {!loading && !error && appointments.length > 0 && (
-            <div className="-mx-1 overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
-                <thead>
-                  <tr className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    <th scope="col" className="whitespace-nowrap px-4 py-3">
-                      ID
-                    </th>
-                    <th scope="col" className="whitespace-nowrap px-4 py-3">
-                      Paciente
-                    </th>
-                    <th scope="col" className="whitespace-nowrap px-4 py-3">
-                      Teléfono
-                    </th>
-                    <th scope="col" className="whitespace-nowrap px-4 py-3">
-                      Doctor
-                    </th>
-                    <th scope="col" className="whitespace-nowrap px-4 py-3">
-                      Fecha
-                    </th>
-                    <th scope="col" className="whitespace-nowrap px-4 py-3">
-                      Hora
-                    </th>
-                    <th scope="col" className="whitespace-nowrap px-4 py-3">
-                      Estado
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {appointments.map((row) => (
-                    <tr
-                      key={row.id}
-                      className="transition-colors hover:bg-slate-50/80"
-                    >
-                      <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-slate-600">
-                        {formatDisplay(row.id)}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 font-medium text-slate-900">
-                        {formatDisplay(row.name)}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-slate-600">
-                        {formatDisplay(row.phoneNumber)}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-slate-700">
-                        {formatDisplay(row.doctorName)}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-slate-600">
-                        {formatDisplay(row.appointmentDate)}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-slate-600">
-                        {formatDisplay(row.appointmentTime)}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3">
-                        <AppointmentStateSelect
-                          value={row.state}
-                          disabled={savingIds.has(row.id)}
-                          onChange={(next) => handleStateChange(row.id, next)}
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <>
+              <FilterTabs value={filter} onChange={setFilter} />
+              <AppointmentTable
+                appointments={filteredAppointments}
+                savingIds={savingIds}
+                onStateChange={handleStateChange}
+              />
+            </>
           )}
         </section>
       </div>
