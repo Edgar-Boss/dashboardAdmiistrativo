@@ -6,7 +6,7 @@ function normalizeState(state) {
 }
 
 const btnBase =
-  "inline-flex items-center justify-center gap-1 rounded-lg border px-3 py-1.5 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:pointer-events-none disabled:opacity-50";
+  "inline-flex min-h-[1.875rem] items-center justify-center gap-0.5 rounded-md border bg-white px-2 py-1 text-[11px] font-medium leading-tight transition-colors focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-1 disabled:pointer-events-none disabled:opacity-45";
 
 export default function ActionButtons({
   state,
@@ -18,23 +18,23 @@ export default function ActionButtons({
 
   if (normalized === "PENDING") {
     return (
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center justify-end gap-1.5">
         <button
           type="button"
           disabled={disabled}
-          className={`${btnBase} border-emerald-500 text-emerald-700 hover:bg-emerald-50 focus:ring-emerald-500/40`}
+          className={`${btnBase} border-emerald-200 text-emerald-600/90 hover:border-emerald-300 hover:bg-emerald-50/40`}
           onClick={() => onStateChange?.(appointmentId, "CONFIRMED")}
         >
-          <span aria-hidden>✅</span>
+          <span aria-hidden className="opacity-70">✅</span>
           Confirmar
         </button>
         <button
           type="button"
           disabled={disabled}
-          className={`${btnBase} border-red-500 text-red-700 hover:bg-red-50 focus:ring-red-500/40`}
+          className={`${btnBase} border-rose-200 text-rose-600/85 hover:border-rose-300 hover:bg-rose-50/50`}
           onClick={() => onStateChange?.(appointmentId, "CANCELLED")}
         >
-          <span aria-hidden>❌</span>
+          <span aria-hidden className="opacity-70">❌</span>
           Cancelar
         </button>
       </div>
@@ -43,23 +43,23 @@ export default function ActionButtons({
 
   if (normalized === "CONFIRMED") {
     return (
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center justify-end gap-1.5">
         <button
           type="button"
           disabled
-          className={`${btnBase} cursor-not-allowed border-slate-200 bg-slate-50 text-slate-400`}
+          className={`${btnBase} cursor-not-allowed border-gray-200 bg-gray-50/80 text-gray-400`}
           aria-label="Editar (no disponible)"
         >
-          <span aria-hidden>✏️</span>
+          <span aria-hidden className="opacity-60">✏️</span>
           Editar
         </button>
         <button
           type="button"
           disabled={disabled}
-          className={`${btnBase} border-red-500 text-red-700 hover:bg-red-50 focus:ring-red-500/40`}
+          className={`${btnBase} border-rose-200 text-rose-600/85 hover:border-rose-300 hover:bg-rose-50/50`}
           onClick={() => onStateChange?.(appointmentId, "CANCELLED")}
         >
-          <span aria-hidden>❌</span>
+          <span aria-hidden className="opacity-70">❌</span>
           Cancelar
         </button>
       </div>
@@ -67,14 +67,16 @@ export default function ActionButtons({
   }
 
   return (
-    <button
-      type="button"
-      disabled
-      className={`${btnBase} cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400`}
-      aria-label="Ver detalle"
-    >
-      <span aria-hidden>👁</span>
-      Ver detalle
-    </button>
+    <div className="flex justify-end">
+      <button
+        type="button"
+        disabled
+        className={`${btnBase} cursor-not-allowed border-gray-200 bg-gray-50/80 text-gray-400`}
+        aria-label="Ver detalle"
+      >
+        <span aria-hidden className="opacity-60">👁</span>
+        Ver detalle
+      </button>
+    </div>
   );
 }

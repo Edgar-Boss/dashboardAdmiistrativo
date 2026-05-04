@@ -32,16 +32,18 @@ function IconX({ className }) {
 
 function Card({ icon: Icon, label, value, iconWrapClass }) {
   return (
-    <div className="rounded-2xl bg-white p-4 shadow-md ring-1 ring-slate-900/5">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-3xl font-semibold tracking-tight text-slate-900 tabular-nums">
+    <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-3xl font-semibold tracking-tight text-gray-900 tabular-nums">
             {value}
           </p>
-          <p className="mt-1 text-sm font-medium text-slate-500">{label}</p>
+          <p className="mt-1.5 text-sm font-medium text-gray-500">{label}</p>
         </div>
-        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${iconWrapClass}`}>
-          <Icon className="h-6 w-6" />
+        <div
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${iconWrapClass}`}
+        >
+          <Icon className="h-5 w-5" />
         </div>
       </div>
     </div>
@@ -68,30 +70,30 @@ export default function SummaryCards({ appointments }) {
   }
 
   return (
-    <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="mb-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-5">
       <Card
         icon={IconCalendar}
         label="Total citas"
         value={total}
-        iconWrapClass="bg-sky-100 text-sky-700"
+        iconWrapClass="bg-sky-50 text-sky-600"
       />
       <Card
         icon={IconClock}
         label="Pendientes"
         value={pending}
-        iconWrapClass="bg-amber-100 text-amber-700"
+        iconWrapClass="bg-amber-50 text-amber-600"
       />
       <Card
         icon={IconCheck}
         label="Confirmadas"
         value={confirmed}
-        iconWrapClass="bg-emerald-100 text-emerald-700"
+        iconWrapClass="bg-emerald-50 text-emerald-600"
       />
       <Card
         icon={IconX}
         label="Canceladas"
         value={cancelled}
-        iconWrapClass="bg-rose-100 text-rose-700"
+        iconWrapClass="bg-rose-50 text-rose-600"
       />
     </div>
   );

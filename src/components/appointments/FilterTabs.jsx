@@ -7,7 +7,7 @@ const TABS = [
 
 export default function FilterTabs({ value, onChange }) {
   return (
-    <div className="mb-6 flex flex-wrap gap-2 border-b border-slate-200/80 pb-1">
+    <div className="mb-8 flex flex-wrap gap-2 border-b border-gray-100 pb-2">
       {TABS.map((tab) => {
         const active = value === tab.id;
         return (
@@ -17,10 +17,10 @@ export default function FilterTabs({ value, onChange }) {
             role="tab"
             aria-selected={active}
             onClick={() => onChange?.(tab.id)}
-            className={`rounded-lg px-4 py-2 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-blue-500/30 ${
+            className={`rounded-lg px-4 py-2.5 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-blue-500/20 ${
               active
                 ? "bg-blue-600 text-white shadow-sm"
-                : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                : "text-gray-500 hover:bg-gray-50 hover:text-gray-800"
             }`}
           >
             {tab.label}

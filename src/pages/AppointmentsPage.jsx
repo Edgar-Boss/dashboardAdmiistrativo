@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import AppointmentTable from "../components/appointments/AppointmentTable";
+import CalendarView from "../components/appointments/CalendarView";
 import FilterTabs from "../components/appointments/FilterTabs";
+import { appointmentDateKey } from "../components/appointments/appointmentHelpers";
 import SummaryCards from "../components/appointments/SummaryCards";
 import {
   fetchAppointments,
@@ -14,6 +16,30 @@ function normalizeState(state) {
     : "PENDING";
 }
 
+function todayIsoDate() {
+  const d = new Date();
+  return [
+    d.getFullYear(),
+    String(d.getMonth() + 1).padStart(2, "0"),
+    String(d.getDate()).padStart(2, "0"),
+  ].join("-");
+}
+
+function formatHeaderDate(iso) {
+  if (!iso) return "";
+  const parts = iso.split("-").map(Number);
+  if (parts.length !== 3 || parts.some((n) => Number.isNaN(n))) return iso;
+  const [y, m, day] = parts;
+  const d = new Date(y, m - 1, day);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString("es-MX", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
 export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,22 +47,20 @@ export default function AppointmentsPage() {
   const [actionError, setActionError] = useState(null);
   const [savingIds, setSavingIds] = useState(() => new Set());
   const [filter, setFilter] = useState("ALL");
-
-  const todayLabel = useMemo(
-    () =>
-      new Date().toLocaleDateString("es-ES", {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      }),
-    []
-  );
+  const [viewMode, setViewMode] = useState("all");
+  const [viewType, setViewType] = useState("list");
+  const [selectedDate, setSelectedDate] = useState(() => todayIsoDate());
 
   const filteredAppointments = useMemo(() => {
     if (filter === "ALL") return appointments;
     return appointments.filter((a) => normalizeState(a.state) === filter);
   }, [appointments, filter]);
+
+  const calendarAppointments = useMemo(() => {
+    return filteredAppointments.filter(
+      (a) => appointmentDateKey(a) === selectedDate
+    );
+  }, [filteredAppointments, selectedDate]);
 
   async function handleStateChange(appointmentId, nextState) {
     setActionError(null);
@@ -115,19 +139,21 @@ export default function AppointmentsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-        <header className="mb-8">
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
-            Citas de Hoy
+      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-8 sm:py-12 lg:px-10">
+        <header className="mb-10">
+          <h1 className="text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl">
+            Citas
           </h1>
-          <p className="mt-2 capitalize text-slate-500 sm:text-base">{todayLabel}</p>
+          <p className="mt-2 capitalize text-sm text-gray-500">
+            {formatHeaderDate(selectedDate)}
+          </p>
         </header>
 
         {!loading && !error && (
           <SummaryCards appointments={appointments} />
         )}
 
-        <section className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm sm:p-8">
+        <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8 lg:p-10">
           {loading && (
             <div
               className="flex min-h-[200px] items-center justify-center text-sm font-medium text-slate-500"
@@ -159,11 +185,11 @@ export default function AppointmentsPage() {
           )}
 
           {!loading && !error && appointments.length === 0 && (
-            <div className="flex min-h-[160px] flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/50 px-4 py-10 text-center">
-              <p className="text-sm font-medium text-slate-600">
+            <div className="flex min-h-[160px] flex-col items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-gray-50/60 px-6 py-12 text-center">
+              <p className="text-sm font-medium text-gray-600">
                 No appointments to display.
               </p>
-              <p className="mt-1 max-w-md text-xs text-slate-500">
+              <p className="mt-1 max-w-md text-xs text-gray-500">
                 When the backend returns records, they will appear in the table
                 below.
               </p>
@@ -172,12 +198,118 @@ export default function AppointmentsPage() {
 
           {!loading && !error && appointments.length > 0 && (
             <>
+              <div className="mb-6 flex flex-wrap items-center gap-2 border-b border-gray-100 pb-4">
+                <span className="sr-only">Tipo de vista</span>
+                <div className="inline-flex rounded-lg border border-gray-200 bg-gray-50/80 p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setViewType("list")}
+                    className={`rounded-md px-3 py-2 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-blue-500/20 ${
+                      viewType === "list"
+                        ? "bg-white text-gray-900 shadow-sm"
+                        : "text-gray-600 hover:text-gray-900"
+                    }`}
+                  >
+                    Lista
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewType("calendar")}
+                    className={`rounded-md px-3 py-2 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-blue-500/20 ${
+                      viewType === "calendar"
+                        ? "bg-white text-gray-900 shadow-sm"
+                        : "text-gray-600 hover:text-gray-900"
+                    }`}
+                  >
+                    Calendario
+                  </button>
+                </div>
+              </div>
+
+              <div className="mb-6 flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedDate(todayIsoDate())}
+                  className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-1"
+                >
+                  Hoy
+                </button>
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 shadow-sm transition hover:border-gray-300 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-1"
+                  aria-label="Fecha"
+                />
+              </div>
+
               <FilterTabs value={filter} onChange={setFilter} />
-              <AppointmentTable
-                appointments={filteredAppointments}
-                savingIds={savingIds}
-                onStateChange={handleStateChange}
-              />
+
+              {viewType === "list" && (
+                <>
+                  <div className="mb-6 mt-6 flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-medium text-gray-500">Vista</span>
+                    <div className="inline-flex flex-wrap rounded-lg border border-gray-200 bg-gray-50/80 p-0.5">
+                      <button
+                        type="button"
+                        onClick={() => setViewMode("all")}
+                        className={`rounded-md px-2.5 py-1.5 text-xs font-medium transition focus:outline-none focus:ring-2 focus:ring-blue-500/20 sm:px-3 ${
+                          viewMode === "all"
+                            ? "bg-white text-gray-900 shadow-sm"
+                            : "text-gray-600 hover:text-gray-900"
+                        }`}
+                      >
+                        Todas las fechas
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setViewMode("day")}
+                        className={`rounded-md px-2.5 py-1.5 text-xs font-medium transition focus:outline-none focus:ring-2 focus:ring-blue-500/20 sm:px-3 ${
+                          viewMode === "day"
+                            ? "bg-white text-gray-900 shadow-sm"
+                            : "text-gray-600 hover:text-gray-900"
+                        }`}
+                      >
+                        Por hora
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setViewMode("date")}
+                        className={`rounded-md px-2.5 py-1.5 text-xs font-medium transition focus:outline-none focus:ring-2 focus:ring-blue-500/20 sm:px-3 ${
+                          viewMode === "date"
+                            ? "bg-white text-gray-900 shadow-sm"
+                            : "text-gray-600 hover:text-gray-900"
+                        }`}
+                      >
+                        Por fecha
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setViewMode("doctor")}
+                        className={`rounded-md px-2.5 py-1.5 text-xs font-medium transition focus:outline-none focus:ring-2 focus:ring-blue-500/20 sm:px-3 ${
+                          viewMode === "doctor"
+                            ? "bg-white text-gray-900 shadow-sm"
+                            : "text-gray-600 hover:text-gray-900"
+                        }`}
+                      >
+                        Por doctor
+                      </button>
+                    </div>
+                  </div>
+                  <AppointmentTable
+                    appointments={filteredAppointments}
+                    savingIds={savingIds}
+                    onStateChange={handleStateChange}
+                    viewMode={viewMode}
+                  />
+                </>
+              )}
+
+              {viewType === "calendar" && (
+                <div className="mt-6">
+                  <CalendarView appointments={calendarAppointments} />
+                </div>
+              )}
             </>
           )}
         </section>
