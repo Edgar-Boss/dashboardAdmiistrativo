@@ -13,7 +13,7 @@ function EmptyState() {
 
 /**
  * Routes to the correct appointments UI by viewMode.
- * @param {"all"|"day"|"date"|"doctor"} viewMode
+ * @param {"all"|"day"|"doctor"} viewMode
  */
 export default function AppointmentTable({
   appointments,
@@ -31,7 +31,7 @@ export default function AppointmentTable({
     return <AppointmentsTable {...shared} />;
   }
 
-  if (viewMode === "day" || viewMode === "date") {
+  if (viewMode === "day") {
     return <AppointmentsTimeline {...shared} />;
   }
 

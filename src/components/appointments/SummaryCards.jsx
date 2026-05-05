@@ -57,16 +57,55 @@ function normalizeState(state) {
     : "PENDING";
 }
 
-export default function SummaryCards({ appointments }) {
-  const total = appointments.length;
-  let pending = 0;
-  let confirmed = 0;
-  let cancelled = 0;
-  for (const a of appointments) {
-    const s = normalizeState(a.state);
-    if (s === "PENDING") pending += 1;
-    else if (s === "CONFIRMED") confirmed += 1;
-    else if (s === "CANCELLED") cancelled += 1;
+function normalizeSummary(summary) {
+  if (!summary || typeof summary !== "object") return null;
+
+  const total =
+    summary.total ??
+    summary.totalAppointments ??
+    summary.total_appointments ??
+    summary.TOTAL ??
+    summary.total_citas;
+  const pending = summary.pending ?? summary.PENDING ?? summary.pendientes;
+  const confirmed = summary.confirmed ?? summary.CONFIRMED ?? summary.confirmadas;
+  const cancelled = summary.cancelled ?? summary.CANCELLED ?? summary.canceladas;
+
+  const toInt = (v) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  };
+
+  const t = toInt(total);
+  const p = toInt(pending);
+  const c = toInt(confirmed);
+  const x = toInt(cancelled);
+  if (t === null && p === null && c === null && x === null) return null;
+  return {
+    total: t ?? 0,
+    pending: p ?? 0,
+    confirmed: c ?? 0,
+    cancelled: x ?? 0,
+  };
+}
+
+export default function SummaryCards({ appointments = [], summary = null }) {
+  const normalized = normalizeSummary(summary);
+  let total = normalized?.total ?? appointments.length;
+  let pending = normalized?.pending ?? 0;
+  let confirmed = normalized?.confirmed ?? 0;
+  let cancelled = normalized?.cancelled ?? 0;
+
+  if (!normalized) {
+    pending = 0;
+    confirmed = 0;
+    cancelled = 0;
+    for (const a of appointments) {
+      const s = normalizeState(a.state);
+      if (s === "PENDING") pending += 1;
+      else if (s === "CONFIRMED") confirmed += 1;
+      else if (s === "CANCELLED") cancelled += 1;
+    }
+    total = appointments.length;
   }
 
   return (

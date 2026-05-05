@@ -1,139 +1,220 @@
+import { useMemo } from "react";
+import { normalizeTimeKey, timeToMinutes } from "./appointmentHelpers";
+
 const DAY_START_HOUR = 8;
 const DAY_END_HOUR = 20;
-const MINUTES_PER_PX = 1;
-const BLOCK_HEIGHT_PX = 50;
 
-function parseAppointmentTime(appointmentTime) {
-  if (appointmentTime == null || appointmentTime === "") {
-    return null;
-  }
-  const s = String(appointmentTime).trim();
-  const m = s.match(/^(\d{1,2}):(\d{2})/);
-  if (!m) return null;
-  const hour = Number(m[1]);
-  const minute = Number(m[2]);
-  if (!Number.isFinite(hour) || !Number.isFinite(minute)) return null;
-  if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return null;
-  return { hour, minute };
-}
-
-function minutesSinceMidnight(hour, minute) {
-  return hour * 60 + minute;
-}
-
-/** Visible day length in px (1 minute = 1 px), 08:00–20:00 → 720px */
-function calendarHeightPx() {
-  return (DAY_END_HOUR - DAY_START_HOUR) * 60 * MINUTES_PER_PX;
-}
-
-/** Minutes from midnight → y offset from 08:00: (hour*60+minute) − 8*60 px */
-function blockTopPx(appointmentTime) {
-  const parsed = parseAppointmentTime(appointmentTime);
-  if (!parsed) return 0;
-  const start = minutesSinceMidnight(DAY_START_HOUR, 0);
-  const at = minutesSinceMidnight(parsed.hour, parsed.minute);
-  const raw = (at - start) * MINUTES_PER_PX;
-  const maxTop = Math.max(0, calendarHeightPx() - BLOCK_HEIGHT_PX);
-  return Math.min(Math.max(0, raw), maxTop);
-}
-
-function stateStyles(state) {
+function normalizeState(state) {
   const key = typeof state === "string" ? state.toUpperCase() : "";
-  switch (key) {
+  return ["PENDING", "CONFIRMED", "CANCELLED"].includes(key) ? key : "PENDING";
+}
+
+function statePillClass(state) {
+  switch (normalizeState(state)) {
     case "CONFIRMED":
-      return "border border-emerald-200/90 bg-emerald-50 text-emerald-950 shadow-sm";
+      return "border-emerald-200 bg-emerald-50 text-emerald-900";
     case "CANCELLED":
-      return "border border-rose-200/90 bg-rose-50 text-rose-950 shadow-sm";
+      return "border-rose-200 bg-rose-50 text-rose-900";
     case "PENDING":
     default:
-      return "border border-amber-200/90 bg-amber-50 text-amber-950 shadow-sm";
+      return "border-amber-200 bg-amber-50 text-amber-900";
   }
 }
 
-function formatHourLabel(h) {
-  return `${String(h).padStart(2, "0")}:00`;
+function buildTimeKeys(appointments) {
+  const set = new Set();
+  for (let h = DAY_START_HOUR; h <= DAY_END_HOUR; h += 1) {
+    set.add(`${String(h).padStart(2, "0")}:00`);
+  }
+  for (const a of appointments) {
+    const k = normalizeTimeKey(a?.appointmentTime);
+    if (k && k !== "—") set.add(k);
+  }
+  return [...set].sort((a, b) => timeToMinutes(a) - timeToMinutes(b));
 }
 
-/**
- * Daily schedule (day view): hour rail + absolutely positioned appointment blocks.
- *
- * @param {{ appointmentTime: string, name: string, doctorName: string, state: string }[]} appointments
- */
-export default function DailyCalendarView({ appointments = [] }) {
-  const heightPx = calendarHeightPx();
-  const hours = [];
-  for (let h = DAY_START_HOUR; h <= DAY_END_HOUR; h += 1) {
-    hours.push(h);
+function buildDoctorColumns({ specialists, appointments }) {
+  if (Array.isArray(specialists) && specialists.length > 0) {
+    return specialists.map((s) => ({
+      key: `sp-${s.id ?? s.name}`,
+      doctorId: s.id,
+      doctorName: s.name,
+      specialty: s.specialty || "",
+    }));
+  }
+
+  const map = new Map();
+  for (const row of appointments) {
+    const id = row?.doctorId ?? "—";
+    if (!map.has(id)) {
+      map.set(id, {
+        key: `doc-${id}`,
+        doctorId: id,
+        doctorName: row?.doctorName ?? "—",
+        specialty: row?.specialty ?? "",
+      });
+    }
+  }
+  return [...map.values()].sort((a, b) =>
+    String(a.doctorName).localeCompare(String(b.doctorName), "es")
+  );
+}
+
+function buildCellMap(appointments) {
+  const map = new Map();
+  for (const row of appointments) {
+    const doctorId = row?.doctorId ?? "—";
+    const timeKey = normalizeTimeKey(row?.appointmentTime);
+    const k = `${doctorId}||${timeKey}`;
+    if (!map.has(k)) map.set(k, []);
+    map.get(k).push(row);
+  }
+  return map;
+}
+
+function AppointmentCell({ items }) {
+  if (!items || items.length === 0) {
+    return <div className="h-full w-full" />;
   }
 
   return (
-    <div className="flex overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-      <div className="w-20 shrink-0 border-r border-gray-100 bg-gray-50/80">
-        <div className="relative" style={{ height: `${heightPx}px` }}>
-          {hours.map((h) => {
-            const top = (h - DAY_START_HOUR) * 60 * MINUTES_PER_PX;
-            return (
-              <div
-                key={h}
-                className="absolute left-0 right-0 flex justify-end pr-2 pt-0.5 text-[11px] font-medium tabular-nums text-gray-500"
-                style={{ top: `${top}px` }}
-              >
-                {formatHourLabel(h)}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="relative min-w-0 flex-1 bg-white">
-        <div
-          className="relative mx-1 sm:mx-2"
-          style={{ height: `${heightPx}px` }}
-          aria-label="Horario del día"
-        >
-          {hours.slice(0, -1).map((h) => {
-            const top = (h - DAY_START_HOUR) * 60 * MINUTES_PER_PX;
-            return (
-              <div
-                key={`grid-${h}`}
-                className="pointer-events-none absolute left-0 right-0 border-t border-gray-100"
-                style={{ top: `${top}px` }}
-              />
-            );
-          })}
+    <div className="flex flex-col gap-1 p-1">
+      {items.map((apt, idx) => {
+        const state = normalizeState(apt?.state);
+        const timeLabel = normalizeTimeKey(apt?.appointmentTime);
+        const key = apt?.id ?? `${timeLabel}-${apt?.patientName}-${idx}`;
+        return (
           <div
-            className="pointer-events-none absolute bottom-0 left-0 right-0 border-t border-gray-200"
-            aria-hidden
-          />
-
-          {appointments.map((apt, index) => {
-            const top = blockTopPx(apt.appointmentTime);
-            const timeLabel =
-              apt.appointmentTime != null && String(apt.appointmentTime).trim() !== ""
-                ? String(apt.appointmentTime).trim()
-                : "—";
-
-            return (
-              <div
-                key={`${timeLabel}-${apt.name}-${index}`}
-                className={`absolute left-1 right-1 rounded-lg p-2 text-left transition duration-150 ease-out hover:z-10 hover:shadow-md ${stateStyles(apt.state)}`}
-                style={{
-                  top: `${top}px`,
-                  height: `${BLOCK_HEIGHT_PX}px`,
-                }}
+            key={key}
+            className="rounded-lg border border-gray-200 bg-white p-2 shadow-sm"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <p className="min-w-0 flex-1 truncate text-xs font-semibold text-gray-900">
+                {apt?.patientName ?? "—"}
+              </p>
+              <span
+                className={`shrink-0 rounded-md border px-1.5 py-0.5 text-[10px] font-medium ${statePillClass(
+                  state
+                )}`}
               >
-                <p className="truncate text-xs font-bold leading-tight text-gray-900">
-                  {apt.name ?? "—"}
+                {state}
+              </span>
+            </div>
+            <p className="mt-1 text-[10px] tabular-nums text-gray-500">
+              {timeLabel}
+            </p>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * Calendar grid:
+ * - Columns: doctors (prefer specialists list for base columns)
+ * - Rows: time keys (hours + any appointment time keys)
+ * - Cells: appointments matched by doctor_id + appointment_time
+ *
+ * @param {{
+ *  appointments: Array<{ id?: any, appointmentTime?: any, patientName?: any, doctorId?: any, doctorName?: any, specialty?: any, state?: any }>,
+ *  specialists: Array<{ id?: any, name: string, specialty: string }>,
+ *  specialistsReady: boolean,
+ *  loading: boolean
+ * }} props
+ */
+export default function DailyCalendarView({
+  appointments = [],
+  specialists = [],
+  specialistsReady = true,
+  loading = false,
+}) {
+  const timeKeys = useMemo(() => buildTimeKeys(appointments), [appointments]);
+  const columns = useMemo(
+    () => buildDoctorColumns({ specialists, appointments }),
+    [specialists, appointments]
+  );
+  const cellMap = useMemo(() => buildCellMap(appointments), [appointments]);
+
+  if (loading) {
+    return (
+      <div
+        className="flex min-h-[240px] items-center justify-center rounded-xl border border-gray-200 bg-white text-sm text-gray-500 shadow-sm"
+        role="status"
+        aria-live="polite"
+      >
+        Loading day appointments...
+      </div>
+    );
+  }
+
+  if (!specialistsReady && columns.length === 0) {
+    return (
+      <div
+        className="flex min-h-[240px] items-center justify-center rounded-xl border border-gray-200 bg-white text-sm text-gray-500 shadow-sm"
+        role="status"
+        aria-live="polite"
+      >
+        Loading specialists...
+      </div>
+    );
+  }
+
+  if (columns.length === 0) {
+    return (
+      <div className="flex min-h-[240px] items-center justify-center rounded-xl border border-gray-200 bg-white text-sm text-gray-500 shadow-sm">
+        No doctors to display.
+      </div>
+    );
+  }
+
+  return (
+    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+      <div className="overflow-x-auto">
+        <div
+          className="grid min-w-max"
+          style={{
+            gridTemplateColumns: `5rem repeat(${columns.length}, minmax(220px, 1fr))`,
+          }}
+        >
+          <div className="sticky left-0 top-0 z-[2] border-b border-r border-gray-100 bg-gray-50/95 px-2 py-2 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+            Hora
+          </div>
+          {columns.map((c) => (
+            <div
+              key={c.key}
+              className="sticky top-0 z-[1] border-b border-r border-gray-100 bg-gray-50/95 px-3 py-2"
+            >
+              <p className="truncate text-sm font-semibold text-gray-900">
+                {c.doctorName}
+              </p>
+              {c.specialty ? (
+                <p className="truncate text-[11px] text-gray-500">
+                  {c.specialty}
                 </p>
-                <p className="mt-0.5 truncate text-[10px] leading-tight text-gray-600">
-                  {apt.doctorName ?? "—"}
-                </p>
-                <p className="mt-0.5 text-[10px] font-medium tabular-nums text-gray-500">
-                  {timeLabel}
-                </p>
+              ) : null}
+            </div>
+          ))}
+
+          {timeKeys.map((timeKey) => (
+            <div key={`row-${timeKey}`} className="contents">
+              <div className="sticky left-0 z-[1] border-b border-r border-gray-100 bg-white px-2 py-2 text-xs font-medium tabular-nums text-gray-600">
+                {timeKey}
               </div>
-            );
-          })}
+              {columns.map((c) => {
+                const k = `${c.doctorId ?? "—"}||${timeKey}`;
+                const items = cellMap.get(k) ?? [];
+                return (
+                  <div
+                    key={`${c.key}-${timeKey}`}
+                    className="min-h-16 border-b border-r border-gray-100 bg-white"
+                  >
+                    <AppointmentCell items={items} />
+                  </div>
+                );
+              })}
+            </div>
+          ))}
         </div>
       </div>
     </div>

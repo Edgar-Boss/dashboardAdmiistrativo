@@ -6,6 +6,7 @@ import { appointmentDateKey } from "../components/appointments/appointmentHelper
 import SummaryCards from "../components/appointments/SummaryCards";
 import {
   fetchAppointments,
+  fetchAppointmentsByDate,
   updateAppointmentState,
 } from "../services/appointmentService";
 
@@ -50,6 +51,10 @@ export default function AppointmentsPage() {
   const [viewMode, setViewMode] = useState("all");
   const [viewType, setViewType] = useState("list");
   const [selectedDate, setSelectedDate] = useState(() => todayIsoDate());
+  const [calendarLoading, setCalendarLoading] = useState(false);
+  const [calendarError, setCalendarError] = useState(null);
+  const [calendarRows, setCalendarRows] = useState([]);
+  const [calendarSummary, setCalendarSummary] = useState(null);
 
   const filteredAppointments = useMemo(() => {
     if (filter === "ALL") return appointments;
@@ -57,10 +62,21 @@ export default function AppointmentsPage() {
   }, [appointments, filter]);
 
   const calendarAppointments = useMemo(() => {
+    // When using SP_GET_APPOINTMENTS_BY_DATE, backend already filters by day.
+    // This fallback keeps calendar usable when the SP endpoint is unavailable.
+    if (calendarRows.length > 0 || calendarLoading || calendarError) {
+      return calendarRows;
+    }
     return filteredAppointments.filter(
       (a) => appointmentDateKey(a) === selectedDate
     );
-  }, [filteredAppointments, selectedDate]);
+  }, [
+    filteredAppointments,
+    selectedDate,
+    calendarRows,
+    calendarLoading,
+    calendarError,
+  ]);
 
   async function handleStateChange(appointmentId, nextState) {
     setActionError(null);
@@ -137,6 +153,45 @@ export default function AppointmentsPage() {
     };
   }, []);
 
+  useEffect(() => {
+    if (viewType !== "calendar") return;
+    if (!selectedDate) return;
+
+    let cancelled = false;
+    async function loadCalendarDay() {
+      setCalendarLoading(true);
+      setCalendarError(null);
+      try {
+        const { appointments: rows, summary } = await fetchAppointmentsByDate({
+          date: selectedDate,
+          doctorId: null,
+          state: filter === "ALL" ? null : filter,
+        });
+        if (!cancelled) {
+          setCalendarRows(Array.isArray(rows) ? rows : []);
+          setCalendarSummary(summary ?? null);
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setCalendarRows([]);
+          setCalendarSummary(null);
+          setCalendarError(
+            e instanceof Error
+              ? e.message
+              : "Could not load calendar day."
+          );
+        }
+      } finally {
+        if (!cancelled) setCalendarLoading(false);
+      }
+    }
+
+    loadCalendarDay();
+    return () => {
+      cancelled = true;
+    };
+  }, [viewType, selectedDate, filter]);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-8 sm:py-12 lg:px-10">
@@ -144,13 +199,18 @@ export default function AppointmentsPage() {
           <h1 className="text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl">
             Citas
           </h1>
-          <p className="mt-2 capitalize text-sm text-gray-500">
-            {formatHeaderDate(selectedDate)}
-          </p>
+          {viewType === "calendar" && (
+            <p className="mt-2 capitalize text-sm text-gray-500">
+              {formatHeaderDate(selectedDate)}
+            </p>
+          )}
         </header>
 
         {!loading && !error && (
-          <SummaryCards appointments={appointments} />
+          <SummaryCards
+            appointments={appointments}
+            summary={viewType === "calendar" ? calendarSummary : null}
+          />
         )}
 
         <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8 lg:p-10">
@@ -226,22 +286,24 @@ export default function AppointmentsPage() {
                 </div>
               </div>
 
-              <div className="mb-6 flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setSelectedDate(todayIsoDate())}
-                  className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-1"
-                >
-                  Hoy
-                </button>
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 shadow-sm transition hover:border-gray-300 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-1"
-                  aria-label="Fecha"
-                />
-              </div>
+              {viewType === "calendar" && (
+                <div className="mb-6 flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedDate(todayIsoDate())}
+                    className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-1"
+                  >
+                    Hoy
+                  </button>
+                  <input
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 shadow-sm transition hover:border-gray-300 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-1"
+                    aria-label="Fecha"
+                  />
+                </div>
+              )}
 
               <FilterTabs value={filter} onChange={setFilter} />
 
@@ -274,17 +336,6 @@ export default function AppointmentsPage() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => setViewMode("date")}
-                        className={`rounded-md px-2.5 py-1.5 text-xs font-medium transition focus:outline-none focus:ring-2 focus:ring-blue-500/20 sm:px-3 ${
-                          viewMode === "date"
-                            ? "bg-white text-gray-900 shadow-sm"
-                            : "text-gray-600 hover:text-gray-900"
-                        }`}
-                      >
-                        Por fecha
-                      </button>
-                      <button
-                        type="button"
                         onClick={() => setViewMode("doctor")}
                         className={`rounded-md px-2.5 py-1.5 text-xs font-medium transition focus:outline-none focus:ring-2 focus:ring-blue-500/20 sm:px-3 ${
                           viewMode === "doctor"
@@ -307,7 +358,18 @@ export default function AppointmentsPage() {
 
               {viewType === "calendar" && (
                 <div className="mt-6">
-                  <CalendarView appointments={calendarAppointments} />
+                  {calendarError && (
+                    <div
+                      className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+                      role="status"
+                    >
+                      {calendarError}. Showing calendar using currently loaded appointments.
+                    </div>
+                  )}
+                  <CalendarView
+                    appointments={calendarAppointments}
+                    loading={calendarLoading}
+                  />
                 </div>
               )}
             </>

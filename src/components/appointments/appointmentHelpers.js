@@ -28,6 +28,14 @@ export function doctorKey(row) {
   return s || "—";
 }
 
+/** Case-insensitive match for calendar column assignment (appointment doctor vs specialist name). */
+export function doctorNameMatchesAppointment(specialistName, row) {
+  const spec = String(specialistName ?? "").trim().toLowerCase();
+  const doc = doctorKey(row).trim().toLowerCase();
+  if (!spec || !doc || doc === "—") return false;
+  return spec === doc;
+}
+
 /** Sort: appointmentDate ASC, appointmentTime ASC, id */
 export function compareByDateTime(a, b) {
   const da = appointmentDateKey(a);
