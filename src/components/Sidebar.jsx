@@ -1,7 +1,7 @@
 const ITEMS = [
   { id: "dashboard", label: "Dashboard" },
   { id: "citas", label: "Citas" },
-  { id: "doctores", label: "Doctores" },
+  { id: "doctores", label: "Especialistas" },
   { id: "pacientes", label: "Pacientes" },
   { id: "configuracion", label: "Configuración" },
 ];

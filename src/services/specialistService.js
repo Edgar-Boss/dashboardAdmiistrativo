@@ -2,9 +2,9 @@
 const SPECIALIST_URL = "/api/admin/specialist";
 
 /**
- * Backend may return tuples: [id, name, specialty]
+ * Backend may return tuples: [id, name, specialty, activeFlag]
  * @param {unknown} raw
- * @returns {{ id?: unknown, name: string, specialty: string }}
+ * @returns {{ id?: unknown, name: string, specialty: string, activeFlag?: string|null }}
  */
 function normalizeSpecialistEntry(raw) {
   if (Array.isArray(raw)) {
@@ -12,6 +12,7 @@ function normalizeSpecialistEntry(raw) {
       id: raw[0],
       name: raw[1] != null ? String(raw[1]).trim() : "",
       specialty: raw[2] != null ? String(raw[2]).trim() : "",
+      activeFlag: raw[3] != null ? String(raw[3]).trim() : null,
     };
   }
   if (raw != null && typeof raw === "object") {
@@ -23,13 +24,25 @@ function normalizeSpecialistEntry(raw) {
       specialty: String(
         raw.specialty ?? raw.speciality ?? raw.doctorSpecialty ?? ""
       ).trim(),
+      activeFlag:
+        raw.activeFlag ??
+        raw.active_flag ??
+        raw.active ??
+        raw.isActive ??
+        raw.enabled ??
+        null,
     };
   }
-  return { id: undefined, name: String(raw ?? "").trim(), specialty: "" };
+  return {
+    id: undefined,
+    name: String(raw ?? "").trim(),
+    specialty: "",
+    activeFlag: null,
+  };
 }
 
 /**
- * @returns {Promise<Array<{ id?: unknown, name: string, specialty: string }>>}
+ * @returns {Promise<Array<{ id?: unknown, name: string, specialty: string, activeFlag?: string|null }>>}
  */
 export async function fetchSpecialists() {
   const response = await fetch(SPECIALIST_URL, {
