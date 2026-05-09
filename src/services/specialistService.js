@@ -1,5 +1,6 @@
 // Relative URL so Vite proxy can avoid CORS in dev.
 const SPECIALIST_URL = "/api/admin/specialist";
+const SPECIALIST_UPDATE_URL = `${SPECIALIST_URL}/update`;
 
 /**
  * Backend may return tuples: [id, name, specialty, activeFlag]
@@ -62,4 +63,32 @@ export async function fetchSpecialists() {
   return data
     .map(normalizeSpecialistEntry)
     .filter((s) => s.name.length > 0);
+}
+
+/**
+ * PATCH /api/admin/specialist/update
+ * @param {{ doctorId: number, name: string, specialty: string, active: "Y"|"N" }} payload
+ * @returns {Promise<unknown>}
+ */
+export async function updateSpecialist(payload) {
+  const response = await fetch(SPECIALIST_UPDATE_URL, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    const details = text ? ` - ${text}` : "";
+    throw new Error(
+      `Request failed (${response.status} ${response.statusText})${details}`
+    );
+  }
+
+  const contentType = response.headers.get("content-type") ?? "";
+  if (contentType.includes("application/json")) return await response.json();
+  return await response.text();
 }

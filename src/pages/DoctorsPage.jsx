@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import DoctorCard from "../components/doctors/DoctorCard";
 import DoctorsFilters from "../components/doctors/DoctorsFilters";
-import { fetchSpecialists } from "../services/specialistService";
+import { fetchSpecialists, updateSpecialist } from "../services/specialistService";
 
 function normalize(text) {
   return String(text ?? "").trim().toLowerCase();
@@ -39,6 +39,8 @@ export default function DoctorsPage() {
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
+  const [toggleError, setToggleError] = useState(null);
+  const [updatingIds, setUpdatingIds] = useState(() => new Set());
   const [query, setQuery] = useState("");
   const [specialty, setSpecialty] = useState("all");
   const [status, setStatus] = useState("all");
@@ -154,13 +156,49 @@ export default function DoctorsPage() {
   }
 
   function handleToggleStatus(doctor) {
+    const doctorId = Number(doctor?.id);
+    if (!Number.isFinite(doctorId)) {
+      setToggleError("Invalid doctor id.");
+      return;
+    }
+
+    setToggleError(null);
+    setUpdatingIds((prev) => {
+      const next = new Set(prev);
+      next.add(doctorId);
+      return next;
+    });
+
+    const prevStatus = normalize(doctor?.status) === "active" ? "active" : "inactive";
+    const nextStatus = prevStatus === "active" ? "inactive" : "active";
+    const activeFlag = nextStatus === "active" ? "Y" : "N";
+
+    // Optimistic UI update with rollback on failure.
     setDoctors((prev) =>
-      prev.map((d) => {
-        if (d.id !== doctor.id) return d;
-        const next = normalize(d.status) === "active" ? "inactive" : "active";
-        return { ...d, status: next };
-      })
+      prev.map((d) => (d.id === doctor.id ? { ...d, status: nextStatus } : d))
     );
+
+    (async () => {
+      try {
+        await updateSpecialist({
+          doctorId,
+          name: String(doctor?.name ?? "").trim(),
+          specialty: String(doctor?.specialty ?? "").trim(),
+          active: activeFlag,
+        });
+      } catch (e) {
+        setDoctors((prev) =>
+          prev.map((d) => (d.id === doctor.id ? { ...d, status: prevStatus } : d))
+        );
+        setToggleError(e instanceof Error ? e.message : "Failed to update specialist.");
+      } finally {
+        setUpdatingIds((prev) => {
+          const next = new Set(prev);
+          next.delete(doctorId);
+          return next;
+        });
+      }
+    })();
   }
 
   return (
@@ -220,6 +258,10 @@ export default function DoctorsPage() {
               <p className="text-xs text-rose-700" role="status">
                 {loadError}
               </p>
+            ) : toggleError ? (
+              <p className="text-xs text-rose-700" role="status">
+                {toggleError}
+              </p>
             ) : (
               <p className="text-xs text-gray-500">Fuente: API de especialistas</p>
             )}
@@ -246,6 +288,7 @@ export default function DoctorsPage() {
                   doctor={doctor}
                   onEdit={handleEdit}
                   onToggleStatus={handleToggleStatus}
+                  isUpdating={updatingIds.has(Number(doctor.id))}
                 />
               ))}
             </div>
