@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import DoctorCard from "../components/doctors/DoctorCard";
+import DoctorDrawer from "../components/doctors/DoctorDrawer";
+import DoctorForm from "../components/doctors/DoctorForm";
 import DoctorsFilters from "../components/doctors/DoctorsFilters";
 import { fetchSpecialists, updateSpecialist } from "../services/specialistService";
 
@@ -39,8 +41,9 @@ export default function DoctorsPage() {
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
-  const [toggleError, setToggleError] = useState(null);
-  const [updatingIds, setUpdatingIds] = useState(() => new Set());
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selectedDoctor, setSelectedDoctor] = useState(null);
+  const [mode, setMode] = useState("create");
   const [query, setQuery] = useState("");
   const [specialty, setSpecialty] = useState("all");
   const [status, setStatus] = useState("all");
@@ -131,74 +134,63 @@ export default function DoctorsPage() {
   }, [doctors]);
 
   function handleNewDoctor() {
-    // No backend create here; just a local mock entry for UI.
-    const nextId = Math.max(0, ...doctors.map((d) => Number(d.id) || 0)) + 1;
-    setDoctors((prev) => [
-      {
-        id: nextId,
-        name: `Nuevo especialista #${nextId}`,
-        specialty: "Medicina General",
-        status: "active",
-        email: null,
-        phone: null,
-        appointmentsThisMonth: 0,
-      },
-      ...prev,
-    ]);
+    setMode("create");
+    setSelectedDoctor(null);
+    setDrawerOpen(true);
   }
 
   function handleEdit(doctor) {
-    // Mock-only: minimal “edit” behavior to demonstrate UI.
-    const nextName = `${doctor.name} (Editado)`;
-    setDoctors((prev) =>
-      prev.map((d) => (d.id === doctor.id ? { ...d, name: nextName } : d))
-    );
+    setMode("edit");
+    setSelectedDoctor(doctor);
+    setDrawerOpen(true);
   }
 
-  function handleToggleStatus(doctor) {
-    const doctorId = Number(doctor?.id);
-    if (!Number.isFinite(doctorId)) {
-      setToggleError("Invalid doctor id.");
+  function handleCloseDrawer() {
+    setDrawerOpen(false);
+    setSelectedDoctor(null);
+    setMode("create");
+  }
+
+  async function handleSubmitDoctor(values) {
+    if (mode === "create") {
+      const nextId = Math.max(0, ...doctors.map((d) => Number(d.id) || 0)) + 1;
+      setDoctors((prev) => [
+        {
+          id: nextId,
+          name: values.name,
+          specialty: values.specialty,
+          status: "active",
+          email: null,
+          phone: null,
+          appointmentsThisMonth: 0,
+        },
+        ...prev,
+      ]);
+      setDrawerOpen(false);
       return;
     }
 
-    setToggleError(null);
-    setUpdatingIds((prev) => {
-      const next = new Set(prev);
-      next.add(doctorId);
-      return next;
+    const doctorId = Number(selectedDoctor?.id);
+    if (!Number.isFinite(doctorId)) {
+      throw new Error("No se pudo identificar al especialista.");
+    }
+
+    await updateSpecialist({
+      doctorId,
+      name: String(values.name ?? "").trim(),
+      specialty: String(values.specialty ?? "").trim(),
+      active: values.active ? "Y" : "N",
     });
 
-    const prevStatus = normalize(doctor?.status) === "active" ? "active" : "inactive";
-    const nextStatus = prevStatus === "active" ? "inactive" : "active";
-    const activeFlag = nextStatus === "active" ? "Y" : "N";
-
-    // Optimistic UI update with rollback on failure.
+    const nextStatus = values.active ? "active" : "inactive";
     setDoctors((prev) =>
-      prev.map((d) => (d.id === doctor.id ? { ...d, status: nextStatus } : d))
+      prev.map((d) =>
+        Number(d.id) === doctorId
+          ? { ...d, name: values.name, specialty: values.specialty, status: nextStatus }
+          : d
+      )
     );
-
-    (async () => {
-      try {
-        await updateSpecialist({
-          doctorId,
-          name: String(doctor?.name ?? "").trim(),
-          specialty: String(doctor?.specialty ?? "").trim(),
-          active: activeFlag,
-        });
-      } catch (e) {
-        setDoctors((prev) =>
-          prev.map((d) => (d.id === doctor.id ? { ...d, status: prevStatus } : d))
-        );
-        setToggleError(e instanceof Error ? e.message : "Failed to update specialist.");
-      } finally {
-        setUpdatingIds((prev) => {
-          const next = new Set(prev);
-          next.delete(doctorId);
-          return next;
-        });
-      }
-    })();
+    setDrawerOpen(false);
   }
 
   return (
@@ -258,10 +250,6 @@ export default function DoctorsPage() {
               <p className="text-xs text-rose-700" role="status">
                 {loadError}
               </p>
-            ) : toggleError ? (
-              <p className="text-xs text-rose-700" role="status">
-                {toggleError}
-              </p>
             ) : (
               <p className="text-xs text-gray-500">Fuente: API de especialistas</p>
             )}
@@ -283,18 +271,26 @@ export default function DoctorsPage() {
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {filtered.map((doctor) => (
-                <DoctorCard
-                  key={doctor.id}
-                  doctor={doctor}
-                  onEdit={handleEdit}
-                  onToggleStatus={handleToggleStatus}
-                  isUpdating={updatingIds.has(Number(doctor.id))}
-                />
+                <DoctorCard key={doctor.id} doctor={doctor} onEdit={handleEdit} />
               ))}
             </div>
           )}
         </section>
       </div>
+
+      <DoctorDrawer
+        open={drawerOpen}
+        onClose={handleCloseDrawer}
+        mode={mode}
+        doctor={selectedDoctor}
+      >
+        <DoctorForm
+          mode={mode}
+          doctor={selectedDoctor}
+          onSubmit={handleSubmitDoctor}
+          onCancel={handleCloseDrawer}
+        />
+      </DoctorDrawer>
     </div>
   );
 }
