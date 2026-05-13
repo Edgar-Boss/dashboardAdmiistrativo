@@ -1,6 +1,7 @@
 // Relative URL so Vite proxy can avoid CORS in dev.
 const SPECIALIST_URL = "/api/admin/specialist";
 const SPECIALIST_UPDATE_URL = `${SPECIALIST_URL}/update`;
+const SPECIALIST_CREATE_URL = `${SPECIALIST_URL}/create`;
 
 /**
  * Backend may return tuples: [id, name, specialty, activeFlag]
@@ -86,6 +87,52 @@ export async function updateSpecialist(payload) {
     throw new Error(
       `Request failed (${response.status} ${response.statusText})${details}`
     );
+  }
+
+  const contentType = response.headers.get("content-type") ?? "";
+  if (contentType.includes("application/json")) return await response.json();
+  return await response.text();
+}
+
+/**
+ * POST /api/admin/specialist/create
+ * @param {{ name: string, specialty?: string, active?: "Y"|"N" }} payload
+ * @returns {Promise<{ ok?: boolean, doctorId?: number }>}
+ */
+export async function createSpecialist(payload) {
+  const body = {
+    name: String(payload?.name ?? "").trim(),
+    specialty: String(payload?.specialty ?? "").trim(),
+  };
+  if (payload?.active === "Y" || payload?.active === "N") {
+    body.active = payload.active;
+  }
+
+  const response = await fetch(SPECIALIST_CREATE_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    let message = `Request failed (${response.status} ${response.statusText})`;
+    const text = await response.text().catch(() => "");
+    if (text) {
+      try {
+        const parsed = JSON.parse(text);
+        if (parsed && typeof parsed.message === "string" && parsed.message.trim()) {
+          message = parsed.message.trim();
+        } else {
+          message = `${message} - ${text}`;
+        }
+      } catch {
+        message = `${message} - ${text}`;
+      }
+    }
+    throw new Error(message);
   }
 
   const contentType = response.headers.get("content-type") ?? "";

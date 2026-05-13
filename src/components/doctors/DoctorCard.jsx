@@ -36,25 +36,6 @@ export default function DoctorCard({ doctor, onEdit }) {
         </div>
       </div>
 
-      <dl className="mt-4 grid grid-cols-2 gap-3 rounded-xl border border-gray-100 bg-gray-50/60 px-4 py-3">
-        <div>
-          <dt className="text-[11px] font-medium text-gray-500">Citas (mes)</dt>
-          <dd className="mt-0.5 text-sm font-semibold tabular-nums text-gray-900">
-            {Number(doctor?.appointmentsThisMonth ?? 0)}
-          </dd>
-        </div>
-        <div>
-          <dt className="text-[11px] font-medium text-gray-500">Contacto</dt>
-          <dd className="mt-0.5 truncate text-xs font-medium text-gray-700">
-            {doctor?.email
-              ? doctor.email
-              : doctor?.phone
-                ? doctor.phone
-                : "—"}
-          </dd>
-        </div>
-      </dl>
-
       <div className="mt-4 flex flex-wrap gap-2">
         <button
           type="button"

@@ -3,7 +3,11 @@ import DoctorCard from "../components/doctors/DoctorCard";
 import DoctorDrawer from "../components/doctors/DoctorDrawer";
 import DoctorForm from "../components/doctors/DoctorForm";
 import DoctorsFilters from "../components/doctors/DoctorsFilters";
-import { fetchSpecialists, updateSpecialist } from "../services/specialistService";
+import {
+  createSpecialist,
+  fetchSpecialists,
+  updateSpecialist,
+} from "../services/specialistService";
 
 function normalize(text) {
   return String(text ?? "").trim().toLowerCase();
@@ -153,13 +157,23 @@ export default function DoctorsPage() {
 
   async function handleSubmitDoctor(values) {
     if (mode === "create") {
-      const nextId = Math.max(0, ...doctors.map((d) => Number(d.id) || 0)) + 1;
+      const name = String(values.name ?? "").trim();
+      const specialty = String(values.specialty ?? "").trim();
+      const result = await createSpecialist({
+        name,
+        specialty,
+        active: values.active ? "Y" : "N",
+      });
+      const doctorId = result?.doctorId;
+      if (!Number.isFinite(Number(doctorId))) {
+        throw new Error("La API no devolvió un identificador válido para el especialista.");
+      }
       setDoctors((prev) => [
         {
-          id: nextId,
-          name: values.name,
-          specialty: values.specialty,
-          status: "active",
+          id: doctorId,
+          name,
+          specialty,
+          status: values.active ? "active" : "inactive",
           email: null,
           phone: null,
           appointmentsThisMonth: 0,
