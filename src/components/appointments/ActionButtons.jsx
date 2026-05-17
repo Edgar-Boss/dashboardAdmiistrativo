@@ -1,3 +1,6 @@
+import { useState } from "react";
+import AppointmentStateConfirmDialog from "./AppointmentStateConfirmDialog";
+
 const STATES = ["PENDING", "CONFIRMED", "CANCELLED"];
 
 function normalizeState(state) {
@@ -11,58 +14,95 @@ const btnBase =
 export default function ActionButtons({
   state,
   appointmentId,
+  patientName,
   disabled,
   onStateChange,
 }) {
+  const [pendingState, setPendingState] = useState(null);
   const normalized = normalizeState(state);
+
+  function requestStateChange(nextState) {
+    setPendingState(normalizeState(nextState));
+  }
+
+  function handleConfirm() {
+    if (!pendingState) return;
+    onStateChange?.(appointmentId, pendingState);
+    setPendingState(null);
+  }
+
+  const dialog = (
+    <AppointmentStateConfirmDialog
+      open={pendingState !== null}
+      targetState={pendingState}
+      patientName={patientName}
+      loading={disabled}
+      onConfirm={handleConfirm}
+      onCancel={() => setPendingState(null)}
+    />
+  );
 
   if (normalized === "PENDING") {
     return (
-      <div className="flex flex-wrap items-center justify-end gap-1.5">
-        <button
-          type="button"
-          disabled={disabled}
-          className={`${btnBase} border-emerald-200 text-emerald-600/90 hover:border-emerald-300 hover:bg-emerald-50/40`}
-          onClick={() => onStateChange?.(appointmentId, "CONFIRMED")}
-        >
-          <span aria-hidden className="opacity-70">✅</span>
-          Confirmar
-        </button>
-        <button
-          type="button"
-          disabled={disabled}
-          className={`${btnBase} border-rose-200 text-rose-600/85 hover:border-rose-300 hover:bg-rose-50/50`}
-          onClick={() => onStateChange?.(appointmentId, "CANCELLED")}
-        >
-          <span aria-hidden className="opacity-70">❌</span>
-          Cancelar
-        </button>
-      </div>
+      <>
+        {dialog}
+        <div className="flex flex-wrap items-center justify-end gap-1.5">
+          <button
+            type="button"
+            disabled={disabled}
+            className={`${btnBase} border-emerald-200 text-emerald-600/90 hover:border-emerald-300 hover:bg-emerald-50/40`}
+            onClick={() => requestStateChange("CONFIRMED")}
+          >
+            <span aria-hidden className="opacity-70">
+              ✅
+            </span>
+            Confirmar
+          </button>
+          <button
+            type="button"
+            disabled={disabled}
+            className={`${btnBase} border-rose-200 text-rose-600/85 hover:border-rose-300 hover:bg-rose-50/50`}
+            onClick={() => requestStateChange("CANCELLED")}
+          >
+            <span aria-hidden className="opacity-70">
+              ❌
+            </span>
+            Cancelar
+          </button>
+        </div>
+      </>
     );
   }
 
   if (normalized === "CONFIRMED") {
     return (
-      <div className="flex flex-wrap items-center justify-end gap-1.5">
-        <button
-          type="button"
-          disabled
-          className={`${btnBase} cursor-not-allowed border-gray-200 bg-gray-50/80 text-gray-400`}
-          aria-label="Editar (no disponible)"
-        >
-          <span aria-hidden className="opacity-60">✏️</span>
-          Editar
-        </button>
-        <button
-          type="button"
-          disabled={disabled}
-          className={`${btnBase} border-rose-200 text-rose-600/85 hover:border-rose-300 hover:bg-rose-50/50`}
-          onClick={() => onStateChange?.(appointmentId, "CANCELLED")}
-        >
-          <span aria-hidden className="opacity-70">❌</span>
-          Cancelar
-        </button>
-      </div>
+      <>
+        {dialog}
+        <div className="flex flex-wrap items-center justify-end gap-1.5">
+          <button
+            type="button"
+            disabled
+            className={`${btnBase} cursor-not-allowed border-gray-200 bg-gray-50/80 text-gray-400`}
+            aria-label="Editar (no disponible)"
+          >
+            <span aria-hidden className="opacity-60">
+              ✏️
+            </span>
+            Editar
+          </button>
+          <button
+            type="button"
+            disabled={disabled}
+            className={`${btnBase} border-rose-200 text-rose-600/85 hover:border-rose-300 hover:bg-rose-50/50`}
+            onClick={() => requestStateChange("CANCELLED")}
+          >
+            <span aria-hidden className="opacity-70">
+              ❌
+            </span>
+            Cancelar
+          </button>
+        </div>
+      </>
     );
   }
 
@@ -74,7 +114,9 @@ export default function ActionButtons({
         className={`${btnBase} cursor-not-allowed border-gray-200 bg-gray-50/80 text-gray-400`}
         aria-label="Ver detalle"
       >
-        <span aria-hidden className="opacity-60">👁</span>
+        <span aria-hidden className="opacity-60">
+          👁
+        </span>
         Ver detalle
       </button>
     </div>

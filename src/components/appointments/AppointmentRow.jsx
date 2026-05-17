@@ -66,6 +66,7 @@ export default function AppointmentRow({
           <ActionButtons
             state={row.state}
             appointmentId={row.id}
+            patientName={row.name}
             disabled={savingIds.has(row.id)}
             onStateChange={onStateChange}
           />
@@ -107,6 +108,7 @@ export default function AppointmentRow({
         <ActionButtons
           state={row.state}
           appointmentId={row.id}
+          patientName={row.name}
           disabled={savingIds.has(row.id)}
           onStateChange={onStateChange}
         />

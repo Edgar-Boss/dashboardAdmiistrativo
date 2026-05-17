@@ -1,5 +1,6 @@
-import { useMemo } from "react";
-import ActionButtons from "./ActionButtons";
+import { useMemo, useState } from "react";
+import AppointmentActionsMenu from "./AppointmentActionsMenu";
+import AppointmentEditDrawer from "./AppointmentEditDrawer";
 import StatusBadge from "./StatusBadge";
 import { compareByDateTime, formatAppointmentDate, normalizeTimeKey } from "./appointmentHelpers";
 
@@ -9,13 +10,29 @@ function formatDisplay(value, fallback = "—") {
 }
 
 export default function AppointmentsTable({ appointments, savingIds, onStateChange }) {
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const [editingAppointment, setEditingAppointment] = useState(null);
+
   const sorted = useMemo(
     () => appointments.slice().sort(compareByDateTime),
     [appointments]
   );
 
+  function handleSaveEdit(updated) {
+    console.log("[AppointmentsTable] Cita actualizada", updated);
+    setEditingAppointment(null);
+  }
+
   return (
-    <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+    <>
+      <AppointmentEditDrawer
+        appointment={editingAppointment}
+        isOpen={editingAppointment !== null}
+        onClose={() => setEditingAppointment(null)}
+        onSave={handleSaveEdit}
+      />
+
+      <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[720px] text-left text-sm">
           <thead className="border-b border-gray-100 bg-gray-50/95">
@@ -64,13 +81,21 @@ export default function AppointmentsTable({ appointments, savingIds, onStateChan
                   <td className="whitespace-nowrap px-4 py-3">
                     <StatusBadge state={row.state} />
                   </td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="pointer-events-none flex justify-end opacity-0 transition-opacity duration-150 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
-                      <ActionButtons
-                        state={row.state}
+                  <td className="px-4 py-3">
+                    <div className="flex items-center justify-end">
+                      <AppointmentActionsMenu
                         appointmentId={row.id}
+                        state={row.state}
+                        patientName={row.name}
                         disabled={savingIds.has(row.id)}
+                        isOpen={openMenuId === row.id}
+                        onOpen={() => setOpenMenuId(row.id)}
+                        onClose={() => setOpenMenuId(null)}
                         onStateChange={onStateChange}
+                        onEdit={() => {
+                          setOpenMenuId(null);
+                          setEditingAppointment(row);
+                        }}
                       />
                     </div>
                   </td>
@@ -81,5 +106,6 @@ export default function AppointmentsTable({ appointments, savingIds, onStateChan
         </table>
       </div>
     </div>
+    </>
   );
 }

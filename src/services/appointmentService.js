@@ -95,40 +95,51 @@ export async function fetchAppointmentsByDate(params) {
   return { appointments, summary };
 }
 
+const API_STATE_CHANGES = {
+  PENDING: "pending",
+  CONFIRMED: "confirmed",
+  CANCELLED: "cancelled",
+};
+
+/**
+ * Maps UI state (PENDING, etc.) to API body value (pending, etc.).
+ * @param {string} state
+ * @returns {"pending"|"confirmed"|"cancelled"|string}
+ */
+export function toApiStateChange(state) {
+  const normalized = typeof state === "string" ? state.toUpperCase() : "";
+  if (API_STATE_CHANGES[normalized]) {
+    return API_STATE_CHANGES[normalized];
+  }
+  return typeof state === "string" ? state.toLowerCase() : "pending";
+}
+
 /**
  * Persists an appointment state change.
+ * PATCH /api/admin/appointments/state — body: { id, change: "pending"|"confirmed"|"cancelled" }
  * @param {{ id: number, change: "PENDING"|"CONFIRMED"|"CANCELLED"|string }} payload
  * @returns {Promise<any>}
  */
 export async function updateAppointmentState(payload) {
-  console.log("[appointments] POST state change ->", {
-    url: APPOINTMENT_STATE_URL,
-    payload,
-  });
+  const body = {
+    id: payload.id,
+    change: toApiStateChange(payload.change),
+  };
 
   const response = await fetch(APPOINTMENT_STATE_URL, {
-    method: "POST",
+    method: "PATCH",
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(payload),
-  });
-
-  console.log("[appointments] state change response <-", {
-    ok: response.ok,
-    status: response.status,
-    statusText: response.statusText,
+    body: JSON.stringify(body),
   });
 
   if (!response.ok) {
     const message = `Request failed (${response.status} ${response.statusText})`;
-    console.error("[appointments] state change failed", { payload, message });
     throw new Error(message);
   }
 
-  // Some backends return empty bodies on success.
   const text = await response.text();
-  console.log("[appointments] state change body <-", text || "<empty>");
   return text ? JSON.parse(text) : null;
 }
