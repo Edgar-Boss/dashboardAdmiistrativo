@@ -19,13 +19,14 @@ export default function AppointmentTable({
   appointments,
   savingIds,
   onStateChange,
+  onAppointmentUpdate,
   viewMode = "all",
 }) {
   if (appointments.length === 0) {
     return <EmptyState />;
   }
 
-  const shared = { appointments, savingIds, onStateChange };
+  const shared = { appointments, savingIds, onStateChange, onAppointmentUpdate };
 
   if (viewMode === "all") {
     return <AppointmentsTable {...shared} />;

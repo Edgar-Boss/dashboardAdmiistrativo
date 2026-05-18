@@ -18,10 +18,10 @@ export default function AppointmentDurationSelect({
   disabled = false,
   maxSlotCount = DEFAULT_MAX_SLOT_COUNT,
 }) {
-  const durationOptions = useMemo(
-    () => buildDurationOptions(maxSlotCount, slotMinutes),
-    [maxSlotCount, slotMinutes],
-  );
+  const durationOptions = useMemo(() => {
+    const optionCount = Math.max(maxSlotCount, slotCount);
+    return buildDurationOptions(optionCount, slotMinutes);
+  }, [maxSlotCount, slotMinutes, slotCount]);
 
   const summary = useMemo(
     () => getDurationSummary(appointmentTime, slotCount, slotMinutes),

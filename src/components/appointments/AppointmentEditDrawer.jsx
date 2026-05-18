@@ -8,14 +8,20 @@ import {
 } from "lucide-react";
 import { normalizeTimeKey } from "./appointmentHelpers";
 import {
+  updateAppointment,
+  updateAppointmentState,
+} from "../../services/appointmentService";
+import {
   DEFAULT_SLOT_MINUTES,
   STATE_OPTIONS,
+  buildUpdateAppointmentPayload,
   buildUpdatedAppointment,
   formatAppointmentDateLong,
   getAppointmentDateRaw,
   getNotes,
   getPatientName,
-  getSlotCount,
+  getEditDurationMaxSlots,
+  resolveSlotCount,
   normalizeAppointmentState,
 } from "./appointmentEditHelpers";
 import AppointmentDurationSelect from "./AppointmentDurationSelect";
@@ -84,14 +90,16 @@ export default function AppointmentEditDrawer({
   const [state, setState] = useState("PENDING");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
 
   useEffect(() => {
     if (!appointment || !isOpen) return;
     setPatientName(getPatientName(appointment));
-    setSlotCount(getSlotCount(appointment));
+    setSlotCount(resolveSlotCount(appointment));
     setState(normalizeAppointmentState(appointment?.state));
     setNotes(getNotes(appointment));
     setSaving(false);
+    setSaveError(null);
   }, [appointment, isOpen]);
 
   useEffect(() => {
@@ -116,17 +124,34 @@ export default function AppointmentEditDrawer({
     if (!trimmedName) return;
 
     setSaving(true);
-    try {
-      const updated = buildUpdatedAppointment(appointment, {
-        patientName: trimmedName,
-        slotCount,
-        state,
-        notes,
-      });
+    setSaveError(null);
 
-      await new Promise((resolve) => setTimeout(resolve, 600));
-      console.log("[AppointmentEdit] Guardar cambios", updated);
+    const form = {
+      patientName: trimmedName,
+      slotCount,
+      state,
+      notes,
+    };
+
+    try {
+      await updateAppointment(
+        appointment.id,
+        buildUpdateAppointmentPayload(form),
+      );
+
+      const previousState = normalizeAppointmentState(appointment.state);
+      if (state !== previousState) {
+        await updateAppointmentState({ id: appointment.id, change: state });
+      }
+
+      const updated = buildUpdatedAppointment(appointment, form);
       onSave?.(updated);
+    } catch (error) {
+      setSaveError(
+        error instanceof Error
+          ? error.message
+          : "No se pudieron guardar los cambios.",
+      );
     } finally {
       setSaving(false);
     }
@@ -211,6 +236,7 @@ export default function AppointmentEditDrawer({
                     slotCount={slotCount}
                     onChange={setSlotCount}
                     slotMinutes={DEFAULT_SLOT_MINUTES}
+                    maxSlotCount={getEditDurationMaxSlots(resolveSlotCount(appointment))}
                     appointmentTime={appointment.appointmentTime}
                     disabled={saving}
                   />
@@ -257,6 +283,14 @@ export default function AppointmentEditDrawer({
           </div>
 
           <footer className="shrink-0 border-t border-gray-100 bg-white px-5 py-4 sm:px-6">
+            {saveError ? (
+              <div
+                className="mb-3 rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-xs text-rose-800"
+                role="alert"
+              >
+                {saveError}
+              </div>
+            ) : null}
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <button
                 type="button"

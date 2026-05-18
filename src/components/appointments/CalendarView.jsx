@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import DailyCalendarView from "./DailyCalendarView";
+import { normalizeAppointment } from "./appointmentEditHelpers";
 import { fetchSpecialists } from "../../services/specialistService";
 
 /**
@@ -45,19 +46,10 @@ export default function CalendarView({ appointments = [], loading = false }) {
     };
   }, []);
 
-  const rows = useMemo(() => {
-    return appointments.map((a) => ({
-      id: a.id,
-      appointmentTime: a.appointmentTime ?? a.appointment_time,
-      patientName: a.patientName ?? a.patient_name ?? a.name,
-      phoneNumber: a.phoneNumber ?? a.phone_number ?? a.phone,
-      doctorId: a.doctorId ?? a.doctor_id ?? a.specialistId ?? a.specialist_id,
-      doctorName: a.doctorName ?? a.doctor_name,
-      specialty: a.specialty ?? a.doctorSpecialty ?? a.speciality,
-      reason: a.reason,
-      state: a.state,
-    }));
-  }, [appointments]);
+  const rows = useMemo(
+    () => appointments.map((a) => normalizeAppointment(a)),
+    [appointments]
+  );
 
   return (
     <div className="space-y-3">

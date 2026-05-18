@@ -1,15 +1,22 @@
+function parseTimeMatch(s) {
+  const atStart = s.match(/^(\d{1,2}):(\d{2})/);
+  if (atStart) return atStart;
+  return s.match(/(?:T|\s)(\d{1,2}):(\d{2})/);
+}
+
 export function normalizeTimeKey(raw) {
   if (raw === null || raw === undefined || raw === "") return "—";
   const s = String(raw).trim();
-  const m = s.match(/^(\d{1,2}):(\d{2})/);
+  const m = parseTimeMatch(s);
   if (m) {
     const h = m[1].padStart(2, "0");
     return `${h}:${m[2]}`;
   }
-  return s;
+  return "—";
 }
 
-export function timeToMinutes(key) {
+export function timeToMinutes(raw) {
+  const key = normalizeTimeKey(raw);
   if (key === "—") return 0;
   const m = key.match(/^(\d{2}):(\d{2})/);
   if (!m) return 0;

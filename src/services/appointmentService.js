@@ -1,21 +1,30 @@
+import { normalizeAppointment, normalizeAppointments } from "../components/appointments/appointmentEditHelpers";
+
 // Use relative URLs so Vite proxy can avoid CORS in dev.
-const APPOINTMENTS_URL = "/api/admin/appointments";
+const APPOINTMENTS_LIST_URL = "/api/admin/appointments";
 const APPOINTMENTS_BY_DATE_URL = "/appointments/search";
+const APPOINTMENT_UPDATE_URL = "/appointments";
 const APPOINTMENT_STATE_URL = "/api/admin/appointments/state";
 
 /**
+ * GET /api/admin/appointments
  * @returns {Promise<Array<{
  *   id: number,
- *   name: string,
  *   phoneNumber: string,
- *   doctorName: string,
+ *   name: string,
+ *   reason: string | null,
+ *   createdAt: string,
  *   appointmentDate: string,
  *   appointmentTime: string,
- *   state: string
+ *   state: "PENDING"|"CONFIRMED"|"CANCELLED"|string,
+ *   doctorId: number,
+ *   doctorName: string,
+ *   specialty: string,
+ *   slotCount: number
  * }>>}
  */
 export async function fetchAppointments() {
-  const response = await fetch(APPOINTMENTS_URL, {
+  const response = await fetch(APPOINTMENTS_LIST_URL, {
     method: "GET",
     headers: {
       Accept: "application/json",
@@ -28,11 +37,17 @@ export async function fetchAppointments() {
   }
 
   const data = await response.json();
-  return Array.isArray(data) ? data : [];
+  return normalizeAppointments(extractAppointmentsList(data));
 }
 
-function coerceArray(value) {
-  return Array.isArray(value) ? value : [];
+/** Supports plain array or wrapped API payloads. */
+function extractAppointmentsList(data) {
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.appointments)) return data.appointments;
+  if (Array.isArray(data?.data)) return data.data;
+  if (Array.isArray(data?.rows)) return data.rows;
+  if (Array.isArray(data?.o_cursor)) return data.o_cursor;
+  return [];
 }
 
 /**
@@ -80,18 +95,11 @@ export async function fetchAppointmentsByDate(params) {
   }
 
   const data = await response.json();
-
-  // Support both: { appointments, summary } and { o_cursor, o_summary } and plain array.
-  if (Array.isArray(data)) {
-    return { appointments: data, summary: null };
-  }
-
-  const appointments =
-    coerceArray(data?.appointments) ||
-    coerceArray(data?.rows) ||
-    coerceArray(data?.o_cursor) ||
-    [];
-  const summary = data?.summary ?? data?.o_summary ?? null;
+  const appointments = normalizeAppointments(extractAppointmentsList(data));
+  const summary =
+    data && typeof data === "object" && !Array.isArray(data)
+      ? data.summary ?? data.o_summary ?? null
+      : null;
   return { appointments, summary };
 }
 
@@ -115,10 +123,35 @@ export function toApiStateChange(state) {
 }
 
 /**
+ * Updates editable appointment fields.
+ * PATCH /appointments/:id — body: { name, slotCount, reason }
+ * @param {number|string} id
+ * @param {{ name: string, slotCount: number, reason?: string|null }} payload
+ * @returns {Promise<any>}
+ */
+export async function updateAppointment(id, payload) {
+  const response = await fetch(`${APPOINTMENT_UPDATE_URL}/${id}`, {
+    method: "PATCH",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const message = `Request failed (${response.status} ${response.statusText})`;
+    throw new Error(message);
+  }
+
+  const text = await response.text();
+  const data = text ? JSON.parse(text) : null;
+  return data && typeof data === "object" ? normalizeAppointment(data) : data;
+}
+
+/**
  * Persists an appointment state change.
  * PATCH /api/admin/appointments/state — body: { id, change: "pending"|"confirmed"|"cancelled" }
- * @param {{ id: number, change: "PENDING"|"CONFIRMED"|"CANCELLED"|string }} payload
- * @returns {Promise<any>}
  */
 export async function updateAppointmentState(payload) {
   const body = {

@@ -1,8 +1,18 @@
 import { useMemo } from "react";
-import { normalizeTimeKey, timeToMinutes } from "./appointmentHelpers";
+import {
+  formatAppointmentDuration,
+  formatAppointmentTimeRange,
+  resolveSlotCount,
+} from "./appointmentEditHelpers";
+import {
+  doctorNameMatchesAppointment,
+  normalizeTimeKey,
+  timeToMinutes,
+} from "./appointmentHelpers";
 
 const DAY_START_HOUR = 8;
 const DAY_END_HOUR = 20;
+const ROW_HEIGHT_PX = 64;
 
 function normalizeState(state) {
   const key = typeof state === "string" ? state.toUpperCase() : "";
@@ -21,10 +31,14 @@ function statePillClass(state) {
   }
 }
 
-function buildTimeKeys(appointments) {
+/** 30-minute grid rows, plus any appointment start times outside the grid. */
+function buildSlotTimeKeys(appointments) {
   const set = new Set();
   for (let h = DAY_START_HOUR; h <= DAY_END_HOUR; h += 1) {
     set.add(`${String(h).padStart(2, "0")}:00`);
+    if (h < DAY_END_HOUR) {
+      set.add(`${String(h).padStart(2, "0")}:30`);
+    }
   }
   for (const a of appointments) {
     const k = normalizeTimeKey(a?.appointmentTime);
@@ -60,52 +74,90 @@ function buildDoctorColumns({ specialists, appointments }) {
   );
 }
 
-function buildCellMap(appointments) {
-  const map = new Map();
-  for (const row of appointments) {
-    const doctorId = row?.doctorId ?? "—";
-    const timeKey = normalizeTimeKey(row?.appointmentTime);
-    const k = `${doctorId}||${timeKey}`;
-    if (!map.has(k)) map.set(k, []);
-    map.get(k).push(row);
-  }
-  return map;
+function buildAppointmentBlocks(appointments) {
+  return appointments.map((row) => {
+    const slotCount = resolveSlotCount(row);
+    const startKey = normalizeTimeKey(
+      row?.appointmentTime ?? row?.appointment_time
+    );
+    const startMin = timeToMinutes(startKey);
+    return {
+      row,
+      doctorId: row?.doctorId ?? row?.doctor_id ?? "—",
+      doctorName: row?.doctorName ?? row?.doctor_name ?? "",
+      startKey,
+      startMin,
+      slotCount,
+    };
+  });
 }
 
-function AppointmentCell({ items }) {
-  if (!items || items.length === 0) {
-    return <div className="h-full w-full" />;
+function blockMatchesColumn(block, column) {
+  if (String(block.doctorId) === String(column.doctorId ?? "—")) {
+    return true;
   }
+  return doctorNameMatchesAppointment(column.doctorName, block.row);
+}
+
+function findStartBlocks(blocks, column, timeKey) {
+  const key = normalizeTimeKey(timeKey);
+  return blocks.filter(
+    (b) => blockMatchesColumn(b, column) && b.startKey === key
+  );
+}
+
+function appointmentForDisplay(row, startKey, slotCount) {
+  return { ...row, appointmentTime: startKey, slotCount };
+}
+
+function AppointmentBlockCard({ block }) {
+  const { row, slotCount, startKey } = block;
+  const display = appointmentForDisplay(row, startKey, slotCount);
+  const timeRange = formatAppointmentTimeRange(display);
+  const durationLabel = formatAppointmentDuration(display);
+  const state = normalizeState(row?.state);
+  const patientName =
+    row?.patientName ?? row?.patient_name ?? row?.name ?? "—";
+  const cardHeight = Math.max(slotCount * ROW_HEIGHT_PX - 8, ROW_HEIGHT_PX - 8);
 
   return (
-    <div className="flex flex-col gap-1 p-1">
-      {items.map((apt, idx) => {
-        const state = normalizeState(apt?.state);
-        const timeLabel = normalizeTimeKey(apt?.appointmentTime);
-        const key = apt?.id ?? `${timeLabel}-${apt?.patientName}-${idx}`;
-        return (
-          <div
-            key={key}
-            className="rounded-lg border border-gray-200 bg-white p-2 shadow-sm"
+    <div
+      className="absolute inset-x-1 top-1 z-10 flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white p-2 shadow-md ring-1 ring-gray-100/80"
+      style={{ height: `${cardHeight}px` }}
+    >
+      <div className="flex min-h-0 flex-1 flex-col">
+        <div className="flex items-start justify-between gap-2">
+          <p className="min-w-0 flex-1 truncate text-xs font-semibold text-gray-900">
+            {patientName}
+          </p>
+          <span
+            className={`shrink-0 rounded-md border px-1.5 py-0.5 text-[10px] font-medium ${statePillClass(
+              state
+            )}`}
           >
-            <div className="flex items-start justify-between gap-2">
-              <p className="min-w-0 flex-1 truncate text-xs font-semibold text-gray-900">
-                {apt?.patientName ?? "—"}
-              </p>
-              <span
-                className={`shrink-0 rounded-md border px-1.5 py-0.5 text-[10px] font-medium ${statePillClass(
-                  state
-                )}`}
-              >
-                {state}
-              </span>
-            </div>
-            <p className="mt-1 text-[10px] tabular-nums text-gray-500">
-              {timeLabel}
-            </p>
-          </div>
-        );
-      })}
+            {state}
+          </span>
+        </div>
+        <p className="mt-1 text-[10px] font-medium tabular-nums text-gray-700">
+          {timeRange}
+        </p>
+        <p className="mt-0.5 text-[10px] text-gray-500">{durationLabel}</p>
+        {row?.reason ? (
+          <p className="mt-auto truncate text-[10px] text-gray-400">{row.reason}</p>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function CalendarDoctorCell({ blocks, column, timeKey }) {
+  const starts = findStartBlocks(blocks, column, timeKey);
+
+  return (
+    <div className="relative min-h-16 overflow-visible border-b border-r border-gray-100 bg-white">
+      {starts.map((block) => (
+        <AppointmentBlockCard key={block.row?.id ?? `${block.startKey}-${block.doctorId}`} block={block} />
+      ))}
     </div>
   );
 }
@@ -113,15 +165,8 @@ function AppointmentCell({ items }) {
 /**
  * Calendar grid:
  * - Columns: doctors (prefer specialists list for base columns)
- * - Rows: time keys (hours + any appointment time keys)
- * - Cells: appointments matched by doctor_id + appointment_time
- *
- * @param {{
- *  appointments: Array<{ id?: any, appointmentTime?: any, patientName?: any, doctorId?: any, doctorName?: any, specialty?: any, state?: any }>,
- *  specialists: Array<{ id?: any, name: string, specialty: string }>,
- *  specialistsReady: boolean,
- *  loading: boolean
- * }} props
+ * - Rows: 30-minute slots
+ * - Cells: appointments span multiple rows according to slotCount
  */
 export default function DailyCalendarView({
   appointments = [],
@@ -129,12 +174,15 @@ export default function DailyCalendarView({
   specialistsReady = true,
   loading = false,
 }) {
-  const timeKeys = useMemo(() => buildTimeKeys(appointments), [appointments]);
+  const timeKeys = useMemo(() => buildSlotTimeKeys(appointments), [appointments]);
   const columns = useMemo(
     () => buildDoctorColumns({ specialists, appointments }),
     [specialists, appointments]
   );
-  const cellMap = useMemo(() => buildCellMap(appointments), [appointments]);
+  const blocks = useMemo(
+    () => buildAppointmentBlocks(appointments),
+    [appointments]
+  );
 
   if (loading) {
     return (
@@ -169,8 +217,8 @@ export default function DailyCalendarView({
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-      <div className="overflow-x-auto">
+    <div className="overflow-x-auto overflow-y-visible rounded-xl border border-gray-200 bg-white shadow-sm">
+      <div className="overflow-x-auto overflow-y-visible">
         <div
           className="grid min-w-max"
           style={{
@@ -201,18 +249,14 @@ export default function DailyCalendarView({
               <div className="sticky left-0 z-[1] border-b border-r border-gray-100 bg-white px-2 py-2 text-xs font-medium tabular-nums text-gray-600">
                 {timeKey}
               </div>
-              {columns.map((c) => {
-                const k = `${c.doctorId ?? "—"}||${timeKey}`;
-                const items = cellMap.get(k) ?? [];
-                return (
-                  <div
-                    key={`${c.key}-${timeKey}`}
-                    className="min-h-16 border-b border-r border-gray-100 bg-white"
-                  >
-                    <AppointmentCell items={items} />
-                  </div>
-                );
-              })}
+              {columns.map((c) => (
+                <CalendarDoctorCell
+                  key={`${c.key}-${timeKey}`}
+                  blocks={blocks}
+                  column={c}
+                  timeKey={timeKey}
+                />
+              ))}
             </div>
           ))}
         </div>

@@ -1,3 +1,7 @@
+import {
+  formatAppointmentDuration,
+  formatAppointmentTimeRange,
+} from "./appointmentEditHelpers";
 import ActionButtons from "./ActionButtons";
 import StatusBadge from "./StatusBadge";
 
@@ -34,7 +38,8 @@ export default function AppointmentRow({
   const motivo = motivoFromRow(row);
   const appointmentDateValue =
     row.appointmentDate ?? row.appointment_date ?? row.date ?? null;
-  const timeText = formatDisplay(row.appointmentTime);
+  const timeRange = formatAppointmentTimeRange(row);
+  const durationLabel = formatAppointmentDuration(row);
 
   if (listMode === "all" || listMode === "doctor") {
     const dateLabel = appointmentDateValue
@@ -44,8 +49,9 @@ export default function AppointmentRow({
     return (
       <article className="group relative overflow-hidden rounded-lg border border-gray-100 bg-white p-3 shadow-sm transition duration-200 ease-out hover:border-gray-200 hover:bg-gray-50/90 hover:shadow">
         <p className="text-xs font-medium tabular-nums text-gray-500">
-          {dateLabel} · {timeText}
+          {dateLabel} · {timeRange}
         </p>
+        <p className="mt-0.5 text-[11px] text-gray-400">{durationLabel}</p>
 
         <div className="mt-2 flex min-w-0 items-start justify-between gap-2">
           <p className="min-w-0 truncate text-sm font-bold text-gray-900">
@@ -92,6 +98,11 @@ export default function AppointmentRow({
         </span>
       </div>
 
+      <p className="mt-1 text-xs font-medium tabular-nums text-gray-600">
+        {timeRange}
+        <span className="mx-1 font-normal text-gray-400">·</span>
+        {durationLabel}
+      </p>
       <p className="mt-1 text-xs text-gray-500">{formatDisplay(row.phoneNumber)}</p>
       <p className="mt-0.5 text-[11px] text-gray-400">ID: {row.id}</p>
 

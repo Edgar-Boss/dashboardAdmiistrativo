@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import AppointmentTable from "../components/appointments/AppointmentTable";
 import CalendarView from "../components/appointments/CalendarView";
 import FilterTabs from "../components/appointments/FilterTabs";
+import { mergeCalendarAppointment } from "../components/appointments/appointmentEditHelpers";
 import { appointmentDateKey } from "../components/appointments/appointmentHelpers";
 import SummaryCards from "../components/appointments/SummaryCards";
 import {
@@ -61,22 +62,41 @@ export default function AppointmentsPage() {
     return appointments.filter((a) => normalizeState(a.state) === filter);
   }, [appointments, filter]);
 
+  const appointmentsById = useMemo(
+    () => new Map(appointments.map((a) => [a.id, a])),
+    [appointments]
+  );
+
   const calendarAppointments = useMemo(() => {
-    // When using SP_GET_APPOINTMENTS_BY_DATE, backend already filters by day.
-    // This fallback keeps calendar usable when the SP endpoint is unavailable.
-    if (calendarRows.length > 0 || calendarLoading || calendarError) {
-      return calendarRows;
-    }
-    return filteredAppointments.filter(
+    const catalogForDay = filteredAppointments.filter(
       (a) => appointmentDateKey(a) === selectedDate
+    );
+
+    // Prefer main catalog (includes slotCount from GET /api/admin/appointments).
+    if (catalogForDay.length > 0) {
+      return catalogForDay;
+    }
+
+    // Fallback: day search rows enriched with slotCount from catalog when possible.
+    return calendarRows.map((row) =>
+      mergeCalendarAppointment(row, appointmentsById.get(row.id))
     );
   }, [
     filteredAppointments,
     selectedDate,
     calendarRows,
-    calendarLoading,
-    calendarError,
+    appointmentsById,
   ]);
+
+  function handleAppointmentUpdate(updated) {
+    setActionError(null);
+    setAppointments((prev) =>
+      prev.map((a) => (a.id === updated.id ? { ...a, ...updated } : a))
+    );
+    setCalendarRows((prev) =>
+      prev.map((a) => (a.id === updated.id ? { ...a, ...updated } : a))
+    );
+  }
 
   async function handleStateChange(appointmentId, nextState) {
     setActionError(null);
@@ -351,6 +371,7 @@ export default function AppointmentsPage() {
                     appointments={filteredAppointments}
                     savingIds={savingIds}
                     onStateChange={handleStateChange}
+                    onAppointmentUpdate={handleAppointmentUpdate}
                     viewMode={viewMode}
                   />
                 </>
