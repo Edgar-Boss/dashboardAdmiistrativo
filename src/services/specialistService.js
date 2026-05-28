@@ -1,6 +1,7 @@
+import { apiFetch } from "./apiClient";
+
 // Relative URL so Vite proxy can avoid CORS in dev.
-const SPECIALIST_URL = "/api/admin/specialist";
-const SPECIALIST_UPDATE_URL = `${SPECIALIST_URL}/update`;
+const SPECIALIST_URL = "/api/admin/specialist";const SPECIALIST_UPDATE_URL = `${SPECIALIST_URL}/update`;
 const SPECIALIST_CREATE_URL = `${SPECIALIST_URL}/create`;
 
 /**
@@ -44,10 +45,49 @@ function normalizeSpecialistEntry(raw) {
 }
 
 /**
+ * Active when any tuple/object field is exactly "Y" (case-insensitive).
+ * @param {unknown} raw
+ */
+export function isSpecialistActiveEntry(raw) {
+  if (Array.isArray(raw)) {
+    return raw.some((v) => String(v ?? "").trim().toUpperCase() === "Y");
+  }
+  const normalized = normalizeSpecialistEntry(raw);
+  return String(normalized.activeFlag ?? "").trim().toUpperCase() === "Y";
+}
+
+/**
+ * GET /api/admin/specialist — only entries with active flag "Y".
+ * @returns {Promise<Array<{ id?: unknown, name: string, specialty: string, activeFlag?: string|null }>>}
+ */
+export async function fetchActiveSpecialists() {
+  const response = await apiFetch(SPECIALIST_URL, {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const message = `Request failed (${response.status} ${response.statusText})`;
+    throw new Error(message);
+  }
+
+  const data = await response.json();
+  if (!Array.isArray(data)) return [];
+
+  return data
+    .filter(isSpecialistActiveEntry)
+    .map(normalizeSpecialistEntry)
+    .filter((s) => s.name.length > 0)
+    .sort((a, b) => a.name.localeCompare(b.name, "es"));
+}
+
+/**
  * @returns {Promise<Array<{ id?: unknown, name: string, specialty: string, activeFlag?: string|null }>>}
  */
 export async function fetchSpecialists() {
-  const response = await fetch(SPECIALIST_URL, {
+  const response = await apiFetch(SPECIALIST_URL, {
     method: "GET",
     headers: {
       Accept: "application/json",
@@ -72,7 +112,7 @@ export async function fetchSpecialists() {
  * @returns {Promise<unknown>}
  */
 export async function updateSpecialist(payload) {
-  const response = await fetch(SPECIALIST_UPDATE_URL, {
+  const response = await apiFetch(SPECIALIST_UPDATE_URL, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
@@ -108,7 +148,7 @@ export async function createSpecialist(payload) {
     body.active = payload.active;
   }
 
-  const response = await fetch(SPECIALIST_CREATE_URL, {
+  const response = await apiFetch(SPECIALIST_CREATE_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
+import { Plus } from "lucide-react";
 import AppointmentTable from "../components/appointments/AppointmentTable";
+import AppointmentEditDrawer from "../components/appointments/AppointmentEditDrawer";
+import CreateAppointmentDrawer from "../components/appointments/CreateAppointmentDrawer";
 import CalendarView from "../components/appointments/CalendarView";
+import CalendarFilterTabs from "../components/appointments/calendar/CalendarFilterTabs";
+import CalendarToolbar from "../components/appointments/calendar/CalendarToolbar";
 import FilterTabs from "../components/appointments/FilterTabs";
 import { mergeCalendarAppointment } from "../components/appointments/appointmentEditHelpers";
 import { appointmentDateKey } from "../components/appointments/appointmentHelpers";
@@ -10,6 +15,7 @@ import {
   fetchAppointmentsByDate,
   updateAppointmentState,
 } from "../services/appointmentService";
+import { normalizeAppointment } from "../components/appointments/appointmentEditHelpers";
 
 function normalizeState(state) {
   const normalized = typeof state === "string" ? state.toUpperCase() : "";
@@ -56,6 +62,8 @@ export default function AppointmentsPage() {
   const [calendarError, setCalendarError] = useState(null);
   const [calendarRows, setCalendarRows] = useState([]);
   const [calendarSummary, setCalendarSummary] = useState(null);
+  const [editingAppointment, setEditingAppointment] = useState(null);
+  const [createDrawerOpen, setCreateDrawerOpen] = useState(false);
 
   const filteredAppointments = useMemo(() => {
     if (filter === "ALL") return appointments;
@@ -96,6 +104,42 @@ export default function AppointmentsPage() {
     setCalendarRows((prev) =>
       prev.map((a) => (a.id === updated.id ? { ...a, ...updated } : a))
     );
+  }
+
+  async function handleAppointmentCreated(created) {
+    setActionError(null);
+    try {
+      const data = await fetchAppointments();
+      setAppointments(data);
+
+      if (viewType === "calendar" && selectedDate) {
+        const { appointments: rows, summary } = await fetchAppointmentsByDate({
+          date: selectedDate,
+          doctorId: null,
+          state: filter === "ALL" ? null : filter,
+        });
+        setCalendarRows(Array.isArray(rows) ? rows : []);
+        setCalendarSummary(summary ?? null);
+      }
+
+      if (
+        created?.appointmentDate &&
+        appointmentDateKey(created) !== selectedDate &&
+        viewType === "calendar"
+      ) {
+        setSelectedDate(appointmentDateKey(created));
+      }
+    } catch (e) {
+      if (created?.id != null) {
+        const normalized = normalizeAppointment(created);
+        setAppointments((prev) => [...prev, normalized]);
+      }
+      setActionError(
+        e instanceof Error
+          ? e.message
+          : "La cita se creó, pero no se pudo actualizar el listado.",
+      );
+    }
   }
 
   async function handleStateChange(appointmentId, nextState) {
@@ -216,14 +260,26 @@ export default function AppointmentsPage() {
     <div className="min-h-screen bg-gray-50">
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-8 sm:py-12 lg:px-10">
         <header className="mb-10">
-          <h1 className="text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl">
-            Citas
-          </h1>
-          {viewType === "calendar" && (
-            <p className="mt-2 capitalize text-sm text-gray-500">
-              {formatHeaderDate(selectedDate)}
-            </p>
-          )}
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl">
+                Citas
+              </h1>
+              {viewType === "calendar" && (
+                <p className="mt-2 capitalize text-sm text-gray-500">
+                  {formatHeaderDate(selectedDate)}
+                </p>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => setCreateDrawerOpen(true)}
+              className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700 sm:w-auto"
+            >
+              <Plus className="h-4 w-4" aria-hidden />
+              Nueva cita
+            </button>
+          </div>
         </header>
 
         {!loading && !error && (
@@ -306,26 +362,9 @@ export default function AppointmentsPage() {
                 </div>
               </div>
 
-              {viewType === "calendar" && (
-                <div className="mb-6 flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedDate(todayIsoDate())}
-                    className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-1"
-                  >
-                    Hoy
-                  </button>
-                  <input
-                    type="date"
-                    value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
-                    className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 shadow-sm transition hover:border-gray-300 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-1"
-                    aria-label="Fecha"
-                  />
-                </div>
-              )}
-
-              <FilterTabs value={filter} onChange={setFilter} />
+              {viewType === "list" ? (
+                <FilterTabs value={filter} onChange={setFilter} />
+              ) : null}
 
               {viewType === "list" && (
                 <>
@@ -378,18 +417,31 @@ export default function AppointmentsPage() {
               )}
 
               {viewType === "calendar" && (
-                <div className="mt-6">
-                  {calendarError && (
+                <div className="mt-2">
+                  <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    <CalendarToolbar
+                      selectedDate={selectedDate}
+                      onDateChange={setSelectedDate}
+                      onToday={() => setSelectedDate(todayIsoDate())}
+                      formattedDateLabel={formatHeaderDate(selectedDate)}
+                    />
+                    <CalendarFilterTabs value={filter} onChange={setFilter} />
+                  </div>
+
+                  {calendarError ? (
                     <div
-                      className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+                      className="mb-4 rounded-xl border border-amber-200/80 bg-amber-50 px-4 py-3 text-sm text-amber-900"
                       role="status"
                     >
-                      {calendarError}. Showing calendar using currently loaded appointments.
+                      {calendarError}. Mostrando citas del catálogo principal.
                     </div>
-                  )}
+                  ) : null}
+
                   <CalendarView
                     appointments={calendarAppointments}
                     loading={calendarLoading}
+                    selectedDate={selectedDate}
+                    onAppointmentClick={setEditingAppointment}
                   />
                 </div>
               )}
@@ -397,6 +449,22 @@ export default function AppointmentsPage() {
           )}
         </section>
       </div>
+
+      <CreateAppointmentDrawer
+        isOpen={createDrawerOpen}
+        onClose={() => setCreateDrawerOpen(false)}
+        onCreated={handleAppointmentCreated}
+      />
+
+      <AppointmentEditDrawer
+        appointment={editingAppointment}
+        isOpen={editingAppointment !== null}
+        onClose={() => setEditingAppointment(null)}
+        onSave={(updated) => {
+          handleAppointmentUpdate(updated);
+          setEditingAppointment(null);
+        }}
+      />
     </div>
   );
 }

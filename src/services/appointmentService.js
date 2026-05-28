@@ -1,8 +1,11 @@
 import { normalizeAppointment, normalizeAppointments } from "../components/appointments/appointmentEditHelpers";
+import { normalizeTimeKey } from "../components/appointments/appointmentHelpers";
+import { apiFetch } from "./apiClient";
 
 // Use relative URLs so Vite proxy can avoid CORS in dev.
 const APPOINTMENTS_LIST_URL = "/api/admin/appointments";
 const APPOINTMENTS_BY_DATE_URL = "/appointments/search";
+const AVAILABLE_SLOTS_URL = "/appointments/available-slots";
 const APPOINTMENT_UPDATE_URL = "/appointments";
 const APPOINTMENT_STATE_URL = "/api/admin/appointments/state";
 
@@ -24,7 +27,7 @@ const APPOINTMENT_STATE_URL = "/api/admin/appointments/state";
  * }>>}
  */
 export async function fetchAppointments() {
-  const response = await fetch(APPOINTMENTS_LIST_URL, {
+  const response = await apiFetch(APPOINTMENTS_LIST_URL, {
     method: "GET",
     headers: {
       Accept: "application/json",
@@ -82,7 +85,7 @@ export async function fetchAppointmentsByDate(params) {
     qs.set("state", String(state));
   }
 
-  const response = await fetch(`${APPOINTMENTS_BY_DATE_URL}?${qs.toString()}`, {
+  const response = await apiFetch(`${APPOINTMENTS_BY_DATE_URL}?${qs.toString()}`, {
     method: "GET",
     headers: {
       Accept: "application/json",
@@ -101,6 +104,133 @@ export async function fetchAppointmentsByDate(params) {
       ? data.summary ?? data.o_summary ?? null
       : null;
   return { appointments, summary };
+}
+
+function extractAvailableSlotsList(data) {
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.slots)) return data.slots;
+  if (Array.isArray(data?.availableSlots)) return data.availableSlots;
+  if (Array.isArray(data?.times)) return data.times;
+  if (Array.isArray(data?.data)) return data.data;
+  return [];
+}
+
+function normalizeAvailableSlot(raw) {
+  if (raw == null) return null;
+  if (typeof raw === "string" || typeof raw === "number") {
+    const time = normalizeTimeKey(raw);
+    return time === "—" ? null : time;
+  }
+  if (typeof raw === "object") {
+    const time = normalizeTimeKey(
+      raw.time ??
+        raw.appointmentTime ??
+        raw.appointment_time ??
+        raw.slotTime ??
+        raw.startTime ??
+        raw.start,
+    );
+    return time === "—" ? null : time;
+  }
+  return null;
+}
+
+/**
+ * GET /appointments/available-slots?date=YYYY-MM-DD&doctorId=N
+ * @param {{ date: string, doctorId: number|string }} params
+ * @returns {Promise<string[]>}
+ */
+export async function fetchAvailableSlots({ date, doctorId }) {
+  const qs = new URLSearchParams();
+  qs.set("date", String(date ?? "").trim());
+  qs.set("doctorId", String(doctorId ?? "").trim());
+
+  const response = await apiFetch(`${AVAILABLE_SLOTS_URL}?${qs.toString()}`, {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const message = `Request failed (${response.status} ${response.statusText})`;
+    throw new Error(message);
+  }
+
+  const data = await response.json();
+  const seen = new Set();
+  const slots = [];
+
+  for (const raw of extractAvailableSlotsList(data)) {
+    const time = normalizeAvailableSlot(raw);
+    if (!time || seen.has(time)) continue;
+    seen.add(time);
+    slots.push(time);
+  }
+
+  return slots.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+}
+
+async function parseAppointmentApiError(response) {
+  let message = `Request failed (${response.status} ${response.statusText})`;
+  const text = await response.text().catch(() => "");
+  if (!text) return message;
+
+  try {
+    const parsed = JSON.parse(text);
+    if (parsed && typeof parsed.message === "string" && parsed.message.trim()) {
+      return parsed.message.trim();
+    }
+    return `${message} - ${text}`;
+  } catch {
+    return `${message} - ${text}`;
+  }
+}
+
+/**
+ * POST /appointments — create a new appointment.
+ * @param {{
+ *   phoneNumber: string,
+ *   name: string,
+ *   appointmentDate: string,
+ *   appointmentTime: string,
+ *   doctorId: number,
+ *   reason?: string
+ * }} payload
+ * @returns {Promise<ReturnType<typeof normalizeAppointment>|null>}
+ */
+export async function createAppointment(payload) {
+  const time = normalizeTimeKey(payload?.appointmentTime);
+  const body = {
+    phoneNumber: String(payload?.phoneNumber ?? "").trim(),
+    name: String(payload?.name ?? "").trim(),
+    appointmentDate: String(payload?.appointmentDate ?? "").trim(),
+    appointmentTime: time !== "—" ? time : String(payload?.appointmentTime ?? "").trim(),
+    doctorId: Number(payload?.doctorId),
+  };
+
+  const reason = String(payload?.reason ?? "").trim();
+  if (reason) body.reason = reason;
+
+  const response = await apiFetch(APPOINTMENT_UPDATE_URL, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    throw new Error(await parseAppointmentApiError(response));
+  }
+
+  const text = await response.text();
+  const data = text ? JSON.parse(text) : null;
+  if (data && typeof data === "object") {
+    return normalizeAppointment(data);
+  }
+  return null;
 }
 
 const API_STATE_CHANGES = {
@@ -130,7 +260,7 @@ export function toApiStateChange(state) {
  * @returns {Promise<any>}
  */
 export async function updateAppointment(id, payload) {
-  const response = await fetch(`${APPOINTMENT_UPDATE_URL}/${id}`, {
+  const response = await apiFetch(`${APPOINTMENT_UPDATE_URL}/${id}`, {
     method: "PATCH",
     headers: {
       Accept: "application/json",
@@ -159,7 +289,7 @@ export async function updateAppointmentState(payload) {
     change: toApiStateChange(payload.change),
   };
 
-  const response = await fetch(APPOINTMENT_STATE_URL, {
+  const response = await apiFetch(APPOINTMENT_STATE_URL, {
     method: "PATCH",
     headers: {
       Accept: "application/json",

@@ -1,21 +1,30 @@
 import { useEffect, useMemo, useState } from "react";
-import DailyCalendarView from "./DailyCalendarView";
+import MedicalCalendarGrid from "./calendar/MedicalCalendarGrid";
+import {
+  USE_CALENDAR_MOCK,
+  getMockCalendarAppointments,
+  getMockSpecialists,
+} from "./calendar/mockCalendarData";
 import { normalizeAppointment } from "./appointmentEditHelpers";
 import { fetchSpecialists } from "../../services/specialistService";
 
-/**
- * Day calendar: loads specialists for base columns, renders day appointments in a doctor×time grid.
- * Accepts either legacy appointment shape or SP_GET_APPOINTMENTS_BY_DATE result rows.
- *
- * @param {Array<any>} appointments
- * @param {boolean} loading
- */
-export default function CalendarView({ appointments = [], loading = false }) {
+export default function CalendarView({
+  appointments = [],
+  loading = false,
+  selectedDate,
+  onAppointmentClick,
+}) {
   const [specialists, setSpecialists] = useState([]);
   const [loadState, setLoadState] = useState("loading");
   const [loadError, setLoadError] = useState(null);
 
   useEffect(() => {
+    if (USE_CALENDAR_MOCK) {
+      setSpecialists(getMockSpecialists());
+      setLoadState("ok");
+      return undefined;
+    }
+
     let cancelled = false;
 
     async function load() {
@@ -46,23 +55,32 @@ export default function CalendarView({ appointments = [], loading = false }) {
     };
   }, []);
 
-  const rows = useMemo(
-    () => appointments.map((a) => normalizeAppointment(a)),
-    [appointments]
-  );
+  const rows = useMemo(() => {
+    if (USE_CALENDAR_MOCK) {
+      return getMockCalendarAppointments().map((a) => normalizeAppointment(a));
+    }
+    return appointments.map((a) => normalizeAppointment(a));
+  }, [appointments]);
+
+  const displaySpecialists = USE_CALENDAR_MOCK ? getMockSpecialists() : specialists;
 
   return (
     <div className="space-y-3">
       {loadState === "error" && loadError && (
-        <p className="text-xs text-amber-800" role="status">
+        <p
+          className="rounded-xl border border-amber-200/80 bg-amber-50 px-3 py-2 text-xs text-amber-900"
+          role="status"
+        >
           {loadError}. Mostrando columnas según las citas del día.
         </p>
       )}
-      <DailyCalendarView
+      <MedicalCalendarGrid
         appointments={rows}
-        specialists={specialists}
-        specialistsReady={loadState !== "loading"}
+        specialists={displaySpecialists}
+        specialistsReady={USE_CALENDAR_MOCK || loadState !== "loading"}
         loading={loading}
+        selectedDate={selectedDate}
+        onAppointmentClick={onAppointmentClick}
       />
     </div>
   );
