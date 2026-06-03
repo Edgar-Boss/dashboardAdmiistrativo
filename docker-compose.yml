@@ -1,0 +1,13 @@
+services:
+  admin-panel:
+    build:
+      context: .
+    image: panel-administrativo:latest
+    container_name: panel-administrativo
+    ports:
+      - "5173:80"
+    environment:
+      # Spring Boot on the host (default webhookCitas port)
+      API_UPSTREAM: ${API_UPSTREAM:-http://host.docker.internal:8080}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

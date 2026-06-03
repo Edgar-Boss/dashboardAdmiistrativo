@@ -1,0 +1,45 @@
+server {
+  listen 80;
+  server_name _;
+
+  # Avoid redirecting POST /appointments -> http://localhost/appointments/ (wrong port)
+  absolute_redirect off;
+  port_in_redirect off;
+
+  root /usr/share/nginx/html;
+  index index.html;
+
+  # Vite/React SPA: route everything to index.html
+  location / {
+    try_files $uri $uri/ /index.html;
+  }
+
+  # Reverse-proxy API routes to backend (same-origin in browser, no CORS)
+  # Prefix locations without trailing slash so /appointments and /appointments/search both match.
+  location /api/ {
+    proxy_pass ${API_UPSTREAM};
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+
+  location /auth {
+    proxy_pass ${API_UPSTREAM};
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+
+  location /appointments {
+    proxy_pass ${API_UPSTREAM};
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+}
