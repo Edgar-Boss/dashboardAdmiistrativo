@@ -1,7 +1,9 @@
+import { API_BASE_URL } from "../config/api";
+
 const TOKEN_KEY = "panel_auth_token";
 const USER_KEY = "panel_auth_user";
 
-const LOGIN_URL = "/auth/login";
+const LOGIN_URL = `${API_BASE_URL}/auth/login`;
 
 let unauthorizedHandler = null;
 

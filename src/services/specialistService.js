@@ -1,7 +1,8 @@
+import { API_BASE_URL } from "../config/api";
 import { apiFetch } from "./apiClient";
 
-// Relative URL so Vite proxy can avoid CORS in dev.
-const SPECIALIST_URL = "/api/admin/specialist";const SPECIALIST_UPDATE_URL = `${SPECIALIST_URL}/update`;
+const SPECIALIST_URL = `${API_BASE_URL}/api/admin/specialist`;
+const SPECIALIST_UPDATE_URL = `${SPECIALIST_URL}/update`;
 const SPECIALIST_CREATE_URL = `${SPECIALIST_URL}/create`;
 
 /**
