@@ -1,7 +1,10 @@
+import { API_BASE_URL } from "../config/api";
+import { buildApiRequestHeaders } from "./apiClient";
+
 const TOKEN_KEY = "panel_auth_token";
 const USER_KEY = "panel_auth_user";
 
-const LOGIN_URL = "/auth/login";
+const LOGIN_URL = `${API_BASE_URL}/auth/login`;
 
 let unauthorizedHandler = null;
 
@@ -88,10 +91,9 @@ async function parseLoginError(response) {
 export async function login(username, password) {
   const response = await fetch(LOGIN_URL, {
     method: "POST",
-    headers: {
-      Accept: "application/json",
+    headers: buildApiRequestHeaders({
       "Content-Type": "application/json",
-    },
+    }),
     body: JSON.stringify({
       username: String(username ?? "").trim(),
       password: String(password ?? ""),

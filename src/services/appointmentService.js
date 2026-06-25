@@ -1,13 +1,13 @@
 import { normalizeAppointment, normalizeAppointments } from "../components/appointments/appointmentEditHelpers";
 import { normalizeTimeKey } from "../components/appointments/appointmentHelpers";
+import { API_BASE_URL } from "../config/api";
 import { apiFetch } from "./apiClient";
 
-// Use relative URLs so Vite proxy can avoid CORS in dev.
-const APPOINTMENTS_LIST_URL = "/api/admin/appointments";
-const APPOINTMENTS_BY_DATE_URL = "/appointments/search";
-const AVAILABLE_SLOTS_URL = "/appointments/available-slots";
-const APPOINTMENT_UPDATE_URL = "/appointments";
-const APPOINTMENT_STATE_URL = "/api/admin/appointments/state";
+const APPOINTMENTS_LIST_URL = `${API_BASE_URL}/api/admin/appointments`;
+const APPOINTMENTS_BY_DATE_URL = `${API_BASE_URL}/appointments/search`;
+const AVAILABLE_SLOTS_URL = `${API_BASE_URL}/appointments/available-slots`;
+const APPOINTMENT_UPDATE_URL = `${API_BASE_URL}/appointments`;
+const APPOINTMENT_STATE_URL = `${API_BASE_URL}/api/admin/appointments/state`;
 
 /**
  * GET /api/admin/appointments
