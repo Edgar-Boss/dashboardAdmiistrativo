@@ -3,11 +3,8 @@ import { LogOut } from "lucide-react";
 import { getStoredUser } from "../services/authService";
 
 const ITEMS = [
-  { id: "dashboard", label: "Dashboard" },
   { id: "citas", label: "Citas" },
   { id: "doctores", label: "Especialistas" },
-  { id: "pacientes", label: "Pacientes" },
-  { id: "configuracion", label: "Configuración" },
 ];
 
 export default function Sidebar({ active = "", onLogout, isOpen = false, onClose }) {
