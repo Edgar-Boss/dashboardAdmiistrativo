@@ -17,10 +17,10 @@ import { useCurrentTime } from "./useCurrentTime";
 
 function CalendarSkeleton() {
   return (
-    <div className="flex min-h-[420px] items-center justify-center rounded-2xl border border-gray-100 bg-white">
+    <div className="flex min-h-[420px] items-center justify-center rounded-brand-md border border-brand-border bg-brand-surface">
       <div className="flex flex-col items-center gap-3">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-blue-500" />
-        <p className="text-sm text-gray-500">Cargando agenda...</p>
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-border border-t-brand-primary" />
+        <p className="text-sm text-brand-text-muted">Cargando agenda...</p>
       </div>
     </div>
   );
@@ -28,9 +28,9 @@ function CalendarSkeleton() {
 
 function EmptyDoctors() {
   return (
-    <div className="flex min-h-[320px] flex-col items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-gray-50/50 px-6 text-center">
-      <p className="text-sm font-medium text-gray-700">Sin doctores para mostrar</p>
-      <p className="mt-1 max-w-sm text-xs text-gray-500">
+    <div className="flex min-h-[320px] flex-col items-center justify-center rounded-brand-md border border-dashed border-brand-border bg-brand-soft/40 px-6 text-center">
+      <p className="text-sm font-medium text-brand-text">Sin doctores para mostrar</p>
+      <p className="mt-1 max-w-sm text-xs text-brand-text-muted">
         Agrega especialistas o citas del día para ver la agenda.
       </p>
     </div>
@@ -77,15 +77,15 @@ export default function MedicalCalendarGrid({
   if (columns.length === 0) return <EmptyDoctors />;
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-gray-200/50 bg-[#fafafa] shadow-sm ring-1 ring-gray-900/[0.03]">
+    <div className="overflow-hidden rounded-brand-md border border-brand-border bg-brand-background shadow-brand ring-1 ring-brand-ink/[0.03]">
       <div className="max-h-[min(72vh,720px)] overflow-auto scroll-smooth">
         <div className="relative min-w-max" style={{ width: gridWidth }}>
-          <div className="sticky top-0 z-40 flex border-b border-gray-200/35 bg-[#fafafa]/90 backdrop-blur-md">
+          <div className="sticky top-0 z-40 flex border-b border-brand-border bg-brand-background/90 backdrop-blur-md">
             <div
-              className="sticky left-0 z-50 shrink-0 border-r border-gray-200/30 bg-[#fafafa]/90 px-2 py-3.5"
+              className="sticky left-0 z-50 shrink-0 border-r border-brand-border bg-brand-background/90 px-2 py-3.5"
               style={{ width: config.timeColumnWidthPx }}
             >
-              <span className="text-[10px] font-medium uppercase tracking-widest text-gray-400/80">
+              <span className="text-[10px] font-medium uppercase tracking-widest text-brand-text-muted/80">
                 Hora
               </span>
             </div>
@@ -106,7 +106,7 @@ export default function MedicalCalendarGrid({
 
           <div className="relative flex">
             <div
-              className="sticky left-0 z-30 shrink-0 border-r border-gray-200/30 bg-[#fafafa]"
+              className="sticky left-0 z-30 shrink-0 border-r border-brand-border bg-brand-background"
               style={{ width: config.timeColumnWidthPx }}
             >
               <div className="relative" style={{ height: gridHeight }}>
@@ -117,7 +117,7 @@ export default function MedicalCalendarGrid({
                     style={{ top: slot.topPx, height: 0 }}
                   >
                     {slot.label ? (
-                      <span className="-mt-2 text-[11px] font-medium tabular-nums text-gray-400/90">
+                      <span className="-mt-2 text-[11px] font-medium tabular-nums text-brand-text-muted/90">
                         {slot.label}
                       </span>
                     ) : null}
@@ -133,14 +133,14 @@ export default function MedicalCalendarGrid({
               return (
                 <div
                   key={col.key}
-                  className={`relative shrink-0 border-r border-gray-200/25 ${theme.column}`}
+                  className={`relative shrink-0 border-r border-brand-border/60 ${theme.column}`}
                   style={{ width: config.doctorColumnWidthPx }}
                 >
                   <div className="relative" style={{ height: gridHeight }}>
                     {timeSlots.map((slot) => (
                       <div
                         key={`${col.key}-${slot.minutes}`}
-                        className="absolute left-0 right-0 border-t border-gray-200/20"
+                        className="absolute left-0 right-0 border-t border-brand-border/50"
                         style={{ top: slot.topPx }}
                         aria-hidden
                       />

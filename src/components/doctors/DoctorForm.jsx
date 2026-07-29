@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import Button from "../ui/Button";
 
 function normalize(text) {
   return String(text ?? "").trim();
@@ -15,13 +16,13 @@ function Toggle({ checked, onChange, label }) {
     <button
       type="button"
       onClick={() => onChange?.(!checked)}
-      className="flex w-full items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-left shadow-sm transition hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-1"
+      className="flex w-full items-center justify-between gap-3 rounded-brand border border-brand-border bg-brand-surface px-4 py-3 text-left shadow-brand transition hover:border-brand-border-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25"
       aria-pressed={checked}
     >
-      <span className="text-sm font-semibold text-gray-900">{label}</span>
+      <span className="text-sm font-semibold text-brand-text">{label}</span>
       <span
         className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-          checked ? "bg-emerald-500" : "bg-gray-200"
+          checked ? "bg-brand-success" : "bg-brand-border-strong"
         }`}
       >
         <span
@@ -88,29 +89,29 @@ export default function DoctorForm({ mode, doctor, onSubmit, onCancel }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div>
-        <label className="block text-xs font-semibold text-gray-500">Nombre</label>
+        <label className="block text-xs font-semibold text-brand-text-muted">Nombre</label>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/25"
+          className="mt-2 w-full rounded-brand border border-brand-border bg-brand-surface px-3.5 py-2.5 text-sm text-brand-text shadow-brand transition placeholder:text-brand-text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25"
           placeholder="Ej: Juan Velázquez"
           autoFocus
         />
       </div>
 
       <div>
-        <label className="block text-xs font-semibold text-gray-500">Especialidad</label>
+        <label className="block text-xs font-semibold text-brand-text-muted">Especialidad</label>
         <input
           value={specialty}
           onChange={(e) => setSpecialty(e.target.value)}
-          className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/25"
+          className="mt-2 w-full rounded-brand border border-brand-border bg-brand-surface px-3.5 py-2.5 text-sm text-brand-text shadow-brand transition placeholder:text-brand-text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25"
           placeholder="Ej: Cardiología"
         />
       </div>
 
       {isEdit ? (
         <div>
-          <label className="block text-xs font-semibold text-gray-500">Estado</label>
+          <label className="block text-xs font-semibold text-brand-text-muted">Estado</label>
           <div className="mt-2">
             <Toggle
               checked={active}
@@ -123,7 +124,7 @@ export default function DoctorForm({ mode, doctor, onSubmit, onCancel }) {
 
       {error ? (
         <div
-          className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-800"
+          className="rounded-brand border border-brand-danger/30 bg-brand-danger-soft px-4 py-3 text-sm font-medium text-brand-danger"
           role="alert"
         >
           {error}
@@ -131,21 +132,12 @@ export default function DoctorForm({ mode, doctor, onSubmit, onCancel }) {
       ) : null}
 
       <div className="flex flex-wrap items-center justify-end gap-2 pt-2">
-        <button
-          type="button"
-          onClick={() => onCancel?.()}
-          className="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-1"
-          disabled={submitting}
-        >
+        <Button type="button" variant="outline" onClick={() => onCancel?.()} disabled={submitting}>
           Cancelar
-        </button>
-        <button
-          type="submit"
-          className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-70"
-          disabled={submitting}
-        >
+        </Button>
+        <Button type="submit" loading={submitting}>
           {submitting ? "Guardando..." : primaryLabel}
-        </button>
+        </Button>
       </div>
     </form>
   );

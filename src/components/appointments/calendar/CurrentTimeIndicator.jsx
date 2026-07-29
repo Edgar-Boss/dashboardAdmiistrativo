@@ -21,7 +21,7 @@ export default function CurrentTimeIndicator({
         style={{ width: timeColumnWidthPx }}
       >
         <span
-          className="-mt-px text-[10px] font-semibold tabular-nums leading-none text-rose-500/90"
+          className="-mt-px text-[10px] font-semibold tabular-nums leading-none text-brand-primary"
           aria-live="polite"
         >
           {timeLabel}
@@ -29,8 +29,8 @@ export default function CurrentTimeIndicator({
       </div>
 
       <div className="flex min-w-0 flex-1 items-center">
-        <div className="h-1.5 w-1.5 shrink-0 -translate-x-1/2 rounded-full bg-rose-500/85 ring-2 ring-[#fafafa]" />
-        <div className="h-px flex-1 bg-rose-500/55" />
+        <div className="h-1.5 w-1.5 shrink-0 -translate-x-1/2 rounded-full bg-brand-primary ring-2 ring-brand-background" />
+        <div className="h-px flex-1 bg-brand-primary/60" />
       </div>
     </div>
   );

@@ -12,7 +12,7 @@ import AppointmentStatusSubmenu from "./AppointmentStatusSubmenu";
 import { requiresStateConfirmation } from "./appointmentStateConfirm";
 
 const menuItemClass =
-  "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-gray-700 transition-colors duration-150 hover:bg-gray-50";
+  "flex w-full items-center gap-2.5 rounded-brand px-3 py-2 text-left text-sm text-brand-text transition-colors duration-150 hover:bg-brand-soft";
 
 export default function AppointmentActionsMenu({
   appointmentId,
@@ -139,7 +139,7 @@ export default function AppointmentActionsMenu({
         aria-haspopup="menu"
         aria-expanded={isOpen}
         onClick={handleToggle}
-        className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition-colors duration-150 hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-1 disabled:pointer-events-none disabled:opacity-45"
+        className="inline-flex h-8 w-8 items-center justify-center rounded-brand text-brand-text-muted transition-colors duration-150 hover:bg-brand-soft hover:text-brand-text focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25 disabled:pointer-events-none disabled:opacity-45"
       >
         <MoreVertical className="h-4 w-4" strokeWidth={2} aria-hidden />
       </button>
@@ -148,7 +148,7 @@ export default function AppointmentActionsMenu({
         <div
           role="menu"
           aria-label="Acciones de la cita"
-          className="absolute right-0 top-full z-30 mt-1.5 min-w-[11.5rem] origin-top-right rounded-xl border border-gray-100 bg-white p-1.5 shadow-lg shadow-gray-200/60 animate-menu-in"
+          className="absolute right-0 top-full z-30 mt-1.5 min-w-[11.5rem] origin-top-right rounded-brand-md border border-brand-border bg-brand-surface p-1.5 shadow-brand-lg animate-menu-in"
         >
           <ul className="space-y-0.5">
             <li>
@@ -158,7 +158,7 @@ export default function AppointmentActionsMenu({
                 className={menuItemClass}
                 onClick={handleEdit}
               >
-                <Pencil className="h-4 w-4 shrink-0 text-gray-400" strokeWidth={2} />
+                <Pencil className="h-4 w-4 shrink-0 text-brand-text-muted" strokeWidth={2} />
                 Editar cita
               </button>
             </li>
@@ -169,15 +169,15 @@ export default function AppointmentActionsMenu({
                 role="menuitem"
                 aria-haspopup="menu"
                 aria-expanded={statusSubmenuOpen}
-                className={`${menuItemClass} ${statusSubmenuOpen ? "bg-gray-50" : ""}`}
+                className={`${menuItemClass} ${statusSubmenuOpen ? "bg-brand-soft" : ""}`}
                 onClick={() => setStatusSubmenuOpen((open) => !open)}
                 onMouseEnter={() => setStatusSubmenuOpen(true)}
               >
-                <RefreshCw className="h-4 w-4 shrink-0 text-gray-400" strokeWidth={2} />
+                <RefreshCw className="h-4 w-4 shrink-0 text-brand-text-muted" strokeWidth={2} />
                 <span className="flex-1">Cambiar estado</span>
                 <ChevronRight
-                  className={`h-4 w-4 shrink-0 text-gray-300 transition-transform duration-150 ${
-                    statusSubmenuOpen ? "translate-x-0.5 text-gray-400" : ""
+                  className={`h-4 w-4 shrink-0 text-brand-text-muted/70 transition-transform duration-150 ${
+                    statusSubmenuOpen ? "translate-x-0.5 text-brand-text-muted" : ""
                   }`}
                   strokeWidth={2}
                   aria-hidden
@@ -199,18 +199,18 @@ export default function AppointmentActionsMenu({
                 className={menuItemClass}
                 onClick={handleViewDetails}
               >
-                <Eye className="h-4 w-4 shrink-0 text-gray-400" strokeWidth={2} />
+                <Eye className="h-4 w-4 shrink-0 text-brand-text-muted" strokeWidth={2} />
                 Ver detalles
               </button>
             </li>
 
-            <li className="my-1 border-t border-gray-100" aria-hidden />
+            <li className="my-1 border-t border-brand-border" aria-hidden />
 
             <li>
               <button
                 type="button"
                 role="menuitem"
-                className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-rose-600 transition-colors duration-150 hover:bg-rose-50"
+                className="flex w-full items-center gap-2.5 rounded-brand px-3 py-2 text-left text-sm text-brand-danger transition-colors duration-150 hover:bg-brand-danger-soft"
                 onClick={handleDelete}
               >
                 <Trash2 className="h-4 w-4 shrink-0" strokeWidth={2} />

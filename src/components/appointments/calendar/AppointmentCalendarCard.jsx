@@ -39,12 +39,12 @@ function CompactCardContent({ patientName, timeRange, stateStyle }) {
   return (
     <div className="flex w-full flex-col gap-0.5">
       <div className="flex min-h-[14px] items-center justify-between gap-1.5">
-        <p className="min-w-0 flex-1 truncate text-[11px] font-semibold leading-none text-gray-900">
+        <p className="min-w-0 flex-1 truncate text-[11px] font-semibold leading-none text-brand-text">
           {patientName}
         </p>
         <StatusBadge stateStyle={stateStyle} size="compact" />
       </div>
-      <p className="truncate text-[10px] font-medium leading-none tabular-nums text-gray-500">
+      <p className="truncate text-[10px] font-medium leading-none tabular-nums text-brand-text-muted">
         {timeRange}
       </p>
     </div>
@@ -60,18 +60,18 @@ function NormalCardContent({
   return (
     <div className="flex w-full flex-col gap-1">
       <div className="flex min-h-[16px] items-start justify-between gap-1.5">
-        <p className="min-w-0 flex-1 truncate text-xs font-semibold leading-none text-gray-900">
+        <p className="min-w-0 flex-1 truncate text-xs font-semibold leading-none text-brand-text">
           {patientName}
         </p>
         <StatusBadge stateStyle={stateStyle} size="normal" />
       </div>
-      <p className="flex items-center gap-1 text-[10px] font-medium leading-none tabular-nums text-gray-600">
-        <Clock className="h-2.5 w-2.5 shrink-0 text-gray-400/90" aria-hidden />
+      <p className="flex items-center gap-1 text-[10px] font-medium leading-none tabular-nums text-brand-text-muted">
+        <Clock className="h-2.5 w-2.5 shrink-0 text-brand-text-muted/80" aria-hidden />
         <span className="truncate">{timeRange}</span>
-        <span className="text-gray-300/90" aria-hidden>
+        <span className="text-brand-text-muted/60" aria-hidden>
           {" \u00b7 "}
         </span>
-        <span className="shrink-0 text-gray-500">{duration}</span>
+        <span className="shrink-0 text-brand-text-muted">{duration}</span>
       </p>
     </div>
   );
@@ -90,30 +90,30 @@ function LargeCardContent({
   return (
     <div className={`flex w-full flex-col ${hasMeta ? "gap-1.5" : "gap-1"}`}>
       <div className="flex items-start justify-between gap-2">
-        <p className="min-w-0 flex-1 truncate text-[13px] font-semibold leading-snug tracking-tight text-gray-900">
+        <p className="min-w-0 flex-1 truncate text-[13px] font-semibold leading-snug tracking-tight text-brand-text">
           {patientName}
         </p>
         <StatusBadge stateStyle={stateStyle} />
       </div>
 
-      <p className="flex items-center gap-1.5 text-[11px] font-medium leading-none tabular-nums text-gray-600">
-        <Clock className="h-3 w-3 shrink-0 text-gray-400/90" aria-hidden />
+      <p className="flex items-center gap-1.5 text-[11px] font-medium leading-none tabular-nums text-brand-text-muted">
+        <Clock className="h-3 w-3 shrink-0 text-brand-text-muted/80" aria-hidden />
         <span className="truncate">{timeRange}</span>
-        <span className="text-gray-300/90" aria-hidden>
+        <span className="text-brand-text-muted/60" aria-hidden>
           {" \u00b7 "}
         </span>
-        <span className="shrink-0 text-gray-500">{duration}</span>
+        <span className="shrink-0 text-brand-text-muted">{duration}</span>
       </p>
 
       {reason ? (
-        <p className="line-clamp-2 text-[11px] leading-snug text-gray-500">
+        <p className="line-clamp-2 text-[11px] leading-snug text-brand-text-muted">
           {reason}
         </p>
       ) : null}
 
       {phone ? (
-        <p className="flex items-center gap-1.5 text-[11px] leading-none text-gray-500">
-          <Phone className="h-3 w-3 shrink-0 text-gray-400/90" aria-hidden />
+        <p className="flex items-center gap-1.5 text-[11px] leading-none text-brand-text-muted">
+          <Phone className="h-3 w-3 shrink-0 text-brand-text-muted/80" aria-hidden />
           <span className="truncate tabular-nums">{phone}</span>
         </p>
       ) : null}
@@ -122,7 +122,7 @@ function LargeCardContent({
 }
 
 const CARD_BASE =
-  "absolute left-1.5 right-1.5 z-20 box-border flex cursor-pointer flex-col rounded-xl border border-gray-200/60 border-l-2 text-left shadow-[0_1px_2px_rgba(15,23,42,0.04)] ring-1 ring-gray-900/[0.02] transition-all duration-200 ease-out hover:z-30 hover:-translate-y-px hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-900/10";
+  "absolute left-1.5 right-1.5 z-20 box-border flex cursor-pointer flex-col rounded-brand-md border border-brand-border border-l-2 text-left shadow-brand ring-1 ring-brand-ink/[0.02] transition-all duration-200 ease-out hover:z-30 hover:-translate-y-px hover:shadow-brand-md focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/20";
 
 const VARIANT_STYLES = {
   [CARD_VARIANT.COMPACT]: "overflow-visible px-2 py-1",

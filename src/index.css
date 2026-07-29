@@ -2,8 +2,143 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* Brand tokens — Nails Boutique Puebla */
+  --color-primary: #b53a5b;
+  --color-primary-hover: #9a3150;
+  --color-secondary: #d98ba3;
+  --color-accent: #c9a86a;
+  --color-background: #fffdfb;
+  --color-surface: #ffffff;
+  --color-surface-soft: #f7e6ec;
+  --color-surface-muted: #f2d4de;
+  --color-nude: #f3e4da;
+  --color-text: #3a2b30;
+  --color-text-muted: #6f5f64;
+  --color-border: #e7d9dd;
+  --color-border-strong: #d7c6cb;
+  --color-success: #2f6f4e;
+  --color-success-soft: #e8f3ec;
+  --color-warning: #a67c3d;
+  --color-warning-soft: #f8f0e4;
+  --color-danger: #9a2f4a;
+  --color-danger-soft: #f8e8ed;
+  --color-ink: #2c2024;
+  --color-ink-soft: #4a3a40;
+  --color-gold-light: #e6d3ab;
+
+  --shadow-sm: 0 4px 14px rgba(181, 58, 91, 0.08);
+  --shadow-md: 0 12px 30px rgba(181, 58, 91, 0.12);
+  --shadow-lg: 0 22px 48px rgba(181, 58, 91, 0.16);
+
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+
+  --font-display: "Cormorant Garamond", "Times New Roman", Georgia, serif;
+  --font-body: "Poppins", system-ui, -apple-system, sans-serif;
+}
+
 @layer base {
+  html {
+    @apply scroll-smooth;
+  }
+
   body {
-    @apply antialiased text-slate-800;
+    margin: 0;
+    font-family: var(--font-body);
+    color: var(--color-text);
+    background-color: var(--color-background);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    color: var(--color-text);
+    letter-spacing: -0.01em;
+  }
+
+  h1 {
+    @apply text-3xl font-semibold sm:text-4xl;
+  }
+
+  h2 {
+    @apply text-2xl font-semibold sm:text-3xl;
+  }
+
+  h3 {
+    @apply text-xl font-semibold;
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--color-primary) 22%, white);
+    color: var(--color-text);
+  }
+
+  :focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--color-primary) 55%, white);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .nb-card {
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .nb-input {
+    @apply w-full px-4 py-3 text-sm transition disabled:cursor-not-allowed disabled:opacity-60;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .nb-input::placeholder {
+    color: color-mix(in srgb, var(--color-text-muted) 70%, white);
+  }
+
+  .nb-input:hover:not(:disabled) {
+    border-color: var(--color-border-strong);
+  }
+
+  .nb-input:focus {
+    outline: none;
+    border-color: color-mix(in srgb, var(--color-primary) 45%, var(--color-border));
+    box-shadow: 0 0 0 3px rgba(181, 58, 91, 0.14);
+  }
+
+  .nb-label {
+    @apply mb-2 block text-xs font-medium uppercase tracking-wider;
+    color: var(--color-text-muted);
+  }
+
+  .nb-overlay {
+    background: rgba(44, 32, 36, 0.42);
+  }
+
+  .nb-login-bg {
+    background:
+      radial-gradient(ellipse 80% 60% at 50% -10%, var(--color-surface-soft) 0%, transparent 55%),
+      radial-gradient(ellipse 50% 40% at 100% 100%, var(--color-nude) 0%, transparent 45%),
+      var(--color-background);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

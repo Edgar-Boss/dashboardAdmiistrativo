@@ -364,7 +364,7 @@ export default function CreateAppointmentDrawer({
 
       <div
 
-        className={`absolute inset-0 bg-gray-900/40 transition-opacity duration-200 ${
+        className={`nb-overlay absolute inset-0 transition-opacity duration-200 ${
 
           isOpen ? "opacity-100" : "opacity-0"
 
@@ -386,7 +386,7 @@ export default function CreateAppointmentDrawer({
 
         aria-label="Nueva cita"
 
-        className={`absolute right-0 top-0 flex h-full w-full flex-col border-l border-gray-100 bg-white shadow-2xl transition-transform duration-300 ease-out sm:max-w-[420px] ${
+        className={`absolute right-0 top-0 flex h-full w-full flex-col border-l border-brand-border bg-brand-surface shadow-brand-lg transition-transform duration-300 ease-out sm:max-w-[420px] ${
 
           isOpen ? "translate-x-0" : "translate-x-full"
 
@@ -394,13 +394,13 @@ export default function CreateAppointmentDrawer({
 
       >
 
-        <header className="flex shrink-0 items-start justify-between gap-3 border-b border-gray-100 px-5 py-5 sm:px-6">
+        <header className="flex shrink-0 items-start justify-between gap-3 border-b border-brand-border px-5 py-5 sm:px-6">
 
           <div className="min-w-0">
 
-            <h2 className="text-base font-semibold text-gray-900">Nueva cita</h2>
+            <h2 className="font-display text-base font-semibold text-brand-text">Nueva cita</h2>
 
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-brand-text-muted">
 
               Completa la información para crear la cita
 
@@ -416,7 +416,7 @@ export default function CreateAppointmentDrawer({
 
             disabled={saving}
 
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 shadow-sm transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-1 disabled:opacity-50"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-brand border border-brand-border bg-brand-surface text-brand-text-muted shadow-brand transition hover:bg-brand-soft focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25 disabled:opacity-50"
 
             aria-label="Cerrar"
 

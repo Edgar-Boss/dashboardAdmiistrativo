@@ -1,8 +1,8 @@
-const labelClass =
-  "mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-500";
+import Button from "../ui/Button";
 
-const inputClass =
-  "w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm transition placeholder:text-gray-400 hover:border-gray-300 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-200 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500";
+const labelClass = "nb-label";
+
+const inputClass = "nb-input disabled:bg-brand-soft";
 
 export function isCreateFormValid(form) {
   return Boolean(
@@ -77,7 +77,7 @@ export default function AppointmentCreateForm({
           </label>
           {doctorsError ? (
             <p
-              className="mb-2 rounded-xl border border-amber-200/80 bg-amber-50 px-3 py-2 text-xs text-amber-900"
+              className="mb-2 rounded-brand border border-brand-accent/40 bg-brand-warning-soft px-3 py-2 text-xs text-brand-warning"
               role="alert"
             >
               {doctorsError}
@@ -123,7 +123,7 @@ export default function AppointmentCreateForm({
           </label>
           {slotsError ? (
             <p
-              className="mb-2 rounded-xl border border-amber-200/80 bg-amber-50 px-3 py-2 text-xs text-amber-900"
+              className="mb-2 rounded-brand border border-brand-accent/40 bg-brand-warning-soft px-3 py-2 text-xs text-brand-warning"
               role="alert"
             >
               {slotsError}
@@ -158,7 +158,7 @@ export default function AppointmentCreateForm({
         <div>
           <label htmlFor="create-reason" className={labelClass}>
             Razón de la cita{" "}
-            <span className="font-normal normal-case tracking-normal text-gray-400">
+            <span className="font-normal normal-case tracking-normal text-brand-text-muted">
               (opcional)
             </span>
           </label>
@@ -174,31 +174,22 @@ export default function AppointmentCreateForm({
         </div>
       </div>
 
-      <footer className="shrink-0 border-t border-gray-100 bg-white px-5 py-4 sm:px-6">
+      <footer className="shrink-0 border-t border-brand-border bg-brand-surface px-5 py-4 sm:px-6">
         {submitError ? (
           <div
-            className="mb-3 rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-xs text-rose-800"
+            className="mb-3 rounded-brand border border-brand-danger/30 bg-brand-danger-soft px-3.5 py-2.5 text-xs text-brand-danger"
             role="alert"
           >
             {submitError}
           </div>
         ) : null}
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={saving}
-            className="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-1 disabled:opacity-50"
-          >
+          <Button type="button" variant="outline" onClick={onCancel} disabled={saving}>
             Cancelar
-          </button>
-          <button
-            type="submit"
-            disabled={!isCreateFormValid(form) || saving}
-            className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {saving ? "Creando…" : "Crear cita"}
-          </button>
+          </Button>
+          <Button type="submit" disabled={!isCreateFormValid(form)} loading={saving}>
+            <span>{saving ? "Creando…" : "Crear cita"}</span>
+          </Button>
         </div>
       </footer>
     </form>

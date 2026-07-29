@@ -9,7 +9,7 @@ function normalizeState(state) {
 }
 
 const btnBase =
-  "inline-flex min-h-[1.875rem] items-center justify-center gap-0.5 rounded-md border bg-white px-2 py-1 text-[11px] font-medium leading-tight transition-colors focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-1 disabled:pointer-events-none disabled:opacity-45";
+  "inline-flex min-h-[1.875rem] items-center justify-center gap-0.5 rounded-brand border bg-brand-surface px-2 py-1 text-[11px] font-medium leading-tight transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25 disabled:pointer-events-none disabled:opacity-45";
 
 export default function ActionButtons({
   state,
@@ -50,7 +50,7 @@ export default function ActionButtons({
           <button
             type="button"
             disabled={disabled}
-            className={`${btnBase} border-emerald-200 text-emerald-600/90 hover:border-emerald-300 hover:bg-emerald-50/40`}
+            className={`${btnBase} border-brand-success/30 text-brand-success hover:border-brand-success/50 hover:bg-brand-success-soft`}
             onClick={() => requestStateChange("CONFIRMED")}
           >
             <span aria-hidden className="opacity-70">
@@ -61,7 +61,7 @@ export default function ActionButtons({
           <button
             type="button"
             disabled={disabled}
-            className={`${btnBase} border-rose-200 text-rose-600/85 hover:border-rose-300 hover:bg-rose-50/50`}
+            className={`${btnBase} border-brand-danger/30 text-brand-danger hover:border-brand-danger/50 hover:bg-brand-danger-soft`}
             onClick={() => requestStateChange("CANCELLED")}
           >
             <span aria-hidden className="opacity-70">
@@ -82,7 +82,7 @@ export default function ActionButtons({
           <button
             type="button"
             disabled
-            className={`${btnBase} cursor-not-allowed border-gray-200 bg-gray-50/80 text-gray-400`}
+            className={`${btnBase} cursor-not-allowed border-brand-border bg-brand-soft/80 text-brand-text-muted`}
             aria-label="Editar (no disponible)"
           >
             <span aria-hidden className="opacity-60">
@@ -93,7 +93,7 @@ export default function ActionButtons({
           <button
             type="button"
             disabled={disabled}
-            className={`${btnBase} border-rose-200 text-rose-600/85 hover:border-rose-300 hover:bg-rose-50/50`}
+            className={`${btnBase} border-brand-danger/30 text-brand-danger hover:border-brand-danger/50 hover:bg-brand-danger-soft`}
             onClick={() => requestStateChange("CANCELLED")}
           >
             <span aria-hidden className="opacity-70">
@@ -111,7 +111,7 @@ export default function ActionButtons({
       <button
         type="button"
         disabled
-        className={`${btnBase} cursor-not-allowed border-gray-200 bg-gray-50/80 text-gray-400`}
+        className={`${btnBase} cursor-not-allowed border-brand-border bg-brand-soft/80 text-brand-text-muted`}
         aria-label="Ver detalle"
       >
         <span aria-hidden className="opacity-60">

@@ -47,14 +47,14 @@ export default function AppointmentRow({
       : "Sin fecha";
 
     return (
-      <article className="group relative overflow-hidden rounded-lg border border-gray-100 bg-white p-3 shadow-sm transition duration-200 ease-out hover:border-gray-200 hover:bg-gray-50/90 hover:shadow">
-        <p className="text-xs font-medium tabular-nums text-gray-500">
+      <article className="group relative overflow-hidden rounded-brand-md border border-brand-border bg-brand-surface p-3 shadow-brand transition duration-200 ease-out hover:border-brand-border-strong hover:bg-brand-soft/50 hover:shadow-brand-md">
+        <p className="text-xs font-medium tabular-nums text-brand-text-muted">
           {dateLabel} · {timeRange}
         </p>
-        <p className="mt-0.5 text-[11px] text-gray-400">{durationLabel}</p>
+        <p className="mt-0.5 text-[11px] text-brand-text-muted">{durationLabel}</p>
 
         <div className="mt-2 flex min-w-0 items-start justify-between gap-2">
-          <p className="min-w-0 truncate text-sm font-bold text-gray-900">
+          <p className="min-w-0 truncate text-sm font-bold text-brand-text">
             {formatDisplay(row.name)}
           </p>
           <span className="shrink-0">
@@ -63,7 +63,7 @@ export default function AppointmentRow({
         </div>
 
         {listMode === "all" ? (
-          <p className="mt-1.5 min-w-0 truncate text-sm text-gray-700">
+          <p className="mt-1.5 min-w-0 truncate text-sm text-brand-text-muted">
             {formatDisplay(row.doctorName)}
           </p>
         ) : null}
@@ -82,15 +82,15 @@ export default function AppointmentRow({
   }
 
   return (
-    <article className="group relative overflow-hidden rounded-lg border border-gray-100 bg-white p-3 shadow-sm transition duration-200 ease-out hover:border-gray-200 hover:bg-gray-50/90 hover:shadow">
+    <article className="group relative overflow-hidden rounded-brand-md border border-brand-border bg-brand-surface p-3 shadow-brand transition duration-200 ease-out hover:border-brand-border-strong hover:bg-brand-soft/50 hover:shadow-brand-md">
       {hasMultipleDates ? (
-        <p className="mb-1.5 text-[11px] leading-tight text-gray-400">
+        <p className="mb-1.5 text-[11px] leading-tight text-brand-text-muted">
           {appointmentDateValue ? formatDate(appointmentDateValue) : "Sin fecha"}
         </p>
       ) : null}
 
       <div className="flex min-w-0 items-start justify-between gap-2">
-        <p className="min-w-0 truncate text-sm font-bold text-gray-900">
+        <p className="min-w-0 truncate text-sm font-bold text-brand-text">
           {formatDisplay(row.name)}
         </p>
         <span className="shrink-0">
@@ -98,22 +98,22 @@ export default function AppointmentRow({
         </span>
       </div>
 
-      <p className="mt-1 text-xs font-medium tabular-nums text-gray-600">
+      <p className="mt-1 text-xs font-medium tabular-nums text-brand-text-muted">
         {timeRange}
-        <span className="mx-1 font-normal text-gray-400">·</span>
+        <span className="mx-1 font-normal text-brand-text-muted">·</span>
         {durationLabel}
       </p>
-      <p className="mt-1 text-xs text-gray-500">{formatDisplay(row.phoneNumber)}</p>
-      <p className="mt-0.5 text-[11px] text-gray-400">ID: {row.id}</p>
+      <p className="mt-1 text-xs text-brand-text-muted">{formatDisplay(row.phoneNumber)}</p>
+      <p className="mt-0.5 text-[11px] text-brand-text-muted">ID: {row.id}</p>
 
-      <p className="mt-1.5 min-w-0 text-sm text-gray-700">
+      <p className="mt-1.5 min-w-0 text-sm text-brand-text-muted">
         <span>{formatDisplay(row.doctorName)}</span>
         {specialty ? (
-          <span className="text-xs text-gray-400"> · {formatDisplay(specialty)}</span>
+          <span className="text-xs text-brand-text-muted"> · {formatDisplay(specialty)}</span>
         ) : null}
       </p>
 
-      <p className="mt-1 min-w-0 truncate text-sm text-gray-600">{formatDisplay(motivo)}</p>
+      <p className="mt-1 min-w-0 truncate text-sm text-brand-text-muted">{formatDisplay(motivo)}</p>
 
       <div className="pointer-events-none mt-2 flex justify-end opacity-0 transition-opacity duration-150 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
         <ActionButtons

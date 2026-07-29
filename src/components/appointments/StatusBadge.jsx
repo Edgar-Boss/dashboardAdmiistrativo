@@ -1,28 +1,14 @@
-const STATE_STYLES = {
-  CONFIRMED: "bg-emerald-100 text-emerald-900 ring-1 ring-emerald-200/80",
-  PENDING: "bg-amber-100 text-amber-900 ring-1 ring-amber-200/80",
-  CANCELLED: "bg-rose-100 text-rose-900 ring-1 ring-rose-200/80",
-};
-
-const DEFAULT_STYLE = "bg-gray-100 text-gray-800 ring-1 ring-gray-200";
-
-const LABELS = {
-  CONFIRMED: "Confirmada",
-  PENDING: "Pendiente",
-  CANCELLED: "Cancelada",
-};
-
-function normalizeState(state) {
-  const normalized = typeof state === "string" ? state.toUpperCase() : "";
-  return ["PENDING", "CONFIRMED", "CANCELLED"].includes(normalized)
-    ? normalized
-    : "PENDING";
-}
+import {
+  APPOINTMENT_STATUS_LABELS,
+  APPOINTMENT_STATUS_STYLES,
+  DEFAULT_STATUS_STYLE,
+  normalizeAppointmentState,
+} from "../ui/statusStyles";
 
 export default function StatusBadge({ state }) {
-  const normalized = normalizeState(state);
-  const className = STATE_STYLES[normalized] ?? DEFAULT_STYLE;
-  const label = LABELS[normalized] ?? String(state ?? "—");
+  const normalized = normalizeAppointmentState(state);
+  const className = APPOINTMENT_STATUS_STYLES[normalized] ?? DEFAULT_STATUS_STYLE;
+  const label = APPOINTMENT_STATUS_LABELS[normalized] ?? String(state ?? "—");
 
   return (
     <span

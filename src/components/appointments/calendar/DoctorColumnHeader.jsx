@@ -6,7 +6,7 @@ export default function DoctorColumnHeader({ doctorName, specialty, themeIndex =
 
   return (
     <div
-      className={`sticky top-0 z-30 border-b border-gray-200/30 px-4 py-3 ${theme.header}`}
+      className={`sticky top-0 z-30 border-b border-brand-border/60 px-4 py-3 ${theme.header}`}
     >
       <div className="flex items-center gap-3">
         <div
@@ -15,11 +15,11 @@ export default function DoctorColumnHeader({ doctorName, specialty, themeIndex =
           <Stethoscope className="h-4 w-4" strokeWidth={1.75} aria-hidden />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold tracking-tight text-gray-800">
+          <p className="truncate text-sm font-semibold tracking-tight text-brand-text">
             {doctorName}
           </p>
           {specialty ? (
-            <p className="mt-0.5 truncate text-xs font-normal text-gray-500/90">
+            <p className="mt-0.5 truncate text-xs font-normal text-brand-text-muted/90">
               {specialty}
             </p>
           ) : null}

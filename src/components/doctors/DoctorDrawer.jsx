@@ -20,7 +20,7 @@ export default function DoctorDrawer({ open, onClose, mode, doctor, children }) 
       aria-hidden={!open}
     >
       <div
-        className={`absolute inset-0 bg-gray-900/40 transition-opacity duration-200 ${
+        className={`nb-overlay absolute inset-0 transition-opacity duration-200 ${
           open ? "opacity-100" : "opacity-0"
         }`}
         onClick={() => onClose?.()}
@@ -30,16 +30,16 @@ export default function DoctorDrawer({ open, onClose, mode, doctor, children }) 
         role="dialog"
         aria-modal="true"
         aria-label={getTitle(mode)}
-        className={`absolute right-0 top-0 h-full w-full max-w-[420px] border-l border-gray-100 bg-white shadow-2xl transition-transform duration-300 ease-out ${
+        className={`absolute right-0 top-0 h-full w-full max-w-[420px] border-l border-brand-border bg-brand-surface shadow-brand-lg transition-transform duration-300 ease-out ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        <header className="flex items-start justify-between gap-3 border-b border-gray-100 px-6 py-5">
+        <header className="flex items-start justify-between gap-3 border-b border-brand-border px-6 py-5">
           <div className="min-w-0">
-            <h2 className="truncate text-base font-semibold text-gray-900">
+            <h2 className="truncate font-display text-base font-semibold text-brand-text">
               {getTitle(mode)}
             </h2>
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-brand-text-muted">
               {mode === "edit"
                 ? `ID: ${doctor?.id ?? "—"}`
                 : "Completa los datos del especialista"}
@@ -48,7 +48,7 @@ export default function DoctorDrawer({ open, onClose, mode, doctor, children }) 
           <button
             type="button"
             onClick={() => onClose?.()}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 shadow-sm transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-1"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-brand border border-brand-border bg-brand-surface text-brand-text-muted shadow-brand transition hover:bg-brand-soft focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25"
             aria-label="Cerrar"
           >
             <svg

@@ -23,10 +23,10 @@ export default function DoctorsFilters({
   onSortChange,
 }) {
   return (
-    <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm sm:p-6">
+    <section className="nb-card p-5 sm:p-6">
       <div className="flex flex-col gap-3 md:flex-row md:items-center">
-        <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 shadow-sm transition focus-within:ring-2 focus-within:ring-gray-200">
-          <span className="text-gray-400" aria-hidden>
+        <div className="flex min-w-0 flex-1 items-center gap-2 rounded-brand border border-brand-border bg-brand-surface px-3 py-2 shadow-brand transition focus-within:ring-2 focus-within:ring-brand-primary/25">
+          <span className="text-brand-text-muted" aria-hidden>
             <svg
               className="h-4 w-4"
               fill="none"
@@ -45,7 +45,7 @@ export default function DoctorsFilters({
             value={query}
             onChange={(e) => onQueryChange?.(e.target.value)}
             placeholder="Buscar especialista..."
-            className="min-w-0 flex-1 bg-transparent text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none"
+            className="min-w-0 flex-1 bg-transparent text-sm text-brand-text placeholder:text-brand-text-muted focus:outline-none"
             aria-label="Buscar especialista"
           />
         </div>
@@ -58,7 +58,7 @@ export default function DoctorsFilters({
             id="specialty"
             value={specialty}
             onChange={(e) => onSpecialtyChange?.(e.target.value)}
-            className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 shadow-sm transition hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-1 md:w-56"
+            className="w-full rounded-brand border border-brand-border bg-brand-surface px-3 py-2 text-sm text-brand-text shadow-brand transition hover:border-brand-border-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25 md:w-56"
           >
             <option value="all">Todas las especialidades</option>
             {specialties.map((s) => (
@@ -75,7 +75,7 @@ export default function DoctorsFilters({
             id="status"
             value={status}
             onChange={(e) => onStatusChange?.(e.target.value)}
-            className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 shadow-sm transition hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-1 md:w-40"
+            className="w-full rounded-brand border border-brand-border bg-brand-surface px-3 py-2 text-sm text-brand-text shadow-brand transition hover:border-brand-border-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25 md:w-40"
           >
             {STATUS_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
@@ -91,7 +91,7 @@ export default function DoctorsFilters({
             id="sort"
             value={sort}
             onChange={(e) => onSortChange?.(e.target.value)}
-            className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 shadow-sm transition hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-1 md:w-44"
+            className="w-full rounded-brand border border-brand-border bg-brand-surface px-3 py-2 text-sm text-brand-text shadow-brand transition hover:border-brand-border-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25 md:w-44"
           >
             {SORT_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>

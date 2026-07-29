@@ -257,16 +257,16 @@ export default function AppointmentsPage() {
   }, [viewType, selectedDate, filter]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-brand-background">
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-8 sm:py-12 lg:px-10">
         <header className="mb-10">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl">
+              <h1 className="font-display text-3xl font-semibold tracking-tight text-brand-text sm:text-4xl">
                 Citas
               </h1>
               {viewType === "calendar" && (
-                <p className="mt-2 capitalize text-sm text-gray-500">
+                <p className="mt-2 capitalize text-sm text-brand-text-muted">
                   {formatHeaderDate(selectedDate)}
                 </p>
               )}
@@ -274,7 +274,7 @@ export default function AppointmentsPage() {
             <button
               type="button"
               onClick={() => setCreateDrawerOpen(true)}
-              className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700 sm:w-auto"
+              className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-brand bg-brand-primary px-4 py-2.5 text-sm font-medium text-white shadow-brand transition-colors hover:bg-brand-primary-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/30 sm:w-auto"
             >
               <Plus className="h-4 w-4" aria-hidden />
               Nueva cita
@@ -289,10 +289,10 @@ export default function AppointmentsPage() {
           />
         )}
 
-        <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8 lg:p-10">
+        <section className="rounded-brand-md border border-brand-border bg-brand-surface p-6 shadow-brand sm:p-8 lg:p-10">
           {loading && (
             <div
-              className="flex min-h-[200px] items-center justify-center text-sm font-medium text-slate-500"
+              className="flex min-h-[200px] items-center justify-center text-sm font-medium text-brand-text-muted"
               role="status"
               aria-live="polite"
             >
@@ -302,30 +302,30 @@ export default function AppointmentsPage() {
 
           {!loading && error && (
             <div
-              className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800"
+              className="rounded-brand border border-brand-danger/25 bg-brand-danger-soft px-4 py-3 text-sm text-brand-danger"
               role="alert"
             >
               <p className="font-medium">Unable to load data</p>
-              <p className="mt-1 text-rose-700/90">{error}</p>
+              <p className="mt-1 opacity-90">{error}</p>
             </div>
           )}
 
           {!loading && !error && actionError && (
             <div
-              className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800"
+              className="mb-4 rounded-brand border border-brand-danger/25 bg-brand-danger-soft px-4 py-3 text-sm text-brand-danger"
               role="alert"
             >
               <p className="font-medium">Update failed</p>
-              <p className="mt-1 text-rose-700/90">{actionError}</p>
+              <p className="mt-1 opacity-90">{actionError}</p>
             </div>
           )}
 
           {!loading && !error && appointments.length === 0 && (
-            <div className="flex min-h-[160px] flex-col items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-gray-50/60 px-6 py-12 text-center">
-              <p className="text-sm font-medium text-gray-600">
+            <div className="flex min-h-[160px] flex-col items-center justify-center rounded-brand-md border border-dashed border-brand-border bg-brand-soft/40 px-6 py-12 text-center">
+              <p className="text-sm font-medium text-brand-text-muted">
                 No appointments to display.
               </p>
-              <p className="mt-1 max-w-md text-xs text-gray-500">
+              <p className="mt-1 max-w-md text-xs text-brand-text-muted/80">
                 When the backend returns records, they will appear in the table
                 below.
               </p>
@@ -334,16 +334,16 @@ export default function AppointmentsPage() {
 
           {!loading && !error && appointments.length > 0 && (
             <>
-              <div className="mb-6 flex flex-wrap items-center gap-2 border-b border-gray-100 pb-4">
+              <div className="mb-6 flex flex-wrap items-center gap-2 border-b border-brand-border pb-4">
                 <span className="sr-only">Tipo de vista</span>
-                <div className="inline-flex rounded-lg border border-gray-200 bg-gray-50/80 p-0.5">
+                <div className="inline-flex rounded-brand border border-brand-border bg-brand-soft/50 p-0.5">
                   <button
                     type="button"
                     onClick={() => setViewType("list")}
-                    className={`rounded-md px-3 py-2 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-blue-500/20 ${
+                    className={`rounded-[10px] px-3 py-2 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25 ${
                       viewType === "list"
-                        ? "bg-white text-gray-900 shadow-sm"
-                        : "text-gray-600 hover:text-gray-900"
+                        ? "bg-brand-surface text-brand-text shadow-brand"
+                        : "text-brand-text-muted hover:text-brand-text"
                     }`}
                   >
                     Lista
@@ -351,10 +351,10 @@ export default function AppointmentsPage() {
                   <button
                     type="button"
                     onClick={() => setViewType("calendar")}
-                    className={`rounded-md px-3 py-2 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-blue-500/20 ${
+                    className={`rounded-[10px] px-3 py-2 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25 ${
                       viewType === "calendar"
-                        ? "bg-white text-gray-900 shadow-sm"
-                        : "text-gray-600 hover:text-gray-900"
+                        ? "bg-brand-surface text-brand-text shadow-brand"
+                        : "text-brand-text-muted hover:text-brand-text"
                     }`}
                   >
                     Calendario
@@ -369,15 +369,15 @@ export default function AppointmentsPage() {
               {viewType === "list" && (
                 <>
                   <div className="mb-6 mt-6 flex flex-wrap items-center gap-2">
-                    <span className="text-xs font-medium text-gray-500">Vista</span>
-                    <div className="inline-flex flex-wrap rounded-lg border border-gray-200 bg-gray-50/80 p-0.5">
+                    <span className="text-xs font-medium text-brand-text-muted">Vista</span>
+                    <div className="inline-flex flex-wrap rounded-brand border border-brand-border bg-brand-soft/50 p-0.5">
                       <button
                         type="button"
                         onClick={() => setViewMode("all")}
-                        className={`rounded-md px-2.5 py-1.5 text-xs font-medium transition focus:outline-none focus:ring-2 focus:ring-blue-500/20 sm:px-3 ${
+                        className={`rounded-[10px] px-2.5 py-1.5 text-xs font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25 sm:px-3 ${
                           viewMode === "all"
-                            ? "bg-white text-gray-900 shadow-sm"
-                            : "text-gray-600 hover:text-gray-900"
+                            ? "bg-brand-surface text-brand-text shadow-brand"
+                            : "text-brand-text-muted hover:text-brand-text"
                         }`}
                       >
                         Todas las fechas
@@ -385,10 +385,10 @@ export default function AppointmentsPage() {
                       <button
                         type="button"
                         onClick={() => setViewMode("day")}
-                        className={`rounded-md px-2.5 py-1.5 text-xs font-medium transition focus:outline-none focus:ring-2 focus:ring-blue-500/20 sm:px-3 ${
+                        className={`rounded-[10px] px-2.5 py-1.5 text-xs font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25 sm:px-3 ${
                           viewMode === "day"
-                            ? "bg-white text-gray-900 shadow-sm"
-                            : "text-gray-600 hover:text-gray-900"
+                            ? "bg-brand-surface text-brand-text shadow-brand"
+                            : "text-brand-text-muted hover:text-brand-text"
                         }`}
                       >
                         Por hora
@@ -396,10 +396,10 @@ export default function AppointmentsPage() {
                       <button
                         type="button"
                         onClick={() => setViewMode("doctor")}
-                        className={`rounded-md px-2.5 py-1.5 text-xs font-medium transition focus:outline-none focus:ring-2 focus:ring-blue-500/20 sm:px-3 ${
+                        className={`rounded-[10px] px-2.5 py-1.5 text-xs font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25 sm:px-3 ${
                           viewMode === "doctor"
-                            ? "bg-white text-gray-900 shadow-sm"
-                            : "text-gray-600 hover:text-gray-900"
+                            ? "bg-brand-surface text-brand-text shadow-brand"
+                            : "text-brand-text-muted hover:text-brand-text"
                         }`}
                       >
                         Por doctor
@@ -430,7 +430,7 @@ export default function AppointmentsPage() {
 
                   {calendarError ? (
                     <div
-                      className="mb-4 rounded-xl border border-amber-200/80 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+                      className="mb-4 rounded-brand border border-brand-warning/30 bg-brand-warning-soft px-4 py-3 text-sm text-brand-warning"
                       role="status"
                     >
                       {calendarError}. Mostrando citas del catálogo principal.

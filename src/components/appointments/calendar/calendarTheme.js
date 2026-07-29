@@ -4,34 +4,34 @@ export const STATUS_BADGE_BASE =
 
 const DOCTOR_THEMES = [
   {
-    header: "bg-gradient-to-br from-sky-50/55 to-blue-50/40",
-    avatar: "bg-sky-50 text-sky-600 ring-sky-100/80",
-    column: "bg-sky-50/[0.07]",
+    header: "bg-gradient-to-br from-brand-soft/70 to-brand-muted/40",
+    avatar: "bg-brand-soft text-brand-primary ring-brand-primary/15",
+    column: "bg-brand-soft/[0.18]",
   },
   {
-    header: "bg-gradient-to-br from-violet-50/55 to-purple-50/40",
-    avatar: "bg-violet-50 text-violet-600 ring-violet-100/80",
-    column: "bg-violet-50/[0.07]",
+    header: "bg-gradient-to-br from-brand-secondary/20 to-brand-nude/40",
+    avatar: "bg-brand-secondary/20 text-brand-primary ring-brand-secondary/30",
+    column: "bg-brand-secondary/[0.08]",
   },
   {
-    header: "bg-gradient-to-br from-emerald-50/55 to-teal-50/40",
-    avatar: "bg-emerald-50 text-emerald-600 ring-emerald-100/80",
-    column: "bg-emerald-50/[0.07]",
+    header: "bg-gradient-to-br from-brand-success-soft to-brand-nude/30",
+    avatar: "bg-brand-success-soft text-brand-success ring-brand-success/20",
+    column: "bg-brand-success-soft/[0.35]",
   },
   {
-    header: "bg-gradient-to-br from-amber-50/55 to-orange-50/40",
-    avatar: "bg-amber-50 text-amber-700 ring-amber-100/80",
-    column: "bg-amber-50/[0.07]",
+    header: "bg-gradient-to-br from-brand-accent/20 to-brand-nude/50",
+    avatar: "bg-brand-accent/20 text-brand-warning ring-brand-accent/25",
+    column: "bg-brand-accent/[0.08]",
   },
   {
-    header: "bg-gradient-to-br from-rose-50/55 to-pink-50/40",
-    avatar: "bg-rose-50 text-rose-600 ring-rose-100/80",
-    column: "bg-rose-50/[0.07]",
+    header: "bg-gradient-to-br from-brand-warning-soft to-brand-nude/30",
+    avatar: "bg-brand-warning-soft text-brand-warning ring-brand-warning/20",
+    column: "bg-brand-warning-soft/[0.35]",
   },
   {
-    header: "bg-gradient-to-br from-cyan-50/55 to-slate-50/40",
-    avatar: "bg-cyan-50 text-cyan-700 ring-cyan-100/80",
-    column: "bg-cyan-50/[0.07]",
+    header: "bg-gradient-to-br from-brand-nude/60 to-brand-soft/30",
+    avatar: "bg-brand-nude text-brand-ink ring-brand-border-strong/60",
+    column: "bg-brand-nude/[0.25]",
   },
 ];
 
@@ -44,28 +44,28 @@ export function normalizeCalendarState(state) {
   return ["PENDING", "CONFIRMED", "CANCELLED"].includes(key) ? key : "PENDING";
 }
 
-/** Soft SaaS palette — low saturation, Stripe / Linear / Notion feel */
+/** Soft Nails Boutique palette — warm pastels, low saturation */
 const STATE_STYLES = {
   CONFIRMED: {
     label: "Confirmada",
-    border: "border-l-emerald-300/80",
-    badge: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100/90",
-    card: "bg-white hover:border-emerald-200/50 hover:bg-emerald-50/25",
-    dot: "bg-emerald-400/80",
+    border: "border-l-brand-success/70",
+    badge: "bg-brand-success-soft text-brand-success ring-1 ring-brand-success/20",
+    card: "bg-brand-surface hover:border-brand-success/40 hover:bg-brand-success-soft/40",
+    dot: "bg-brand-success/80",
   },
   PENDING: {
     label: "Pendiente",
-    border: "border-l-amber-300/80",
-    badge: "bg-amber-50 text-amber-800/90 ring-1 ring-amber-100/90",
-    card: "bg-white hover:border-amber-200/50 hover:bg-amber-50/30",
-    dot: "bg-amber-400/70",
+    border: "border-l-brand-accent/70",
+    badge: "bg-brand-warning-soft text-brand-warning ring-1 ring-brand-accent/25",
+    card: "bg-brand-surface hover:border-brand-accent/40 hover:bg-brand-warning-soft/40",
+    dot: "bg-brand-accent/80",
   },
   CANCELLED: {
     label: "Cancelada",
-    border: "border-l-rose-300/80",
-    badge: "bg-rose-50 text-rose-700/90 ring-1 ring-rose-100/90",
-    card: "bg-white hover:border-rose-200/50 hover:bg-rose-50/25",
-    dot: "bg-rose-400/75",
+    border: "border-l-brand-danger/70",
+    badge: "bg-brand-danger-soft text-brand-danger ring-1 ring-brand-danger/20",
+    card: "bg-brand-surface hover:border-brand-danger/40 hover:bg-brand-danger-soft/40",
+    dot: "bg-brand-danger/80",
   },
 };
 

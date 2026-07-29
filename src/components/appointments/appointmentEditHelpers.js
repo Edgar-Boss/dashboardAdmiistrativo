@@ -55,19 +55,19 @@ export const STATE_OPTIONS = [
     value: "PENDING",
     label: "Pendiente",
     selectClass:
-      "border-amber-200 bg-amber-50 text-amber-900 focus:border-amber-300 focus:ring-amber-500/20",
+      "border-brand-accent/40 bg-brand-warning-soft text-brand-warning focus:border-brand-accent focus:ring-brand-warning/20",
   },
   {
     value: "CONFIRMED",
     label: "Confirmada",
     selectClass:
-      "border-emerald-200 bg-emerald-50 text-emerald-900 focus:border-emerald-300 focus:ring-emerald-500/20",
+      "border-brand-success/30 bg-brand-success-soft text-brand-success focus:border-brand-success focus:ring-brand-success/20",
   },
   {
     value: "CANCELLED",
     label: "Cancelada",
     selectClass:
-      "border-rose-200 bg-rose-50 text-rose-900 focus:border-rose-300 focus:ring-rose-500/20",
+      "border-brand-danger/30 bg-brand-danger-soft text-brand-danger focus:border-brand-danger focus:ring-brand-danger/20",
   },
 ];
 

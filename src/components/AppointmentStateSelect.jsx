@@ -2,12 +2,12 @@ const STATES = ["PENDING", "CONFIRMED", "CANCELLED"];
 
 const STATE_STYLES = {
   CONFIRMED:
-    "bg-emerald-50 text-emerald-800 ring-emerald-600/20",
-  PENDING: "bg-amber-50 text-amber-800 ring-amber-600/20",
-  CANCELLED: "bg-rose-50 text-rose-800 ring-rose-600/20",
+    "bg-brand-success-soft text-brand-success ring-brand-success/25",
+  PENDING: "bg-brand-warning-soft text-brand-warning ring-brand-accent/35",
+  CANCELLED: "bg-brand-danger-soft text-brand-danger ring-brand-danger/25",
 };
 
-const DEFAULT_STYLE = "bg-slate-100 text-slate-700 ring-slate-600/10";
+const DEFAULT_STYLE = "bg-brand-soft text-brand-text-muted ring-brand-border";
 
 function normalizeState(state) {
   const normalized = typeof state === "string" ? state.toUpperCase() : "";
@@ -23,7 +23,7 @@ export default function AppointmentStateSelect({ value, onChange, disabled }) {
       value={normalized}
       onChange={(e) => onChange?.(e.target.value)}
       disabled={disabled}
-      className={`rounded-full px-3 py-1 text-xs font-medium ring-1 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-slate-400/30 ${className} ${
+      className={`rounded-full px-3 py-1 text-xs font-medium ring-1 shadow-brand transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25 ${className} ${
         disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"
       }`}
       aria-label="Appointment state"
