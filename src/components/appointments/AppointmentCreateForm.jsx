@@ -41,7 +41,7 @@ export default function AppointmentCreateForm({
       <div className="flex-1 space-y-5 overflow-y-auto px-5 py-5 sm:px-6">
         <div>
           <label htmlFor="create-patient-name" className={labelClass}>
-            Nombre del paciente
+            Nombre de la clienta
           </label>
           <input
             id="create-patient-name"
@@ -73,7 +73,7 @@ export default function AppointmentCreateForm({
 
         <div>
           <label htmlFor="create-doctor" className={labelClass}>
-            Doctor
+            Especialista
           </label>
           {doctorsError ? (
             <p
@@ -91,7 +91,7 @@ export default function AppointmentCreateForm({
             className={`${inputClass} cursor-pointer`}
           >
             <option value="">
-              {doctorsLoading ? "Cargando doctores…" : "Seleccionar doctor"}
+              {doctorsLoading ? "Cargando especialistas…" : "Seleccionar especialista"}
             </option>
             {doctors.map((doctor) => (
               <option key={doctor.id} value={String(doctor.id)}>
@@ -138,7 +138,7 @@ export default function AppointmentCreateForm({
           >
             <option value="">
               {!slotsEnabled
-                ? "Selecciona fecha y doctor primero"
+                ? "Selecciona fecha y especialista primero"
                 : slotsLoading
                   ? "Cargando horarios…"
                   : availableSlots.length === 0
@@ -157,7 +157,7 @@ export default function AppointmentCreateForm({
 
         <div>
           <label htmlFor="create-reason" className={labelClass}>
-            Razón de la cita{" "}
+            Servicio o tratamiento{" "}
             <span className="font-normal normal-case tracking-normal text-brand-text-muted">
               (opcional)
             </span>
@@ -169,7 +169,7 @@ export default function AppointmentCreateForm({
             disabled={fieldsDisabled}
             onChange={(e) => onFieldChange("reason", e.target.value)}
             className={`${inputClass} resize-none`}
-            placeholder="Ej. Revisión, control, examen, etc."
+            placeholder="Ej. Manicure gel, pedicure spa, diseño…"
           />
         </div>
       </div>

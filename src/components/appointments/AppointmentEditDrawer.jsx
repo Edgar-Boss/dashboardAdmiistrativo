@@ -3,7 +3,7 @@ import {
   Calendar,
   Clock,
   Hash,
-  Stethoscope,
+  Sparkles,
   X,
 } from "lucide-react";
 import { normalizeTimeKey } from "./appointmentHelpers";
@@ -45,13 +45,13 @@ function ReadOnlyInfo({ appointment }) {
       value: normalizeTimeKey(appointment?.appointmentTime),
     },
     {
-      icon: Stethoscope,
-      label: "Doctor",
+      icon: Sparkles,
+      label: "Especialista",
       value: appointment?.doctorName ?? appointment?.doctor ?? "—",
     },
     {
       icon: Hash,
-      label: "ID de cita",
+      label: "Folio de cita",
       value: appointment?.id != null ? String(appointment.id) : "—",
     },
   ];
@@ -186,7 +186,7 @@ export default function AppointmentEditDrawer({
           <div className="min-w-0">
             <h2 className="font-display text-base font-semibold text-brand-text">Editar cita</h2>
             <p className="mt-1 text-xs text-brand-text-muted">
-              Actualiza los datos editables de la cita
+              Actualiza los datos de la cita
             </p>
           </div>
           <button
@@ -212,7 +212,7 @@ export default function AppointmentEditDrawer({
 
                 <div>
                   <label htmlFor="patient-name" className={labelClass}>
-                    Paciente
+                    Clienta
                   </label>
                   <input
                     id="patient-name"
@@ -222,7 +222,7 @@ export default function AppointmentEditDrawer({
                     value={patientName}
                     onChange={(e) => setPatientName(e.target.value)}
                     className={inputClass}
-                    placeholder="Nombre del paciente"
+                    placeholder="Nombre de la clienta"
                     autoComplete="name"
                   />
                 </div>
@@ -274,7 +274,7 @@ export default function AppointmentEditDrawer({
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     className={`${inputClass} resize-none`}
-                    placeholder="Motivo, indicaciones u observaciones…"
+                    placeholder="Servicio, preferencias u observaciones…"
                   />
                 </div>
               </div>

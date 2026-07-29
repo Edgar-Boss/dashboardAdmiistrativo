@@ -86,7 +86,7 @@ export default function DoctorsPage() {
       } catch (e) {
         if (!cancelled) {
           setDoctors([]);
-          setLoadError(e instanceof Error ? e.message : "Failed to load specialists.");
+          setLoadError(e instanceof Error ? e.message : "No se pudieron cargar las especialistas.");
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -217,7 +217,7 @@ export default function DoctorsPage() {
               Especialistas
             </h1>
             <p className="mt-2 text-sm text-brand-text-muted">
-              Administra los especialistas y especialidades de la clínica
+              Administra las especialistas y servicios de la boutique
             </p>
           </div>
 
@@ -230,8 +230,8 @@ export default function DoctorsPage() {
 
         <section className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
           <SummaryCard label="Total especialistas" value={summary.total} tone="neutral" />
-          <SummaryCard label="Activos" value={summary.active} tone="success" />
-          <SummaryCard label="Inactivos" value={summary.inactive} tone="danger" />
+          <SummaryCard label="Activas" value={summary.active} tone="success" />
+          <SummaryCard label="Inactivas" value={summary.inactive} tone="danger" />
         </section>
 
         <div className="mb-6">
@@ -262,7 +262,7 @@ export default function DoctorsPage() {
                 {loadError}
               </p>
             ) : (
-              <p className="text-xs text-brand-text-muted">Fuente: API de especialistas</p>
+              <p className="text-xs text-brand-text-muted">Datos actualizados</p>
             )}
           </div>
 

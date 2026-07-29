@@ -173,7 +173,7 @@ export default function AppointmentsPage() {
       setActionError(
         e instanceof Error
           ? e.message
-          : "Could not update appointment state."
+          : "No se pudo actualizar el estado de la cita."
       );
     } finally {
       setSavingIds((prev) => {
@@ -200,7 +200,7 @@ export default function AppointmentsPage() {
           setError(
             e instanceof Error
               ? e.message
-              : "Could not load appointments. Check that the API is running."
+              : "No se pudieron cargar las citas. Verifica la conexión."
           );
           setAppointments([]);
         }
@@ -242,7 +242,7 @@ export default function AppointmentsPage() {
           setCalendarError(
             e instanceof Error
               ? e.message
-              : "Could not load calendar day."
+              : "No se pudo cargar el día del calendario."
           );
         }
       } finally {
@@ -296,7 +296,7 @@ export default function AppointmentsPage() {
               role="status"
               aria-live="polite"
             >
-              Loading appointments...
+              Cargando citas…
             </div>
           )}
 
@@ -305,7 +305,7 @@ export default function AppointmentsPage() {
               className="rounded-brand border border-brand-danger/25 bg-brand-danger-soft px-4 py-3 text-sm text-brand-danger"
               role="alert"
             >
-              <p className="font-medium">Unable to load data</p>
+              <p className="font-medium">No se pudieron cargar los datos</p>
               <p className="mt-1 opacity-90">{error}</p>
             </div>
           )}
@@ -315,7 +315,7 @@ export default function AppointmentsPage() {
               className="mb-4 rounded-brand border border-brand-danger/25 bg-brand-danger-soft px-4 py-3 text-sm text-brand-danger"
               role="alert"
             >
-              <p className="font-medium">Update failed</p>
+              <p className="font-medium">No se pudo actualizar</p>
               <p className="mt-1 opacity-90">{actionError}</p>
             </div>
           )}
@@ -323,11 +323,10 @@ export default function AppointmentsPage() {
           {!loading && !error && appointments.length === 0 && (
             <div className="flex min-h-[160px] flex-col items-center justify-center rounded-brand-md border border-dashed border-brand-border bg-brand-soft/40 px-6 py-12 text-center">
               <p className="text-sm font-medium text-brand-text-muted">
-                No appointments to display.
+                No hay citas para mostrar.
               </p>
               <p className="mt-1 max-w-md text-xs text-brand-text-muted/80">
-                When the backend returns records, they will appear in the table
-                below.
+                Cuando haya citas registradas, aparecerán aquí.
               </p>
             </div>
           )}
@@ -402,7 +401,7 @@ export default function AppointmentsPage() {
                             : "text-brand-text-muted hover:text-brand-text"
                         }`}
                       >
-                        Por doctor
+                        Por especialista
                       </button>
                     </div>
                   </div>
@@ -433,7 +432,7 @@ export default function AppointmentsPage() {
                       className="mb-4 rounded-brand border border-brand-warning/30 bg-brand-warning-soft px-4 py-3 text-sm text-brand-warning"
                       role="status"
                     >
-                      {calendarError}. Mostrando citas del catálogo principal.
+                      {calendarError}. Mostrando las citas del listado principal.
                     </div>
                   ) : null}
 

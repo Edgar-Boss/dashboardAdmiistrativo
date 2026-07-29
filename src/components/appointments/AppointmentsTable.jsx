@@ -106,7 +106,7 @@ export default function AppointmentsTable({
                 </div>
                 <div className="flex gap-2">
                   <dt className="w-20 shrink-0 text-xs font-medium uppercase tracking-wider text-brand-text-muted">
-                    Razón
+                    Servicio
                   </dt>
                   <dd className="min-w-0 text-brand-text-muted">{reasonCell}</dd>
                 </div>
@@ -129,13 +129,13 @@ export default function AppointmentsTable({
                   Horario
                 </th>
                 <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-brand-text-muted">
-                  Paciente
+                  Clienta
                 </th>
                 <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-brand-text-muted">
-                  Razón
+                  Servicio
                 </th>
                 <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-brand-text-muted">
-                  Doctor
+                  Especialista
                 </th>
                 <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-brand-text-muted">
                   Estado

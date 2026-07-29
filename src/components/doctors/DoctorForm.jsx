@@ -94,18 +94,18 @@ export default function DoctorForm({ mode, doctor, onSubmit, onCancel }) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           className="mt-2 w-full rounded-brand border border-brand-border bg-brand-surface px-3.5 py-2.5 text-sm text-brand-text shadow-brand transition placeholder:text-brand-text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25"
-          placeholder="Ej: Juan Velázquez"
+          placeholder="Ej: Ana López"
           autoFocus
         />
       </div>
 
       <div>
-        <label className="block text-xs font-semibold text-brand-text-muted">Especialidad</label>
+        <label className="block text-xs font-semibold text-brand-text-muted">Servicio</label>
         <input
           value={specialty}
           onChange={(e) => setSpecialty(e.target.value)}
           className="mt-2 w-full rounded-brand border border-brand-border bg-brand-surface px-3.5 py-2.5 text-sm text-brand-text shadow-brand transition placeholder:text-brand-text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25"
-          placeholder="Ej: Cardiología"
+          placeholder="Ej: Uñas gel, Pedicure spa"
         />
       </div>
 
@@ -116,7 +116,7 @@ export default function DoctorForm({ mode, doctor, onSubmit, onCancel }) {
             <Toggle
               checked={active}
               onChange={setActive}
-              label={active ? "Activo" : "Inactivo"}
+              label={active ? "Activa" : "Inactiva"}
             />
           </div>
         </div>
