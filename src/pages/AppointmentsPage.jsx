@@ -66,7 +66,10 @@ export default function AppointmentsPage() {
   const [createDrawerOpen, setCreateDrawerOpen] = useState(false);
 
   const filteredAppointments = useMemo(() => {
-    if (filter === "ALL") return appointments;
+    if (filter === "ALL") {
+      // "Todas" = active appointments only; cancelled are under "Canceladas".
+      return appointments.filter((a) => normalizeState(a.state) !== "CANCELLED");
+    }
     return appointments.filter((a) => normalizeState(a.state) === filter);
   }, [appointments, filter]);
 
@@ -86,14 +89,21 @@ export default function AppointmentsPage() {
     }
 
     // Fallback: day search rows enriched with slotCount from catalog when possible.
-    return calendarRows.map((row) =>
-      mergeCalendarAppointment(row, appointmentsById.get(row.id))
-    );
+    return calendarRows
+      .filter((row) => {
+        const state = normalizeState(row.state);
+        if (filter === "ALL") return state !== "CANCELLED";
+        return state === filter;
+      })
+      .map((row) =>
+        mergeCalendarAppointment(row, appointmentsById.get(row.id))
+      );
   }, [
     filteredAppointments,
     selectedDate,
     calendarRows,
     appointmentsById,
+    filter,
   ]);
 
   function handleAppointmentUpdate(updated) {
