@@ -5,18 +5,39 @@ const SPECIALIST_URL = `${API_BASE_URL}/api/admin/specialist`;
 const SPECIALIST_UPDATE_URL = `${SPECIALIST_URL}/update`;
 const SPECIALIST_CREATE_URL = `${SPECIALIST_URL}/create`;
 
+function normalizeWhatsappPhone(value) {
+  if (value == null) return "";
+  return String(value).trim();
+}
+
+function normalizeNotificationsEnabled(value) {
+  return String(value ?? "").trim().toUpperCase() === "Y";
+}
+
 /**
- * Backend may return tuples: [id, name, specialty, activeFlag]
+ * Backend may return tuples:
+ * [id, name, specialty, activeFlag]
+ * or
+ * [id, name, specialty, activeFlag, whatsappPhone, notificationsEnabled]
  * @param {unknown} raw
- * @returns {{ id?: unknown, name: string, specialty: string, activeFlag?: string|null }}
+ * @returns {{
+ *   id?: unknown,
+ *   name: string,
+ *   specialty: string,
+ *   activeFlag?: string|null,
+ *   whatsappPhone: string,
+ *   notificationsEnabled: boolean
+ * }}
  */
-function normalizeSpecialistEntry(raw) {
+export function normalizeSpecialistEntry(raw) {
   if (Array.isArray(raw)) {
     return {
       id: raw[0],
       name: raw[1] != null ? String(raw[1]).trim() : "",
       specialty: raw[2] != null ? String(raw[2]).trim() : "",
       activeFlag: raw[3] != null ? String(raw[3]).trim() : null,
+      whatsappPhone: normalizeWhatsappPhone(raw[4]),
+      notificationsEnabled: normalizeNotificationsEnabled(raw[5]),
     };
   }
   if (raw != null && typeof raw === "object") {
@@ -35,6 +56,12 @@ function normalizeSpecialistEntry(raw) {
         raw.isActive ??
         raw.enabled ??
         null,
+      whatsappPhone: normalizeWhatsappPhone(
+        raw.whatsappPhone ?? raw.whatsapp_phone ?? null
+      ),
+      notificationsEnabled: normalizeNotificationsEnabled(
+        raw.notificationsEnabled ?? raw.notifications_enabled ?? null
+      ),
     };
   }
   return {
@@ -42,24 +69,44 @@ function normalizeSpecialistEntry(raw) {
     name: String(raw ?? "").trim(),
     specialty: "",
     activeFlag: null,
+    whatsappPhone: "",
+    notificationsEnabled: false,
   };
 }
 
 /**
- * Active when any tuple/object field is exactly "Y" (case-insensitive).
+ * Active when the active flag is exactly "Y" (case-insensitive).
+ * Arrays: only index 3. Objects: normalized activeFlag.
  * @param {unknown} raw
  */
 export function isSpecialistActiveEntry(raw) {
   if (Array.isArray(raw)) {
-    return raw.some((v) => String(v ?? "").trim().toUpperCase() === "Y");
+    return String(raw[3] ?? "").trim().toUpperCase() === "Y";
   }
   const normalized = normalizeSpecialistEntry(raw);
   return String(normalized.activeFlag ?? "").trim().toUpperCase() === "Y";
 }
 
 /**
+ * Build create/update body fields for WhatsApp without omitting false.
+ * @param {Record<string, unknown>} body
+ * @param {{ whatsappPhone?: unknown, notificationsEnabled?: unknown }} payload
+ */
+function applyWhatsappPayloadFields(body, payload) {
+  if (payload != null && Object.prototype.hasOwnProperty.call(payload, "whatsappPhone")) {
+    body.whatsappPhone = String(payload.whatsappPhone ?? "");
+  }
+  if (
+    payload != null &&
+    Object.prototype.hasOwnProperty.call(payload, "notificationsEnabled")
+  ) {
+    body.notificationsEnabled = Boolean(payload.notificationsEnabled);
+  }
+}
+
+/**
  * GET /api/admin/specialist — only entries with active flag "Y".
- * @returns {Promise<Array<{ id?: unknown, name: string, specialty: string, activeFlag?: string|null }>>}
+ * @returns {Promise<Array<{ id?: unknown, name: string, specialty: string, activeFlag?: string|null, whatsappPhone: string, notificationsEnabled: boolean }>>}
  */
 export async function fetchActiveSpecialists() {
   const response = await apiFetch(SPECIALIST_URL, {
@@ -85,7 +132,7 @@ export async function fetchActiveSpecialists() {
 }
 
 /**
- * @returns {Promise<Array<{ id?: unknown, name: string, specialty: string, activeFlag?: string|null }>>}
+ * @returns {Promise<Array<{ id?: unknown, name: string, specialty: string, activeFlag?: string|null, whatsappPhone: string, notificationsEnabled: boolean }>>}
  */
 export async function fetchSpecialists() {
   const response = await apiFetch(SPECIALIST_URL, {
@@ -109,17 +156,27 @@ export async function fetchSpecialists() {
 
 /**
  * PATCH /api/admin/specialist/update
- * @param {{ doctorId: number, name: string, specialty: string, active: "Y"|"N" }} payload
+ * @param {{ doctorId: number, name: string, specialty: string, active: "Y"|"N", whatsappPhone?: string, notificationsEnabled?: boolean }} payload
  * @returns {Promise<unknown>}
  */
 export async function updateSpecialist(payload) {
+  const body = {
+    doctorId: payload?.doctorId,
+    name: String(payload?.name ?? "").trim(),
+    specialty: String(payload?.specialty ?? "").trim(),
+  };
+  if (payload?.active === "Y" || payload?.active === "N") {
+    body.active = payload.active;
+  }
+  applyWhatsappPayloadFields(body, payload);
+
   const response = await apiFetch(SPECIALIST_UPDATE_URL, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
       Accept: "application/json",
     },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(body),
   });
 
   if (!response.ok) {
@@ -137,7 +194,7 @@ export async function updateSpecialist(payload) {
 
 /**
  * POST /api/admin/specialist/create
- * @param {{ name: string, specialty?: string, active?: "Y"|"N" }} payload
+ * @param {{ name: string, specialty?: string, active?: "Y"|"N", whatsappPhone?: string, notificationsEnabled?: boolean }} payload
  * @returns {Promise<{ ok?: boolean, doctorId?: number }>}
  */
 export async function createSpecialist(payload) {
@@ -148,6 +205,7 @@ export async function createSpecialist(payload) {
   if (payload?.active === "Y" || payload?.active === "N") {
     body.active = payload.active;
   }
+  applyWhatsappPayloadFields(body, payload);
 
   const response = await apiFetch(SPECIALIST_CREATE_URL, {
     method: "POST",

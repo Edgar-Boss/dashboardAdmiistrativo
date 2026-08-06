@@ -3,6 +3,7 @@ import Layout from "./components/Layout";
 import AppointmentsPage from "./pages/AppointmentsPage";
 import DoctorsPage from "./pages/DoctorsPage";
 import LoginPage from "./pages/LoginPage";
+import { useAppointmentNotifications } from "./hooks/useAppointmentNotifications";
 import {
   isAuthenticated,
   logout,
@@ -12,6 +13,8 @@ import {
 export default function App() {
   const [authenticated, setAuthenticated] = useState(() => isAuthenticated());
   const [hash, setHash] = useState(() => window.location.hash || "#citas");
+  const { permission, requestPermission } =
+    useAppointmentNotifications(authenticated);
 
   useEffect(() => {
     setUnauthorizedHandler(() => setAuthenticated(false));
@@ -48,7 +51,12 @@ export default function App() {
   }
 
   return (
-    <Layout active={active} onLogout={handleLogout}>
+    <Layout
+      active={active}
+      onLogout={handleLogout}
+      notificationPermission={permission}
+      onEnableNotifications={requestPermission}
+    >
       {content}
     </Layout>
   );

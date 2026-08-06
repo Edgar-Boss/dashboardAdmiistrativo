@@ -78,6 +78,8 @@ export default function DoctorsPage() {
               status: active ? "active" : "inactive",
               email: null,
               phone: null,
+              whatsappPhone: s.whatsappPhone ?? "",
+              notificationsEnabled: Boolean(s.notificationsEnabled),
               appointmentsThisMonth,
             };
           });
@@ -157,6 +159,9 @@ export default function DoctorsPage() {
   }
 
   async function handleSubmitDoctor(values) {
+    const whatsappPhone = String(values.whatsappPhone ?? "");
+    const notificationsEnabled = Boolean(values.notificationsEnabled);
+
     if (mode === "create") {
       const name = String(values.name ?? "").trim();
       const specialty = String(values.specialty ?? "").trim();
@@ -164,6 +169,8 @@ export default function DoctorsPage() {
         name,
         specialty,
         active: values.active ? "Y" : "N",
+        whatsappPhone,
+        notificationsEnabled,
       });
       const doctorId = result?.doctorId;
       if (!Number.isFinite(Number(doctorId))) {
@@ -177,6 +184,8 @@ export default function DoctorsPage() {
           status: values.active ? "active" : "inactive",
           email: null,
           phone: null,
+          whatsappPhone,
+          notificationsEnabled,
           appointmentsThisMonth: 0,
         },
         ...prev,
@@ -195,13 +204,22 @@ export default function DoctorsPage() {
       name: String(values.name ?? "").trim(),
       specialty: String(values.specialty ?? "").trim(),
       active: values.active ? "Y" : "N",
+      whatsappPhone,
+      notificationsEnabled,
     });
 
     const nextStatus = values.active ? "active" : "inactive";
     setDoctors((prev) =>
       prev.map((d) =>
         Number(d.id) === doctorId
-          ? { ...d, name: values.name, specialty: values.specialty, status: nextStatus }
+          ? {
+              ...d,
+              name: values.name,
+              specialty: values.specialty,
+              status: nextStatus,
+              whatsappPhone,
+              notificationsEnabled,
+            }
           : d
       )
     );

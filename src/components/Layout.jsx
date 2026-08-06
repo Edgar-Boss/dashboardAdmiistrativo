@@ -2,7 +2,13 @@ import { useEffect, useState } from "react";
 import { Menu } from "lucide-react";
 import Sidebar from "./Sidebar";
 
-export default function Layout({ children, active, onLogout }) {
+export default function Layout({
+  children,
+  active,
+  onLogout,
+  notificationPermission,
+  onEnableNotifications,
+}) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
@@ -16,6 +22,8 @@ export default function Layout({ children, active, onLogout }) {
         onLogout={onLogout}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        notificationPermission={notificationPermission}
+        onEnableNotifications={onEnableNotifications}
       />
       <div className="flex min-h-screen min-w-0 flex-1 flex-col bg-brand-background">
         <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-brand-border bg-brand-surface/95 px-4 py-3 backdrop-blur lg:hidden">

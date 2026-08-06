@@ -16,6 +16,7 @@ import {
   updateAppointmentState,
 } from "../services/appointmentService";
 import { normalizeAppointment } from "../components/appointments/appointmentEditHelpers";
+import { rememberAppointmentIds } from "../hooks/useAppointmentNotifications";
 
 function normalizeState(state) {
   const normalized = typeof state === "string" ? state.toUpperCase() : "";
@@ -118,9 +119,13 @@ export default function AppointmentsPage() {
 
   async function handleAppointmentCreated(created) {
     setActionError(null);
+    if (created?.id != null) {
+      rememberAppointmentIds([created.id]);
+    }
     try {
       const data = await fetchAppointments();
       setAppointments(data);
+      rememberAppointmentIds(data.map((a) => a.id));
 
       if (viewType === "calendar" && selectedDate) {
         const { appointments: rows, summary } = await fetchAppointmentsByDate({

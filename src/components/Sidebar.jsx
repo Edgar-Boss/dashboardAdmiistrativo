@@ -1,4 +1,4 @@
-import { LogOut } from "lucide-react";
+import { Bell, LogOut } from "lucide-react";
 import { useEffect } from "react";
 import { getStoredUser } from "../services/authService";
 
@@ -7,8 +7,16 @@ const ITEMS = [
   { id: "doctores", label: "Especialistas" },
 ];
 
-export default function Sidebar({ active = "", onLogout, isOpen = false, onClose }) {
+export default function Sidebar({
+  active = "",
+  onLogout,
+  isOpen = false,
+  onClose,
+  notificationPermission,
+  onEnableNotifications,
+}) {
   const user = getStoredUser();
+  const showEnableNotifications = notificationPermission === "default";
 
   useEffect(() => {
     if (!isOpen) return;
@@ -82,6 +90,16 @@ export default function Sidebar({ active = "", onLogout, isOpen = false, onClose
         </nav>
 
         <div className="border-t border-white/10 p-3">
+          {showEnableNotifications ? (
+            <button
+              type="button"
+              onClick={() => onEnableNotifications?.()}
+              className="mb-1 flex w-full items-center gap-2 rounded-brand px-3 py-2.5 text-sm font-medium text-white/55 transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-secondary/50"
+            >
+              <Bell className="h-4 w-4 shrink-0" aria-hidden />
+              Activar notificaciones
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={onLogout}

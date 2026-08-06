@@ -22,6 +22,8 @@ import {
 
 } from "./appointmentCreateConstants";
 
+import { rememberAppointmentIds } from "../../hooks/useAppointmentNotifications";
+
 
 
 export default function CreateAppointmentDrawer({
@@ -325,6 +327,12 @@ export default function CreateAppointmentDrawer({
     try {
 
       const created = await createAppointment(payload);
+
+      if (created?.id != null) {
+
+        rememberAppointmentIds([created.id]);
+
+      }
 
       await onCreated?.(created);
 
