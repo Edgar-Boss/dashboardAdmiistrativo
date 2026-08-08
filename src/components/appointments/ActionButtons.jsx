@@ -1,5 +1,9 @@
 import { useState } from "react";
 import AppointmentStateConfirmDialog from "./AppointmentStateConfirmDialog";
+import {
+  CANCELLED_INFO_MESSAGE,
+  isCancelledReactivation,
+} from "./appointmentStateConfirm";
 
 const STATES = ["PENDING", "CONFIRMED", "CANCELLED"];
 
@@ -22,11 +26,17 @@ export default function ActionButtons({
   const normalized = normalizeState(state);
 
   function requestStateChange(nextState) {
-    setPendingState(normalizeState(nextState));
+    const next = normalizeState(nextState);
+    if (isCancelledReactivation(normalized, next)) return;
+    setPendingState(next);
   }
 
   function handleConfirm() {
     if (!pendingState) return;
+    if (isCancelledReactivation(normalized, pendingState)) {
+      setPendingState(null);
+      return;
+    }
     onStateChange?.(appointmentId, pendingState);
     setPendingState(null);
   }
@@ -107,7 +117,7 @@ export default function ActionButtons({
   }
 
   return (
-    <div className="flex justify-end">
+    <div className="flex max-w-[14rem] flex-col items-end gap-1">
       <button
         type="button"
         disabled
@@ -119,6 +129,9 @@ export default function ActionButtons({
         </span>
         Ver detalle
       </button>
+      <p className="text-right text-[10px] leading-snug text-brand-text-muted">
+        {CANCELLED_INFO_MESSAGE}
+      </p>
     </div>
   );
 }

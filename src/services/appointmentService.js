@@ -179,6 +179,7 @@ async function parseAppointmentApiError(response) {
   try {
     const parsed = JSON.parse(text);
     if (parsed && typeof parsed.message === "string" && parsed.message.trim()) {
+      // Prefer backend message (e.g. CANCELLED_APPOINTMENT_CANNOT_BE_REACTIVATED / 409)
       return parsed.message.trim();
     }
     return `${message} - ${text}`;
@@ -299,8 +300,7 @@ export async function updateAppointmentState(payload) {
   });
 
   if (!response.ok) {
-    const message = `Request failed (${response.status} ${response.statusText})`;
-    throw new Error(message);
+    throw new Error(await parseAppointmentApiError(response));
   }
 
   const text = await response.text();

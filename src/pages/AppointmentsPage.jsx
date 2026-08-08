@@ -9,6 +9,10 @@ import CalendarToolbar from "../components/appointments/calendar/CalendarToolbar
 import FilterTabs from "../components/appointments/FilterTabs";
 import { mergeCalendarAppointment } from "../components/appointments/appointmentEditHelpers";
 import { appointmentDateKey } from "../components/appointments/appointmentHelpers";
+import {
+  CANCELLED_CANNOT_REACTIVATE_MESSAGE,
+  isCancelledReactivation,
+} from "../components/appointments/appointmentStateConfirm";
 import SummaryCards from "../components/appointments/SummaryCards";
 import {
   fetchAppointments,
@@ -166,6 +170,11 @@ export default function AppointmentsPage() {
       return;
     }
 
+    if (isCancelledReactivation(previousState, nextState)) {
+      setActionError(CANCELLED_CANNOT_REACTIVATE_MESSAGE);
+      return;
+    }
+
     // Optimistic update
     setAppointments((prev) =>
       prev.map((a) =>
@@ -178,7 +187,7 @@ export default function AppointmentsPage() {
     try {
       await updateAppointmentState({ id: appointmentId, change: nextState });
     } catch (e) {
-      // Revert on failure
+      // Revert on failure — keep previous state (e.g. CANCELLED)
       setAppointments((prev) =>
         prev.map((a) =>
           a.id === appointmentId ? { ...a, state: previousState } : a

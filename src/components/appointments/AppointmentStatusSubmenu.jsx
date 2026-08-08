@@ -1,3 +1,8 @@
+import {
+  CANCELLED_INFO_MESSAGE,
+  isCancelledAppointment,
+} from "./appointmentStateConfirm";
+
 const STATUS_OPTIONS = [
   {
     value: "PENDING",
@@ -35,6 +40,10 @@ export default function AppointmentStatusSubmenu({
   className = "",
 }) {
   const active = normalizeState(currentState);
+  const cancelled = isCancelledAppointment(active);
+  const visibleOptions = cancelled
+    ? STATUS_OPTIONS.filter((option) => option.value === "CANCELLED")
+    : STATUS_OPTIONS;
 
   return (
     <div
@@ -46,7 +55,7 @@ export default function AppointmentStatusSubmenu({
         Estado
       </p>
       <ul className="space-y-0.5">
-        {STATUS_OPTIONS.map((option) => {
+        {visibleOptions.map((option) => {
           const isActive = active === option.value;
           return (
             <li key={option.value}>
@@ -74,6 +83,11 @@ export default function AppointmentStatusSubmenu({
           );
         })}
       </ul>
+      {cancelled ? (
+        <p className="mt-1.5 border-t border-brand-border px-2.5 pb-1.5 pt-2 text-[11px] leading-snug text-brand-text-muted">
+          {CANCELLED_INFO_MESSAGE}
+        </p>
+      ) : null}
     </div>
   );
 }

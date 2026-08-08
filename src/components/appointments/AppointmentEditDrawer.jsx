@@ -24,6 +24,12 @@ import {
   resolveSlotCount,
   normalizeAppointmentState,
 } from "./appointmentEditHelpers";
+import {
+  CANCELLED_CANNOT_REACTIVATE_MESSAGE,
+  CANCELLED_INFO_MESSAGE,
+  isCancelledAppointment,
+  isCancelledReactivation,
+} from "./appointmentStateConfirm";
 import AppointmentDurationSelect from "./AppointmentDurationSelect";
 import Button from "../ui/Button";
 
@@ -112,8 +118,14 @@ export default function AppointmentEditDrawer({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [isOpen, saving, onClose]);
 
+  const previousState = normalizeAppointmentState(appointment?.state);
+  const isCancelled = isCancelledAppointment(previousState);
+  const effectiveState = isCancelled ? "CANCELLED" : state;
+  const stateOptions = isCancelled
+    ? STATE_OPTIONS.filter((option) => option.value === "CANCELLED")
+    : STATE_OPTIONS;
   const stateOption =
-    STATE_OPTIONS.find((o) => o.value === state) ?? STATE_OPTIONS[0];
+    STATE_OPTIONS.find((o) => o.value === effectiveState) ?? STATE_OPTIONS[0];
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -122,13 +134,19 @@ export default function AppointmentEditDrawer({
     const trimmedName = patientName.trim();
     if (!trimmedName) return;
 
+    const nextState = isCancelled ? "CANCELLED" : state;
+    if (isCancelledReactivation(previousState, nextState)) {
+      setSaveError(CANCELLED_CANNOT_REACTIVATE_MESSAGE);
+      return;
+    }
+
     setSaving(true);
     setSaveError(null);
 
     const form = {
       patientName: trimmedName,
       slotCount,
-      state,
+      state: nextState,
       notes,
     };
 
@@ -138,9 +156,11 @@ export default function AppointmentEditDrawer({
         buildUpdateAppointmentPayload(form),
       );
 
-      const previousState = normalizeAppointmentState(appointment.state);
-      if (state !== previousState) {
-        await updateAppointmentState({ id: appointment.id, change: state });
+      if (nextState !== previousState) {
+        await updateAppointmentState({
+          id: appointment.id,
+          change: nextState,
+        });
       }
 
       const updated = buildUpdatedAppointment(appointment, form);
@@ -247,17 +267,24 @@ export default function AppointmentEditDrawer({
                   </label>
                   <select
                     id="appointment-state"
-                    disabled={saving}
-                    value={state}
+                    disabled={saving || isCancelled}
+                    value={effectiveState}
                     onChange={(e) => setState(e.target.value)}
-                    className={`${inputClass} cursor-pointer font-medium ${stateOption.selectClass}`}
+                    className={`${inputClass} font-medium ${stateOption.selectClass} ${
+                      isCancelled ? "cursor-not-allowed opacity-80" : "cursor-pointer"
+                    }`}
                   >
-                    {STATE_OPTIONS.map((option) => (
+                    {stateOptions.map((option) => (
                       <option key={option.value} value={option.value}>
                         {option.label}
                       </option>
                     ))}
                   </select>
+                  {isCancelled ? (
+                    <p className="mt-2 text-xs leading-snug text-brand-text-muted">
+                      {CANCELLED_INFO_MESSAGE}
+                    </p>
+                  ) : null}
                 </div>
 
                 <div>

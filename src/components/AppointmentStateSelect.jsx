@@ -1,3 +1,9 @@
+import {
+  CANCELLED_INFO_MESSAGE,
+  isCancelledAppointment,
+  isCancelledReactivation,
+} from "./appointments/appointmentStateConfirm";
+
 const STATES = ["PENDING", "CONFIRMED", "CANCELLED"];
 
 const STATE_LABELS = {
@@ -22,23 +28,38 @@ function normalizeState(state) {
 
 export default function AppointmentStateSelect({ value, onChange, disabled }) {
   const normalized = normalizeState(value);
+  const cancelled = isCancelledAppointment(normalized);
   const className = STATE_STYLES[normalized] ?? DEFAULT_STYLE;
+  const visibleStates = cancelled
+    ? STATES.filter((s) => s === "CANCELLED")
+    : STATES;
 
   return (
-    <select
-      value={normalized}
-      onChange={(e) => onChange?.(e.target.value)}
-      disabled={disabled}
-      className={`rounded-full px-3 py-1 text-xs font-medium ring-1 shadow-brand transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25 ${className} ${
-        disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"
-      }`}
-      aria-label="Estado de la cita"
-    >
-      {STATES.map((s) => (
-        <option key={s} value={s}>
-          {STATE_LABELS[s]}
-        </option>
-      ))}
-    </select>
+    <div className="inline-flex flex-col gap-1">
+      <select
+        value={normalized}
+        onChange={(e) => {
+          const next = e.target.value;
+          if (isCancelledReactivation(normalized, next)) return;
+          onChange?.(next);
+        }}
+        disabled={disabled || cancelled}
+        className={`rounded-full px-3 py-1 text-xs font-medium ring-1 shadow-brand transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25 ${className} ${
+          disabled || cancelled ? "cursor-not-allowed opacity-60" : "cursor-pointer"
+        }`}
+        aria-label="Estado de la cita"
+      >
+        {visibleStates.map((s) => (
+          <option key={s} value={s}>
+            {STATE_LABELS[s]}
+          </option>
+        ))}
+      </select>
+      {cancelled ? (
+        <p className="max-w-[12rem] text-[10px] leading-snug text-brand-text-muted">
+          {CANCELLED_INFO_MESSAGE}
+        </p>
+      ) : null}
+    </div>
   );
 }

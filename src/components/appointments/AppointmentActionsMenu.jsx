@@ -5,11 +5,13 @@ import {
   MoreVertical,
   Pencil,
   RefreshCw,
-  Trash2,
 } from "lucide-react";
 import AppointmentStateConfirmDialog from "./AppointmentStateConfirmDialog";
 import AppointmentStatusSubmenu from "./AppointmentStatusSubmenu";
-import { requiresStateConfirmation } from "./appointmentStateConfirm";
+import {
+  isCancelledReactivation,
+  requiresStateConfirmation,
+} from "./appointmentStateConfirm";
 
 const menuItemClass =
   "flex w-full items-center gap-2.5 rounded-brand px-3 py-2 text-left text-sm text-brand-text transition-colors duration-150 hover:bg-brand-soft";
@@ -85,17 +87,17 @@ export default function AppointmentActionsMenu({
     closeMenu();
   }
 
-  function handleDelete() {
-    console.log("[AppointmentActions] Eliminar cita", appointmentId);
-    closeMenu();
-  }
-
   function handleStatusSelect(nextState) {
     const normalized =
       typeof nextState === "string" ? nextState.toUpperCase() : "";
     const current =
       typeof state === "string" ? state.toUpperCase() : "";
     if (normalized === current) {
+      closeMenu();
+      return;
+    }
+
+    if (isCancelledReactivation(current, normalized)) {
       closeMenu();
       return;
     }
@@ -201,20 +203,6 @@ export default function AppointmentActionsMenu({
               >
                 <Eye className="h-4 w-4 shrink-0 text-brand-text-muted" strokeWidth={2} />
                 Ver detalles
-              </button>
-            </li>
-
-            <li className="my-1 border-t border-brand-border" aria-hidden />
-
-            <li>
-              <button
-                type="button"
-                role="menuitem"
-                className="flex w-full items-center gap-2.5 rounded-brand px-3 py-2 text-left text-sm text-brand-danger transition-colors duration-150 hover:bg-brand-danger-soft"
-                onClick={handleDelete}
-              >
-                <Trash2 className="h-4 w-4 shrink-0" strokeWidth={2} />
-                Eliminar cita
               </button>
             </li>
           </ul>
