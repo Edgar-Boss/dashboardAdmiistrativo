@@ -2,18 +2,13 @@ export const CALENDAR_CONFIG = {
   dayStartHour: 7,
   dayEndHour: 21,
   slotMinutes: 30,
-  rowHeightPx: 48,
+  /** Tall enough for name/badge + time/phone inside a 30 min slot without clipping */
+  rowHeightPx: 60,
   timeColumnWidthPx: 72,
-  doctorColumnWidthPx: 280,
+  doctorColumnWidthPx: 300,
   gridLineIntervalMinutes: 60,
   /** Vertical gap between card edge and slot boundary */
   cardVerticalInsetPx: 2,
-  /** Min inner content area for 30 min cards (name + badge + time) */
-  compactMinHeightPx: 52,
-  /** Min height for 60 min cards */
-  normalMinHeightPx: 56,
-  /** Min height for long appointments */
-  largeMinHeightPx: 72,
 };
 
 export function getDayStartMinutes(config = CALENDAR_CONFIG) {

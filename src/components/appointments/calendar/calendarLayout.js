@@ -91,7 +91,6 @@ export function buildAppointmentBlocks(appointments, config = CALENDAR_CONFIG) {
         variant,
         topPx,
         heightPx,
-        minHeightPx: heightPx,
       };
     })
     .filter(Boolean);
