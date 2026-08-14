@@ -6,6 +6,8 @@ vi.mock("../services/appointmentService", () => ({
   fetchAppointments: vi.fn(),
   fetchAppointmentsByDate: vi.fn(),
   updateAppointmentState: vi.fn(),
+  sendAppointmentConfirmation: vi.fn(),
+  fetchBusinessSchedule: vi.fn(),
 }));
 
 vi.mock("../components/appointments/AppointmentTable", () => ({

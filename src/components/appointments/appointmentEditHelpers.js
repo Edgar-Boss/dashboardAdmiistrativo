@@ -284,6 +284,21 @@ export function getDurationSummary(
   };
 }
 
+/** True when editable drawer fields differ from the persisted appointment. */
+export function isAppointmentEditFormDirty(appointment, form) {
+  if (!appointment) return false;
+  const persistedName = String(getPatientName(appointment)).trim();
+  const persistedNotes = String(getNotes(appointment)).trim();
+  const persistedSlots = resolveSlotCount(appointment);
+  const persistedState = normalizeAppointmentState(appointment?.state);
+  return (
+    String(form?.patientName ?? "").trim() !== persistedName ||
+    Number(form?.slotCount) !== persistedSlots ||
+    normalizeAppointmentState(form?.state) !== persistedState ||
+    String(form?.notes ?? "").trim() !== persistedNotes
+  );
+}
+
 export function buildUpdateAppointmentPayload(form) {
   const reason = form.notes.trim();
   return {

@@ -2,7 +2,11 @@ import { useMemo } from "react";
 import AppointmentRow from "./AppointmentRow";
 import { buildDoctorGroups, formatAppointmentDate } from "./appointmentHelpers";
 
-export default function DoctorCalendar({ appointments, savingIds, onStateChange }) {
+export default function DoctorCalendar({
+  appointments,
+  savingIds,
+  onStateChange,
+}) {
   const columns = useMemo(() => buildDoctorGroups(appointments), [appointments]);
 
   return (

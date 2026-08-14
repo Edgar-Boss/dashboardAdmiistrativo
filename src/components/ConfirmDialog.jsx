@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import Button from "./ui/Button";
 
 const VARIANT_STYLES = {
@@ -43,11 +44,13 @@ export default function ConfirmDialog({
   }, [open, loading, onCancel]);
 
   if (!open) return null;
+  if (typeof document === "undefined" || !document.body) return null;
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center p-4"
       role="presentation"
+      data-testid="confirm-dialog-root"
     >
       <div
         className="nb-overlay absolute inset-0 animate-menu-in"
@@ -62,7 +65,7 @@ export default function ConfirmDialog({
         aria-modal="true"
         aria-labelledby="confirm-dialog-title"
         aria-describedby="confirm-dialog-description"
-        className="relative max-h-[min(90vh,640px)] w-full max-w-md overflow-y-auto rounded-brand-md border border-brand-border bg-brand-surface p-6 shadow-brand-lg animate-menu-in"
+        className="relative max-h-[min(90vh,640px)] w-full max-w-[min(28rem,calc(100vw-2rem))] overflow-y-auto rounded-brand-md border border-brand-border bg-brand-surface p-6 shadow-brand-lg animate-menu-in"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex gap-4">
@@ -126,6 +129,7 @@ export default function ConfirmDialog({
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

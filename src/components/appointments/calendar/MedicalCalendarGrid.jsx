@@ -1,5 +1,4 @@
-import { useMemo } from "react";
-import { CALENDAR_CONFIG } from "./calendarConfig";
+import { useMemo, useState } from "react";
 import {
   buildAppointmentBlocks,
   buildDoctorColumns,
@@ -43,18 +42,25 @@ export default function MedicalCalendarGrid({
   specialistsReady = true,
   loading = false,
   selectedDate,
+  config,
   onAppointmentClick,
+  onStateChange,
+  savingIds,
 }) {
-  const config = CALENDAR_CONFIG;
-  const gridHeight = getGridHeightPx(config);
-  const timeSlots = useMemo(() => buildVisualTimeSlots(config), [config]);
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const calendarConfig = config;
+  const gridHeight = getGridHeightPx(calendarConfig);
+  const timeSlots = useMemo(
+    () => (calendarConfig ? buildVisualTimeSlots(calendarConfig) : []),
+    [calendarConfig]
+  );
   const columns = useMemo(
     () => buildDoctorColumns({ specialists, appointments }),
     [specialists, appointments]
   );
   const blocks = useMemo(
-    () => buildAppointmentBlocks(appointments, config),
-    [appointments, config]
+    () => (calendarConfig ? buildAppointmentBlocks(appointments, calendarConfig) : []),
+    [appointments, calendarConfig]
   );
   const blocksByColumn = useMemo(
     () => groupBlocksByColumn(blocks, columns),
@@ -63,14 +69,18 @@ export default function MedicalCalendarGrid({
   const showNowLine = isTodayDate(selectedDate);
   const now = useCurrentTime(showNowLine);
   const nowPosition = useMemo(
-    () => (showNowLine ? getCurrentTimePosition(now, config) : null),
-    [showNowLine, now, config],
+    () =>
+      showNowLine && calendarConfig
+        ? getCurrentTimePosition(now, calendarConfig)
+        : null,
+    [showNowLine, now, calendarConfig],
   );
 
   const gridWidth =
-    config.timeColumnWidthPx + columns.length * config.doctorColumnWidthPx;
+    (calendarConfig?.timeColumnWidthPx ?? 0) +
+    columns.length * (calendarConfig?.doctorColumnWidthPx ?? 0);
 
-  if (loading) return <CalendarSkeleton />;
+  if (loading || !calendarConfig) return <CalendarSkeleton />;
 
   if (!specialistsReady && columns.length === 0) return <CalendarSkeleton />;
 
@@ -83,7 +93,7 @@ export default function MedicalCalendarGrid({
           <div className="sticky top-0 z-40 flex border-b border-brand-border bg-brand-background/90 backdrop-blur-md">
             <div
               className="sticky left-0 z-50 shrink-0 border-r border-brand-border bg-brand-background/90 px-2 py-3.5"
-              style={{ width: config.timeColumnWidthPx }}
+              style={{ width: calendarConfig.timeColumnWidthPx }}
             >
               <span className="text-[10px] font-medium uppercase tracking-widest text-brand-text-muted/80">
                 Hora
@@ -92,7 +102,7 @@ export default function MedicalCalendarGrid({
             {columns.map((col) => (
               <div
                 key={col.key}
-                style={{ width: config.doctorColumnWidthPx }}
+                style={{ width: calendarConfig.doctorColumnWidthPx }}
                 className="shrink-0"
               >
                 <DoctorColumnHeader
@@ -107,7 +117,7 @@ export default function MedicalCalendarGrid({
           <div className="relative flex">
             <div
               className="sticky left-0 z-30 shrink-0 border-r border-brand-border bg-brand-background"
-              style={{ width: config.timeColumnWidthPx }}
+              style={{ width: calendarConfig.timeColumnWidthPx }}
             >
               <div className="relative" style={{ height: gridHeight }}>
                 {timeSlots.map((slot) => (
@@ -134,7 +144,7 @@ export default function MedicalCalendarGrid({
                 <div
                   key={col.key}
                   className={`relative shrink-0 border-r border-brand-border/60 ${theme.column}`}
-                  style={{ width: config.doctorColumnWidthPx }}
+                  style={{ width: calendarConfig.doctorColumnWidthPx }}
                 >
                   <div className="relative" style={{ height: gridHeight }}>
                     {timeSlots.map((slot) => (
@@ -151,6 +161,11 @@ export default function MedicalCalendarGrid({
                         key={block.row?.id ?? `${block.startKey}-${col.key}`}
                         block={block}
                         onClick={onAppointmentClick}
+                        onStateChange={onStateChange}
+                        savingIds={savingIds}
+                        isMenuOpen={openMenuId === block.row?.id}
+                        onMenuOpen={() => setOpenMenuId(block.row?.id ?? null)}
+                        onMenuClose={() => setOpenMenuId(null)}
                         style={{
                           top: block.topPx,
                           height: block.heightPx,
@@ -167,7 +182,7 @@ export default function MedicalCalendarGrid({
                 topPx={nowPosition.topPx}
                 timeLabel={nowPosition.label}
                 gridWidth={gridWidth}
-                timeColumnWidthPx={config.timeColumnWidthPx}
+                timeColumnWidthPx={calendarConfig.timeColumnWidthPx}
               />
             ) : null}
           </div>

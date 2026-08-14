@@ -5,18 +5,46 @@ import {
   getMockCalendarAppointments,
   getMockSpecialists,
 } from "./calendar/mockCalendarData";
+import { buildCalendarConfigFromSchedule } from "./calendar/calendarConfig";
 import { normalizeAppointment } from "./appointmentEditHelpers";
 import { fetchSpecialists } from "../../services/specialistService";
+import { fetchBusinessSchedule } from "../../services/appointmentService";
+
+const MOCK_SCHEDULE = {
+  date: "2026-05-27",
+  open: true,
+  startTime: "09:00",
+  endTime: "18:00",
+  slotMinutes: 30,
+};
+
+function ClosedDayState() {
+  return (
+    <div className="flex min-h-[280px] flex-col items-center justify-center rounded-brand-md border border-dashed border-brand-border bg-brand-soft/40 px-6 text-center">
+      <p className="text-sm font-medium text-brand-text">
+        El negocio no labora este día.
+      </p>
+      <p className="mt-1 max-w-sm text-xs text-brand-text-muted">
+        Cambia la fecha en la barra superior para ver otro día.
+      </p>
+    </div>
+  );
+}
 
 export default function CalendarView({
   appointments = [],
   loading = false,
   selectedDate,
   onAppointmentClick,
+  onStateChange,
+  savingIds,
 }) {
   const [specialists, setSpecialists] = useState([]);
   const [loadState, setLoadState] = useState("loading");
   const [loadError, setLoadError] = useState(null);
+  const [scheduleState, setScheduleState] = useState("loading");
+  const [schedule, setSchedule] = useState(null);
+  const [scheduleError, setScheduleError] = useState(null);
 
   useEffect(() => {
     if (USE_CALENDAR_MOCK) {
@@ -55,6 +83,43 @@ export default function CalendarView({
     };
   }, []);
 
+  useEffect(() => {
+    if (USE_CALENDAR_MOCK) {
+      setSchedule({ ...MOCK_SCHEDULE, date: selectedDate });
+      setScheduleState("ok");
+      setScheduleError(null);
+      return undefined;
+    }
+
+    if (!selectedDate) return undefined;
+
+    let cancelled = false;
+
+    async function loadSchedule() {
+      setScheduleState("loading");
+      setSchedule(null);
+      setScheduleError(null);
+      try {
+        const data = await fetchBusinessSchedule(selectedDate);
+        if (!cancelled) {
+          setSchedule(data);
+          setScheduleState("ok");
+        }
+      } catch {
+        if (!cancelled) {
+          setSchedule(null);
+          setScheduleState("error");
+          setScheduleError("No se pudo cargar el horario del negocio.");
+        }
+      }
+    }
+
+    loadSchedule();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedDate]);
+
   const rows = useMemo(() => {
     if (USE_CALENDAR_MOCK) {
       return getMockCalendarAppointments().map((a) => normalizeAppointment(a));
@@ -63,6 +128,12 @@ export default function CalendarView({
   }, [appointments]);
 
   const displaySpecialists = USE_CALENDAR_MOCK ? getMockSpecialists() : specialists;
+  const calendarConfig = useMemo(
+    () => buildCalendarConfigFromSchedule(schedule),
+    [schedule],
+  );
+  const scheduleLoading = scheduleState === "loading";
+  const businessClosed = scheduleState === "ok" && schedule && !schedule.open;
 
   return (
     <div className="space-y-3">
@@ -74,14 +145,28 @@ export default function CalendarView({
           {loadError}. Mostrando columnas según las citas del día.
         </p>
       )}
-      <MedicalCalendarGrid
-        appointments={rows}
-        specialists={displaySpecialists}
-        specialistsReady={USE_CALENDAR_MOCK || loadState !== "loading"}
-        loading={loading}
-        selectedDate={selectedDate}
-        onAppointmentClick={onAppointmentClick}
-      />
+      {scheduleState === "error" && scheduleError ? (
+        <div
+          className="flex min-h-[280px] flex-col items-center justify-center rounded-brand-md border border-brand-danger/25 bg-brand-danger-soft px-6 text-center"
+          role="alert"
+        >
+          <p className="text-sm font-medium text-brand-danger">{scheduleError}</p>
+        </div>
+      ) : businessClosed ? (
+        <ClosedDayState />
+      ) : (
+        <MedicalCalendarGrid
+          appointments={rows}
+          specialists={displaySpecialists}
+          specialistsReady={USE_CALENDAR_MOCK || loadState !== "loading"}
+          loading={loading || scheduleLoading}
+          selectedDate={selectedDate}
+          config={calendarConfig}
+          onAppointmentClick={onAppointmentClick}
+          onStateChange={onStateChange}
+          savingIds={savingIds}
+        />
+      )}
     </div>
   );
 }

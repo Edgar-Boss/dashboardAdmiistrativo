@@ -6,7 +6,11 @@ import {
   formatAppointmentDate,
 } from "./appointmentHelpers";
 
-export default function AppointmentsTimeline({ appointments, savingIds, onStateChange }) {
+export default function AppointmentsTimeline({
+  appointments,
+  savingIds,
+  onStateChange,
+}) {
   const hasMultipleDates =
     new Set(appointments.map((a) => appointmentDateKey(a))).size > 1;
 

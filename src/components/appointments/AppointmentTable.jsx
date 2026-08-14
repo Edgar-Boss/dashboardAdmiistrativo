@@ -18,15 +18,26 @@ function EmptyState() {
 export default function AppointmentTable({
   appointments,
   savingIds,
+  sendingConfirmationId,
   onStateChange,
   onAppointmentUpdate,
+  onSendConfirmation,
+  onEditAppointment,
   viewMode = "all",
 }) {
   if (appointments.length === 0) {
     return <EmptyState />;
   }
 
-  const shared = { appointments, savingIds, onStateChange, onAppointmentUpdate };
+  const shared = {
+    appointments,
+    savingIds,
+    sendingConfirmationId,
+    onStateChange,
+    onAppointmentUpdate,
+    onSendConfirmation,
+    onEditAppointment,
+  };
 
   if (viewMode === "all") {
     return <AppointmentsTable {...shared} />;

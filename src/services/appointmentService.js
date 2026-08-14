@@ -8,6 +8,7 @@ const APPOINTMENTS_BY_DATE_URL = `${API_BASE_URL}/appointments/search`;
 const AVAILABLE_SLOTS_URL = `${API_BASE_URL}/appointments/available-slots`;
 const APPOINTMENT_UPDATE_URL = `${API_BASE_URL}/appointments`;
 const APPOINTMENT_STATE_URL = `${API_BASE_URL}/api/admin/appointments/state`;
+const BUSINESS_SCHEDULE_URL = `${API_BASE_URL}/api/admin/schedule`;
 
 /**
  * GET /api/admin/appointments
@@ -305,4 +306,67 @@ export async function updateAppointmentState(payload) {
 
   const text = await response.text();
   return text ? JSON.parse(text) : null;
+}
+
+/**
+ * POST /api/admin/appointments/:id/confirmation-message
+ * Sends the appointment confirmation message. No request body.
+ * @param {number|string} appointmentId
+ * @returns {Promise<any>}
+ */
+export async function sendAppointmentConfirmation(appointmentId) {
+  const response = await apiFetch(
+    `${APPOINTMENTS_LIST_URL}/${appointmentId}/confirmation-message`,
+    {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+      },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(await parseAppointmentApiError(response));
+  }
+
+  const text = await response.text();
+  return text ? JSON.parse(text) : null;
+}
+
+/**
+ * GET /api/admin/schedule?date=YYYY-MM-DD
+ * Business hours for the authenticated tenant on that date.
+ * Tenant comes from the JWT — do not send tenantId from the client.
+ * @param {string} date
+ * @returns {Promise<{
+ *   date: string,
+ *   open: boolean,
+ *   startTime: string | null,
+ *   endTime: string | null,
+ *   slotMinutes: number
+ * }>}
+ */
+export async function fetchBusinessSchedule(date) {
+  const qs = new URLSearchParams();
+  qs.set("date", String(date ?? "").trim());
+
+  const response = await apiFetch(`${BUSINESS_SCHEDULE_URL}?${qs.toString()}`, {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(await parseAppointmentApiError(response));
+  }
+
+  const data = await response.json();
+  return {
+    date: data?.date ?? String(date ?? "").trim(),
+    open: Boolean(data?.open),
+    startTime: data?.startTime ?? data?.start_time ?? null,
+    endTime: data?.endTime ?? data?.end_time ?? null,
+    slotMinutes: Number(data?.slotMinutes ?? data?.slot_minutes) || 30,
+  };
 }

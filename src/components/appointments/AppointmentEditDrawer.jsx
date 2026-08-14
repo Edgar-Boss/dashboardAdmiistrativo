@@ -3,6 +3,8 @@ import {
   Calendar,
   Clock,
   Hash,
+  Phone,
+  Send,
   Sparkles,
   X,
 } from "lucide-react";
@@ -23,7 +25,12 @@ import {
   getEditDurationMaxSlots,
   resolveSlotCount,
   normalizeAppointmentState,
+  isAppointmentEditFormDirty,
 } from "./appointmentEditHelpers";
+import {
+  canSendAppointmentConfirmation,
+  isSendingAppointmentConfirmation,
+} from "./appointmentConfirmationAction";
 import {
   CANCELLED_CANNOT_REACTIVATE_MESSAGE,
   CANCELLED_INFO_MESSAGE,
@@ -36,6 +43,16 @@ import Button from "../ui/Button";
 const inputClass = "nb-input disabled:bg-brand-soft";
 
 const labelClass = "nb-label";
+
+function getClientPhone(appointment) {
+  const raw =
+    appointment?.phoneNumber ??
+    appointment?.phone_number ??
+    appointment?.phone ??
+    "";
+  const phone = String(raw).trim();
+  return phone || "—";
+}
 
 function ReadOnlyInfo({ appointment }) {
   const dateRaw = getAppointmentDateRaw(appointment);
@@ -56,6 +73,12 @@ function ReadOnlyInfo({ appointment }) {
       value: appointment?.doctorName ?? appointment?.doctor ?? "—",
     },
     {
+      icon: Phone,
+      label: "Teléfono del cliente",
+      value: getClientPhone(appointment),
+      valueClass: "tabular-nums",
+    },
+    {
       icon: Hash,
       label: "Folio de cita",
       value: appointment?.id != null ? String(appointment.id) : "—",
@@ -68,14 +91,16 @@ function ReadOnlyInfo({ appointment }) {
         Información de la cita
       </p>
       <dl className="space-y-3">
-        {items.map(({ icon: Icon, label, value }) => (
+        {items.map(({ icon: Icon, label, value, valueClass = "" }) => (
           <div key={label} className="flex gap-3">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-brand bg-brand-surface text-brand-text-muted shadow-brand ring-1 ring-brand-border">
               <Icon className="h-4 w-4" strokeWidth={2} aria-hidden />
             </div>
             <div className="min-w-0 flex-1">
               <dt className="text-[11px] font-medium text-brand-text-muted">{label}</dt>
-              <dd className="mt-0.5 text-sm font-medium text-brand-text">{value}</dd>
+              <dd className={`mt-0.5 text-sm font-medium text-brand-text ${valueClass}`.trim()}>
+                {value}
+              </dd>
             </div>
           </div>
         ))}
@@ -89,6 +114,8 @@ export default function AppointmentEditDrawer({
   isOpen,
   onClose,
   onSave,
+  onSendConfirmation,
+  sendingConfirmationId,
 }) {
   const [patientName, setPatientName] = useState("");
   const [slotCount, setSlotCount] = useState(1);
@@ -121,6 +148,18 @@ export default function AppointmentEditDrawer({
   const previousState = normalizeAppointmentState(appointment?.state);
   const isCancelled = isCancelledAppointment(previousState);
   const effectiveState = isCancelled ? "CANCELLED" : state;
+  const canSendWhatsappConfirmation = canSendAppointmentConfirmation(previousState);
+  const isSendingConfirmation = isSendingAppointmentConfirmation(
+    sendingConfirmationId,
+    appointment?.id,
+  );
+  const isDirty = isAppointmentEditFormDirty(appointment, {
+    patientName,
+    slotCount,
+    state: effectiveState,
+    notes,
+  });
+  const sendDisabled = saving || isDirty || isSendingConfirmation;
   const stateOptions = isCancelled
     ? STATE_OPTIONS.filter((option) => option.value === "CANCELLED")
     : STATE_OPTIONS;
@@ -304,6 +343,36 @@ export default function AppointmentEditDrawer({
                     placeholder="Servicio, preferencias u observaciones…"
                   />
                 </div>
+
+                {canSendWhatsappConfirmation ? (
+                  <section className="border-t border-brand-border pt-6">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-brand-text-muted">
+                      Confirmación por WhatsApp
+                    </p>
+                    <p className="mt-1 text-xs leading-snug text-brand-text-muted">
+                      Envía al cliente los datos confirmados de su cita.
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="mt-3 min-h-11 w-full sm:w-auto"
+                      disabled={sendDisabled}
+                      aria-busy={isSendingConfirmation || undefined}
+                      onClick={() => {
+                        if (sendDisabled) return;
+                        onSendConfirmation?.(appointment);
+                      }}
+                    >
+                      <Send className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
+                      {isSendingConfirmation ? "Enviando..." : "Enviar confirmación"}
+                    </Button>
+                    {isDirty ? (
+                      <p className="mt-2 text-xs leading-snug text-brand-text-muted">
+                        Guarda los cambios antes de enviar la confirmación.
+                      </p>
+                    ) : null}
+                  </section>
+                ) : null}
               </div>
             ) : null}
           </div>

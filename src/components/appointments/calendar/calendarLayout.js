@@ -12,19 +12,40 @@ import {
 } from "./calendarConfig";
 
 export function buildVisualTimeSlots(config = CALENDAR_CONFIG) {
+  const start = getDayStartMinutes(config);
+  const end = getDayEndMinutes(config);
+  if (end <= start) return [];
+
+  const interval = config.gridLineIntervalMinutes || 60;
+  const seen = new Set();
   const slots = [];
-  const interval = config.gridLineIntervalMinutes;
-  for (let m = getDayStartMinutes(config); m < getDayEndMinutes(config); m += interval) {
-    const h = Math.floor(m / 60);
-    const min = m % 60;
+
+  function addSlot(minutes, { forceLabel = false } = {}) {
+    if (!Number.isFinite(minutes) || minutes < start || minutes > end) return;
+    if (seen.has(minutes)) return;
+    seen.add(minutes);
+    const h = Math.floor(minutes / 60);
+    const min = minutes % 60;
+    const isHour = min === 0;
     slots.push({
-      minutes: m,
-      label: min === 0 ? `${String(h).padStart(2, "0")}:00` : null,
-      isHour: min === 0,
-      topPx: ((m - getDayStartMinutes(config)) / config.slotMinutes) * config.rowHeightPx,
+      minutes,
+      label:
+        forceLabel || isHour
+          ? `${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`
+          : null,
+      isHour,
+      topPx: ((minutes - start) / config.slotMinutes) * config.rowHeightPx,
     });
   }
-  return slots;
+
+  addSlot(start, { forceLabel: true });
+  const firstTick = Math.ceil((start + 1) / interval) * interval;
+  for (let m = firstTick; m < end; m += interval) {
+    addSlot(m);
+  }
+  addSlot(end, { forceLabel: true });
+
+  return slots.sort((a, b) => a.minutes - b.minutes);
 }
 
 export function buildDoctorColumns({ specialists, appointments }) {
@@ -58,6 +79,13 @@ export function buildDoctorColumns({ specialists, appointments }) {
   );
 }
 
+/**
+ * Maps appointments onto the visible business-hours grid.
+ *
+ * Appointments whose start is outside {@code dayStartMinutes}…{@code dayEndMinutes}
+ * are skipped (not drawn). The grid is not expanded to fit them — CLINIC_SCHEDULE
+ * remains the range source. Height is clamped so a card cannot paint past close.
+ */
 export function buildAppointmentBlocks(appointments, config = CALENDAR_CONFIG) {
   const dayStart = getDayStartMinutes(config);
   const dayEnd = getDayEndMinutes(config);
@@ -70,15 +98,30 @@ export function buildAppointmentBlocks(appointments, config = CALENDAR_CONFIG) {
       );
       const startMin = timeToMinutes(startKey);
       if (startKey === "—" || startMin < dayStart || startMin >= dayEnd) {
+        if (startKey !== "—") {
+          console.warn(
+            "Calendar skipped appointment outside business hours",
+            row?.id,
+            startKey,
+          );
+        }
         return null;
       }
 
       const durationMinutes = slotCount * config.slotMinutes;
       const variant = getCardVariant(durationMinutes, config.slotMinutes);
+      const visibleMinutes = Math.max(
+        config.slotMinutes,
+        Math.min(durationMinutes, dayEnd - startMin),
+      );
+      const visibleSlots = Math.max(
+        1,
+        Math.round(visibleMinutes / config.slotMinutes),
+      );
 
       const topPx =
         ((startMin - dayStart) / config.slotMinutes) * config.rowHeightPx;
-      const heightPx = computeCardBlockHeight(slotCount, variant, config);
+      const heightPx = computeCardBlockHeight(visibleSlots, variant, config);
 
       return {
         row,

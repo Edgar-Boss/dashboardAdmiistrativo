@@ -70,6 +70,7 @@ export default function AppointmentRow({
 
         <div className="pointer-events-none mt-2 flex justify-end opacity-0 transition-opacity duration-150 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
           <ActionButtons
+            appointment={row}
             state={row.state}
             appointmentId={row.id}
             patientName={row.name}
@@ -117,6 +118,7 @@ export default function AppointmentRow({
 
       <div className="pointer-events-none mt-2 flex justify-end opacity-0 transition-opacity duration-150 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
         <ActionButtons
+          appointment={row}
           state={row.state}
           appointmentId={row.id}
           patientName={row.name}

@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Plus } from "lucide-react";
 import AppointmentTable from "../components/appointments/AppointmentTable";
+import AppointmentConfirmationDialog from "../components/appointments/AppointmentConfirmationDialog";
 import AppointmentEditDrawer from "../components/appointments/AppointmentEditDrawer";
 import CreateAppointmentDrawer from "../components/appointments/CreateAppointmentDrawer";
 import CalendarView from "../components/appointments/CalendarView";
@@ -17,10 +18,16 @@ import SummaryCards from "../components/appointments/SummaryCards";
 import {
   fetchAppointments,
   fetchAppointmentsByDate,
+  sendAppointmentConfirmation,
   updateAppointmentState,
 } from "../services/appointmentService";
 import { normalizeAppointment } from "../components/appointments/appointmentEditHelpers";
 import { rememberAppointmentIds } from "../hooks/useAppointmentNotifications";
+import {
+  CONFIRMATION_DIALOG_STATUS,
+  getClosedConfirmationDialog,
+  isAlreadySentConfirmationError,
+} from "../components/appointments/appointmentConfirmationAction";
 
 function normalizeState(state) {
   const normalized = typeof state === "string" ? state.toUpperCase() : "";
@@ -58,7 +65,13 @@ export default function AppointmentsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [actionError, setActionError] = useState(null);
+  const [actionSuccess, setActionSuccess] = useState(null);
   const [savingIds, setSavingIds] = useState(() => new Set());
+  const [sendingConfirmationId, setSendingConfirmationId] = useState(null);
+  const sendingConfirmationIdRef = useRef(null);
+  const [confirmationDialog, setConfirmationDialog] = useState(
+    getClosedConfirmationDialog
+  );
   const [filter, setFilter] = useState("ALL");
   const [viewMode, setViewMode] = useState("all");
   const [viewType, setViewType] = useState("list");
@@ -208,6 +221,80 @@ export default function AppointmentsPage() {
     }
   }
 
+  function requestSendConfirmation(appointment) {
+    if (sendingConfirmationIdRef.current != null) return;
+    if (appointment?.id == null || appointment.id === "") return;
+    setConfirmationDialog({
+      status: CONFIRMATION_DIALOG_STATUS.CONFIRM,
+      appointment,
+      errorMessage: null,
+    });
+  }
+
+  function closeConfirmationDialog() {
+    setConfirmationDialog((prev) =>
+      prev.status === CONFIRMATION_DIALOG_STATUS.SENDING
+        ? prev
+        : getClosedConfirmationDialog()
+    );
+  }
+
+  async function handleSendConfirmation(appointment) {
+    if (appointment?.id == null || appointment.id === "") {
+      setConfirmationDialog({
+        status: CONFIRMATION_DIALOG_STATUS.ERROR,
+        appointment: appointment ?? null,
+        errorMessage: "No se pudo enviar la confirmación de la cita.",
+      });
+      return;
+    }
+
+    const appointmentId = appointment.id;
+    if (
+      sendingConfirmationId === appointmentId ||
+      sendingConfirmationIdRef.current === appointmentId
+    ) {
+      return;
+    }
+
+    sendingConfirmationIdRef.current = appointmentId;
+    setSendingConfirmationId(appointmentId);
+    setConfirmationDialog({
+      status: CONFIRMATION_DIALOG_STATUS.SENDING,
+      appointment,
+      errorMessage: null,
+    });
+
+    try {
+      await sendAppointmentConfirmation(appointmentId);
+      setConfirmationDialog({
+        status: CONFIRMATION_DIALOG_STATUS.SUCCESS,
+        appointment,
+        errorMessage: null,
+      });
+    } catch (e) {
+      if (isAlreadySentConfirmationError(e)) {
+        setConfirmationDialog({
+          status: CONFIRMATION_DIALOG_STATUS.ALREADY_SENT,
+          appointment,
+          errorMessage: null,
+        });
+      } else {
+        setConfirmationDialog({
+          status: CONFIRMATION_DIALOG_STATUS.ERROR,
+          appointment,
+          errorMessage:
+            e instanceof Error && String(e.message).trim()
+              ? e.message
+              : "No se pudo enviar la confirmación de la cita.",
+        });
+      }
+    } finally {
+      sendingConfirmationIdRef.current = null;
+      setSendingConfirmationId(null);
+    }
+  }
+
   useEffect(() => {
     let cancelled = false;
 
@@ -344,6 +431,15 @@ export default function AppointmentsPage() {
             </div>
           )}
 
+          {!loading && !error && actionSuccess && (
+            <div
+              className="mb-4 rounded-brand border border-brand-success/25 bg-brand-success-soft px-4 py-3 text-sm text-brand-success"
+              role="status"
+            >
+              <p className="font-medium">{actionSuccess}</p>
+            </div>
+          )}
+
           {!loading && !error && appointments.length === 0 && (
             <div className="flex min-h-[160px] flex-col items-center justify-center rounded-brand-md border border-dashed border-brand-border bg-brand-soft/40 px-6 py-12 text-center">
               <p className="text-sm font-medium text-brand-text-muted">
@@ -432,8 +528,11 @@ export default function AppointmentsPage() {
                   <AppointmentTable
                     appointments={filteredAppointments}
                     savingIds={savingIds}
+                    sendingConfirmationId={sendingConfirmationId}
                     onStateChange={handleStateChange}
                     onAppointmentUpdate={handleAppointmentUpdate}
+                    onSendConfirmation={requestSendConfirmation}
+                    onEditAppointment={setEditingAppointment}
                     viewMode={viewMode}
                   />
                 </>
@@ -465,6 +564,8 @@ export default function AppointmentsPage() {
                     loading={calendarLoading}
                     selectedDate={selectedDate}
                     onAppointmentClick={setEditingAppointment}
+                    onStateChange={handleStateChange}
+                    savingIds={savingIds}
                   />
                 </div>
               )}
@@ -487,6 +588,15 @@ export default function AppointmentsPage() {
           handleAppointmentUpdate(updated);
           setEditingAppointment(null);
         }}
+        onSendConfirmation={requestSendConfirmation}
+        sendingConfirmationId={sendingConfirmationId}
+      />
+
+      <AppointmentConfirmationDialog
+        status={confirmationDialog.status}
+        errorMessage={confirmationDialog.errorMessage}
+        onConfirm={() => handleSendConfirmation(confirmationDialog.appointment)}
+        onClose={closeConfirmationDialog}
       />
     </div>
   );

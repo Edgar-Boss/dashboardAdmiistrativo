@@ -1,4 +1,6 @@
 import { Clock, Phone } from "lucide-react";
+import { useRef } from "react";
+import AppointmentActionsMenu from "../AppointmentActionsMenu";
 import {
   formatAppointmentDuration,
   formatAppointmentTimeRange,
@@ -40,7 +42,7 @@ function StatusBadge({ stateStyle, size = "default" }) {
 function CompactCardContent({ patientName, timeRange, phone, stateStyle }) {
   return (
     <div className="flex h-full min-h-0 w-full flex-col justify-center gap-1">
-      <div className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-1.5">
+      <div className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-1.5 pr-7">
         <p className="truncate text-[11px] font-semibold leading-tight text-brand-text">
           {patientName}
         </p>
@@ -71,7 +73,7 @@ function NormalCardContent({
 }) {
   return (
     <div className="flex h-full min-h-0 w-full flex-col gap-1">
-      <div className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-1.5">
+      <div className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-1.5 pr-7">
         <p className="truncate text-xs font-semibold leading-tight text-brand-text">
           {patientName}
         </p>
@@ -107,7 +109,7 @@ function LargeCardContent({
 
   return (
     <div className={`flex h-full min-h-0 w-full flex-col ${hasMeta ? "gap-1.5" : "gap-1"}`}>
-      <div className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2">
+      <div className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 pr-7">
         <p className="truncate text-[13px] font-semibold leading-snug tracking-tight text-brand-text">
           {patientName}
         </p>
@@ -140,15 +142,24 @@ function LargeCardContent({
 }
 
 const CARD_BASE =
-  "absolute left-1.5 right-1.5 z-20 box-border flex cursor-pointer flex-col rounded-brand-md border border-brand-border border-l-2 text-left shadow-brand ring-1 ring-brand-ink/[0.02] transition-all duration-200 ease-out hover:z-30 hover:-translate-y-px hover:shadow-brand-md focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/20";
+  "absolute left-1.5 right-1.5 box-border flex cursor-pointer flex-col rounded-brand-md border border-brand-border border-l-2 text-left shadow-brand ring-1 ring-brand-ink/[0.02] transition-all duration-200 ease-out hover:-translate-y-px hover:shadow-brand-md";
 
 const VARIANT_STYLES = {
-  [CARD_VARIANT.COMPACT]: "overflow-hidden px-2.5 py-1.5",
-  [CARD_VARIANT.NORMAL]: "overflow-hidden px-2.5 py-1.5",
-  [CARD_VARIANT.LARGE]: "overflow-hidden px-2.5 py-2",
+  [CARD_VARIANT.COMPACT]: "px-2.5 py-1.5",
+  [CARD_VARIANT.NORMAL]: "px-2.5 py-1.5",
+  [CARD_VARIANT.LARGE]: "px-2.5 py-2",
 };
 
-export default function AppointmentCalendarCard({ block, onClick, style }) {
+export default function AppointmentCalendarCard({
+  block,
+  onClick,
+  onStateChange,
+  savingIds,
+  isMenuOpen = false,
+  onMenuOpen,
+  onMenuClose,
+  style,
+}) {
   const { row, startKey, slotCount, variant = CARD_VARIANT.COMPACT } = block;
   const display = { ...row, appointmentTime: startKey, slotCount };
   const timeRange = formatAppointmentTimeRange(display);
@@ -167,13 +178,26 @@ export default function AppointmentCalendarCard({ block, onClick, style }) {
   });
 
   const heightPx = block.heightPx ?? style?.height;
+  const suppressCardClickRef = useRef(false);
+
+  function handleCardMouseDown() {
+    if (isMenuOpen) {
+      suppressCardClickRef.current = true;
+    }
+  }
+
+  function handleCardClick() {
+    if (isMenuOpen || suppressCardClickRef.current) {
+      suppressCardClickRef.current = false;
+      return;
+    }
+    onClick?.(row);
+  }
 
   return (
-    <button
-      type="button"
-      onClick={() => onClick?.(row)}
-      title={fullTooltip}
-      className={`${CARD_BASE} ${VARIANT_STYLES[variant] ?? VARIANT_STYLES[CARD_VARIANT.LARGE]} ${stateStyle.border} ${stateStyle.card}`}
+    <div
+      data-testid="appointment-calendar-card"
+      className={`${CARD_BASE} ${isMenuOpen ? "z-40 hover:z-40" : "z-20 hover:z-30"} ${VARIANT_STYLES[variant] ?? VARIANT_STYLES[CARD_VARIANT.LARGE]} ${stateStyle.border} ${stateStyle.card}`}
       style={{
         ...style,
         boxSizing: "border-box",
@@ -181,33 +205,61 @@ export default function AppointmentCalendarCard({ block, onClick, style }) {
         maxHeight: heightPx,
         minWidth: 0,
       }}
-      aria-label={`Cita de ${patientName}, ${timeRange}${duration ? `, ${duration}` : ""}${phone ? `, ${phone}` : ""}`}
     >
-      {variant === CARD_VARIANT.COMPACT ? (
-        <CompactCardContent
+      <button
+        type="button"
+        onClick={handleCardClick}
+        onMouseDown={handleCardMouseDown}
+        title={fullTooltip}
+        className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/20"
+        aria-label={`Cita de ${patientName}, ${timeRange}${duration ? `, ${duration}` : ""}${phone ? `, ${phone}` : ""}`}
+      >
+        {variant === CARD_VARIANT.COMPACT ? (
+          <CompactCardContent
+            patientName={patientName}
+            timeRange={timeRange}
+            phone={phone}
+            stateStyle={stateStyle}
+          />
+        ) : variant === CARD_VARIANT.NORMAL ? (
+          <NormalCardContent
+            patientName={patientName}
+            timeRange={timeRange}
+            duration={duration}
+            phone={phone}
+            stateStyle={stateStyle}
+          />
+        ) : (
+          <LargeCardContent
+            patientName={patientName}
+            timeRange={timeRange}
+            duration={duration}
+            reason={reason}
+            phone={phone}
+            stateStyle={stateStyle}
+          />
+        )}
+      </button>
+
+      <div
+        className="absolute right-0.5 top-0.5 z-[35]"
+        onClick={(event) => event.stopPropagation()}
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <AppointmentActionsMenu
+          appointment={row}
+          appointmentId={row?.id}
+          state={row?.state}
           patientName={patientName}
-          timeRange={timeRange}
-          phone={phone}
-          stateStyle={stateStyle}
+          disabled={savingIds?.has(row?.id) ?? false}
+          isOpen={isMenuOpen}
+          onOpen={onMenuOpen}
+          onClose={onMenuClose}
+          onStateChange={onStateChange}
+          onEdit={() => onClick?.(row)}
+          compactTrigger
         />
-      ) : variant === CARD_VARIANT.NORMAL ? (
-        <NormalCardContent
-          patientName={patientName}
-          timeRange={timeRange}
-          duration={duration}
-          phone={phone}
-          stateStyle={stateStyle}
-        />
-      ) : (
-        <LargeCardContent
-          patientName={patientName}
-          timeRange={timeRange}
-          duration={duration}
-          reason={reason}
-          phone={phone}
-          stateStyle={stateStyle}
-        />
-      )}
-    </button>
+      </div>
+    </div>
   );
 }

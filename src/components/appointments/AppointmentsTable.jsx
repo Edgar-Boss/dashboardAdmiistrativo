@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import AppointmentActionsMenu from "./AppointmentActionsMenu";
-import AppointmentEditDrawer from "./AppointmentEditDrawer";
 import StatusBadge from "./StatusBadge";
 import {
   formatAppointmentDuration,
@@ -28,49 +27,35 @@ export default function AppointmentsTable({
   appointments,
   savingIds,
   onStateChange,
-  onAppointmentUpdate,
+  onEditAppointment,
 }) {
   const [openMenuId, setOpenMenuId] = useState(null);
-  const [editingAppointment, setEditingAppointment] = useState(null);
 
   const sorted = useMemo(
     () => appointments.slice().sort(compareByDateTime),
     [appointments]
   );
 
-  function handleSaveEdit(updated) {
-    onAppointmentUpdate?.(updated);
-    setEditingAppointment(null);
-  }
-
-  function renderActions(row) {
+  function renderActions(row, surface) {
+    const menuId = `${surface}-${row.id}`;
     return (
       <AppointmentActionsMenu
+        appointment={row}
         appointmentId={row.id}
         state={row.state}
         patientName={row.name}
         disabled={savingIds.has(row.id)}
-        isOpen={openMenuId === row.id}
-        onOpen={() => setOpenMenuId(row.id)}
+        isOpen={openMenuId === menuId}
+        onOpen={() => setOpenMenuId(menuId)}
         onClose={() => setOpenMenuId(null)}
         onStateChange={onStateChange}
-        onEdit={() => {
-          setOpenMenuId(null);
-          setEditingAppointment(row);
-        }}
+        onEdit={onEditAppointment}
       />
     );
   }
 
   return (
     <>
-      <AppointmentEditDrawer
-        appointment={editingAppointment}
-        isOpen={editingAppointment !== null}
-        onClose={() => setEditingAppointment(null)}
-        onSave={handleSaveEdit}
-      />
-
       {/* Mobile cards */}
       <div className="space-y-3 md:hidden">
         {sorted.map((row) => {
@@ -92,7 +77,7 @@ export default function AppointmentsTable({
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   <StatusBadge state={row.state} />
-                  {renderActions(row)}
+                  {renderActions(row, "mobile")}
                 </div>
               </div>
               <dl className="mt-3 space-y-1.5 text-sm">
@@ -187,7 +172,7 @@ export default function AppointmentsTable({
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end">
-                        {renderActions(row)}
+                        {renderActions(row, "desktop")}
                       </div>
                     </td>
                   </tr>
