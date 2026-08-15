@@ -12,6 +12,39 @@ export const CALENDAR_CONFIG = {
   cardVerticalInsetPx: 2,
 };
 
+/**
+ * Max viewport width that uses one full specialist “page” + scroll snap.
+ * Matches Tailwind `md` (`max-width: 767px`). From `md` up, keep the multi-column grid.
+ */
+export const CALENDAR_PAGED_MAX_WIDTH_PX = 767;
+
+export function getDoctorColumnWidthPx(
+  containerWidthPx,
+  isPaged,
+  config = CALENDAR_CONFIG,
+) {
+  if (!isPaged) return config.doctorColumnWidthPx;
+  const timeWidth = config.timeColumnWidthPx ?? 0;
+  const containerWidth = Number(containerWidthPx);
+  if (!Number.isFinite(containerWidth) || containerWidth <= timeWidth) {
+    return config.doctorColumnWidthPx;
+  }
+  return Math.round(containerWidth - timeWidth);
+}
+
+export function getCalendarGridWidthPx(
+  columnCount,
+  doctorColumnWidthPx,
+  config = CALENDAR_CONFIG,
+) {
+  const n = Math.max(0, Number(columnCount) || 0);
+  const doctorWidth = Number(doctorColumnWidthPx);
+  const safeDoctorWidth = Number.isFinite(doctorWidth)
+    ? doctorWidth
+    : config.doctorColumnWidthPx;
+  return (config.timeColumnWidthPx ?? 0) + n * safeDoctorWidth;
+}
+
 export function parseTimeToMinutes(time) {
   if (time == null || time === "") return null;
   const minutes = timeToMinutes(time);

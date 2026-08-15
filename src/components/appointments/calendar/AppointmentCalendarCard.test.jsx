@@ -149,6 +149,19 @@ describe("AppointmentCalendarCard actions menu", () => {
       screen.getByRole("button", { name: "Acciones de la cita" })
     ).toBeInTheDocument();
   });
+
+  it("keeps the Confirmada badge fully visible next to the menu", () => {
+    renderCard();
+
+    const badge = screen.getByText("Confirmada");
+    expect(badge).toBeInTheDocument();
+    expect(badge).toHaveClass("shrink-0");
+    expect(badge).toHaveClass("leading-tight");
+    expect(badge).toHaveClass("whitespace-nowrap");
+    expect(
+      screen.getByRole("button", { name: /Cita de Cliente Confirmada/ })
+    ).toHaveClass("pr-8");
+  });
 });
 
 const pendingAppointment = {

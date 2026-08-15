@@ -130,6 +130,48 @@
       radial-gradient(ellipse 50% 40% at 100% 100%, var(--color-nude) 0%, transparent 45%),
       var(--color-background);
   }
+
+  .calendar-scroll {
+    container-type: inline-size;
+  }
+
+  .calendar-grid-inner {
+    width: calc(
+      var(--calendar-time-col) +
+        (var(--calendar-col-count) * var(--calendar-doctor-col))
+    );
+  }
+
+  .calendar-doctor-col {
+    width: var(--calendar-doctor-col);
+  }
+
+  @media (max-width: 767px) {
+    .calendar-scroll {
+      scroll-snap-type: x mandatory;
+      scroll-padding-left: var(--calendar-time-col);
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .calendar-scroll::-webkit-scrollbar {
+      width: 0;
+      height: 0;
+    }
+
+    .calendar-grid-inner {
+      width: calc(
+        var(--calendar-time-col) +
+          (var(--calendar-col-count) * (100cqw - var(--calendar-time-col)))
+      );
+    }
+
+    .calendar-doctor-col {
+      width: calc(100cqw - var(--calendar-time-col));
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+    }
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

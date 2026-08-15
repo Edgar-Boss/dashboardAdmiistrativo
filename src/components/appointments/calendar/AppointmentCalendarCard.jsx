@@ -25,14 +25,14 @@ function buildTooltipText({ patientName, timeRange, duration, reason, phone }) {
 function StatusBadge({ stateStyle, size = "default" }) {
   const sizeClass =
     size === "compact"
-      ? "px-1.5 py-0.5 text-[9px] leading-none"
+      ? "px-1.5 py-0.5 text-[9px] leading-tight"
       : size === "normal"
-        ? "px-2 py-0.5 text-[9px] leading-none"
-        : "px-2.5 py-1 text-[10px] leading-none";
+        ? "px-2 py-0.5 text-[9px] leading-tight"
+        : "px-2.5 py-0.5 text-[10px] leading-tight";
 
   return (
     <span
-      className={`inline-flex shrink-0 items-center whitespace-nowrap rounded-full font-medium ${sizeClass} ${stateStyle.badge}`}
+      className={`inline-flex h-fit shrink-0 items-center whitespace-nowrap rounded-full font-medium ${sizeClass} ${stateStyle.badge}`}
     >
       {stateStyle.label}
     </span>
@@ -42,7 +42,7 @@ function StatusBadge({ stateStyle, size = "default" }) {
 function CompactCardContent({ patientName, timeRange, phone, stateStyle }) {
   return (
     <div className="flex h-full min-h-0 w-full flex-col justify-center gap-1">
-      <div className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-1.5 pr-7">
+      <div className="grid w-full shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-1.5">
         <p className="truncate text-[11px] font-semibold leading-tight text-brand-text">
           {patientName}
         </p>
@@ -73,7 +73,7 @@ function NormalCardContent({
 }) {
   return (
     <div className="flex h-full min-h-0 w-full flex-col gap-1">
-      <div className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-1.5 pr-7">
+      <div className="grid w-full shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-1.5">
         <p className="truncate text-xs font-semibold leading-tight text-brand-text">
           {patientName}
         </p>
@@ -109,7 +109,7 @@ function LargeCardContent({
 
   return (
     <div className={`flex h-full min-h-0 w-full flex-col ${hasMeta ? "gap-1.5" : "gap-1"}`}>
-      <div className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 pr-7">
+      <div className="grid w-full shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2">
         <p className="truncate text-[13px] font-semibold leading-snug tracking-tight text-brand-text">
           {patientName}
         </p>
@@ -211,7 +211,7 @@ export default function AppointmentCalendarCard({
         onClick={handleCardClick}
         onMouseDown={handleCardMouseDown}
         title={fullTooltip}
-        className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/20"
+        className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden pr-8 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/20"
         aria-label={`Cita de ${patientName}, ${timeRange}${duration ? `, ${duration}` : ""}${phone ? `, ${phone}` : ""}`}
       >
         {variant === CARD_VARIANT.COMPACT ? (

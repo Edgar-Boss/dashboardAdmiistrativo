@@ -5,15 +5,14 @@
 export default function CurrentTimeIndicator({
   topPx,
   timeLabel,
-  gridWidth,
   timeColumnWidthPx,
 }) {
   if (topPx == null || !timeLabel) return null;
 
   return (
     <div
-      className="pointer-events-none absolute left-0 z-30 flex items-center"
-      style={{ top: topPx, width: gridWidth }}
+      className="pointer-events-none absolute left-0 z-30 flex w-full items-center"
+      style={{ top: topPx }}
       aria-hidden
     >
       <div

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   buildAppointmentBlocks,
   buildDoctorColumns,
@@ -76,9 +76,25 @@ export default function MedicalCalendarGrid({
     [showNowLine, now, calendarConfig],
   );
 
-  const gridWidth =
-    (calendarConfig?.timeColumnWidthPx ?? 0) +
-    columns.length * (calendarConfig?.doctorColumnWidthPx ?? 0);
+  const scrollRef = useRef(null);
+
+  useLayoutEffect(() => {
+    const node = scrollRef.current;
+    if (!node) return undefined;
+
+    function clampHorizontalScroll() {
+      const maxScroll = Math.max(0, node.scrollWidth - node.clientWidth);
+      if (node.scrollLeft > maxScroll) {
+        node.scrollLeft = maxScroll;
+      }
+    }
+
+    clampHorizontalScroll();
+    if (typeof ResizeObserver === "undefined") return undefined;
+    const observer = new ResizeObserver(clampHorizontalScroll);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [columns.length]);
 
   if (loading || !calendarConfig) return <CalendarSkeleton />;
 
@@ -88,8 +104,17 @@ export default function MedicalCalendarGrid({
 
   return (
     <div className="overflow-hidden rounded-brand-md border border-brand-border bg-brand-background shadow-brand ring-1 ring-brand-ink/[0.03]">
-      <div className="max-h-[min(72vh,720px)] overflow-auto scroll-smooth">
-        <div className="relative min-w-max" style={{ width: gridWidth }}>
+      <div
+        ref={scrollRef}
+        data-testid="calendar-scroll"
+        className="calendar-scroll max-h-[min(72vh,720px)] overflow-auto scroll-smooth overscroll-x-contain"
+        style={{
+          "--calendar-time-col": `${calendarConfig.timeColumnWidthPx}px`,
+          "--calendar-doctor-col": `${calendarConfig.doctorColumnWidthPx}px`,
+          "--calendar-col-count": String(columns.length),
+        }}
+      >
+        <div className="calendar-grid-inner relative min-w-max">
           <div className="sticky top-0 z-40 flex border-b border-brand-border bg-brand-background/90 backdrop-blur-md">
             <div
               className="sticky left-0 z-50 shrink-0 border-r border-brand-border bg-brand-background/90 px-2 py-3.5"
@@ -102,8 +127,8 @@ export default function MedicalCalendarGrid({
             {columns.map((col) => (
               <div
                 key={col.key}
-                style={{ width: calendarConfig.doctorColumnWidthPx }}
-                className="shrink-0"
+                data-testid={`calendar-doctor-header-${col.key}`}
+                className="calendar-doctor-col shrink-0"
               >
                 <DoctorColumnHeader
                   doctorName={col.doctorName}
@@ -114,7 +139,7 @@ export default function MedicalCalendarGrid({
             ))}
           </div>
 
-          <div className="relative flex">
+          <div className="relative flex w-full">
             <div
               className="sticky left-0 z-30 shrink-0 border-r border-brand-border bg-brand-background"
               style={{ width: calendarConfig.timeColumnWidthPx }}
@@ -127,7 +152,11 @@ export default function MedicalCalendarGrid({
                     style={{ top: slot.topPx, height: 0 }}
                   >
                     {slot.label ? (
-                      <span className="-mt-2 text-[11px] font-medium tabular-nums text-brand-text-muted/90">
+                      <span
+                        className={`${
+                          slot.topPx === 0 ? "mt-1" : "-mt-2"
+                        } text-[11px] font-medium tabular-nums text-brand-text-muted/90`}
+                      >
                         {slot.label}
                       </span>
                     ) : null}
@@ -143,8 +172,8 @@ export default function MedicalCalendarGrid({
               return (
                 <div
                   key={col.key}
-                  className={`relative shrink-0 border-r border-brand-border/60 ${theme.column}`}
-                  style={{ width: calendarConfig.doctorColumnWidthPx }}
+                  data-testid={`calendar-doctor-col-${col.key}`}
+                  className={`calendar-doctor-col relative shrink-0 border-r border-brand-border/60 ${theme.column}`}
                 >
                   <div className="relative" style={{ height: gridHeight }}>
                     {timeSlots.map((slot) => (
@@ -181,7 +210,6 @@ export default function MedicalCalendarGrid({
               <CurrentTimeIndicator
                 topPx={nowPosition.topPx}
                 timeLabel={nowPosition.label}
-                gridWidth={gridWidth}
                 timeColumnWidthPx={calendarConfig.timeColumnWidthPx}
               />
             ) : null}
