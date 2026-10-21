@@ -20,7 +20,7 @@ export default function DoctorCard({ doctor, onEdit }) {
     <article className="group nb-card p-5 transition hover:-translate-y-0.5 hover:shadow-brand-md">
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-soft text-sm font-semibold text-brand-primary ring-1 ring-brand-primary/15">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-soft text-sm font-semibold text-brand-primary-text ring-1 ring-brand-primary-text/20">
             {initials(doctor?.name)}
           </div>
           <div className="min-w-0">

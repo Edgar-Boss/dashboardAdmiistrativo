@@ -18,7 +18,7 @@ function CalendarSkeleton() {
   return (
     <div className="flex min-h-[420px] items-center justify-center rounded-brand-md border border-brand-border bg-brand-surface">
       <div className="flex flex-col items-center gap-3">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-border border-t-brand-primary" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-border border-t-brand-primary-text" />
         <p className="text-sm text-brand-text-muted">Cargando agenda...</p>
       </div>
     </div>
@@ -103,7 +103,7 @@ export default function MedicalCalendarGrid({
   if (columns.length === 0) return <EmptyDoctors />;
 
   return (
-    <div className="overflow-hidden rounded-brand-md border border-brand-border bg-brand-background shadow-brand ring-1 ring-brand-ink/[0.03]">
+    <div className="overflow-hidden rounded-brand-md border border-brand-border bg-brand-calendar shadow-brand ring-1 ring-brand-ink/[0.03]">
       <div
         ref={scrollRef}
         data-testid="calendar-scroll"
@@ -115,9 +115,9 @@ export default function MedicalCalendarGrid({
         }}
       >
         <div className="calendar-grid-inner relative min-w-max">
-          <div className="sticky top-0 z-40 flex border-b border-brand-border bg-brand-background/90 backdrop-blur-md">
+          <div className="sticky top-0 z-40 flex border-b border-brand-border bg-brand-calendar/95 backdrop-blur-md">
             <div
-              className="sticky left-0 z-50 shrink-0 border-r border-brand-border bg-brand-background/90 px-2 py-3.5"
+              className="sticky left-0 z-50 shrink-0 border-r border-brand-border bg-brand-calendar px-2 py-3.5"
               style={{ width: calendarConfig.timeColumnWidthPx }}
             >
               <span className="text-[10px] font-medium uppercase tracking-widest text-brand-text-muted/80">
@@ -141,7 +141,7 @@ export default function MedicalCalendarGrid({
 
           <div className="relative flex w-full">
             <div
-              className="sticky left-0 z-30 shrink-0 border-r border-brand-border bg-brand-background"
+              className="sticky left-0 z-30 shrink-0 border-r border-brand-border bg-brand-calendar"
               style={{ width: calendarConfig.timeColumnWidthPx }}
             >
               <div className="relative" style={{ height: gridHeight }}>

@@ -20,7 +20,7 @@ function SummaryCard({ label, value, tone = "neutral" }) {
       ? "bg-brand-success-soft text-brand-success"
       : tone === "danger"
         ? "bg-brand-danger-soft text-brand-danger"
-        : "bg-brand-soft text-brand-primary";
+        : "bg-brand-soft text-brand-primary-text";
 
   return (
     <div className="nb-card p-5">

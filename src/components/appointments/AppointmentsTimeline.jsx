@@ -35,7 +35,7 @@ export default function AppointmentsTimeline({
                 <div className="relative flex items-center gap-2.5 pt-0.5">
                   <span
                     aria-hidden
-                    className="pointer-events-none absolute left-[calc(-0.75rem-30px)] top-2.5 h-3 w-3 -translate-x-1/2 rounded-full border-2 border-brand-surface bg-brand-primary shadow-brand ring-1 ring-brand-border sm:left-[calc(-1rem-30px)]"
+                    className="pointer-events-none absolute left-[calc(-0.75rem-30px)] top-2.5 h-3 w-3 -translate-x-1/2 rounded-full border-2 border-brand-surface bg-brand-primary-text shadow-brand ring-1 ring-brand-border sm:left-[calc(-1rem-30px)]"
                   />
                   <p className="font-display text-lg font-semibold tracking-tight text-brand-text">{timeKey}</p>
                 </div>

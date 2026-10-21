@@ -114,7 +114,7 @@ export default function SummaryCards({ appointments = [], summary = null }) {
         icon={IconCalendar}
         label="Total citas"
         value={total}
-        iconWrapClass="bg-brand-soft text-brand-primary"
+        iconWrapClass="bg-brand-soft text-brand-primary-text"
       />
       <Card
         icon={IconClock}

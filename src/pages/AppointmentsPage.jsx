@@ -385,7 +385,7 @@ export default function AppointmentsPage() {
             <button
               type="button"
               onClick={() => setCreateDrawerOpen(true)}
-              className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-brand bg-brand-primary px-4 py-2.5 text-sm font-medium text-white shadow-brand transition-colors hover:bg-brand-primary-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/30 sm:w-auto"
+              className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-brand bg-brand-primary px-4 py-2.5 text-sm font-medium text-brand-ink shadow-brand transition-colors hover:bg-brand-primary-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/30 sm:w-auto"
             >
               <Plus className="h-4 w-4" aria-hidden />
               Nueva cita

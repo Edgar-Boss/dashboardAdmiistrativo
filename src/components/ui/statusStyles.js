@@ -1,4 +1,4 @@
-/** Shared status badge styles aligned with Nails Boutique Puebla brand */
+/** Shared status badge styles aligned with the clinic logo palette */
 
 export const APPOINTMENT_STATUS_STYLES = {
   PENDING:
@@ -8,7 +8,7 @@ export const APPOINTMENT_STATUS_STYLES = {
   CANCELLED:
     "bg-brand-danger-soft text-brand-danger ring-1 ring-brand-danger/25",
   COMPLETED:
-    "bg-brand-soft text-brand-primary ring-1 ring-brand-primary/20",
+    "bg-brand-soft text-brand-primary-text ring-1 ring-brand-primary-text/25",
 };
 
 export const APPOINTMENT_STATUS_LABELS = {

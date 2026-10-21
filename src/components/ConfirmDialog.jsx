@@ -12,7 +12,7 @@ const VARIANT_STYLES = {
     confirmVariant: "danger",
   },
   default: {
-    icon: "bg-brand-soft text-brand-primary",
+    icon: "bg-brand-soft text-brand-primary-text",
     confirmVariant: "primary",
   },
 };

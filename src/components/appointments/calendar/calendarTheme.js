@@ -4,34 +4,34 @@ export const STATUS_BADGE_BASE =
 
 const DOCTOR_THEMES = [
   {
-    header: "bg-gradient-to-br from-brand-soft/70 to-brand-muted/40",
-    avatar: "bg-brand-soft text-brand-primary ring-brand-primary/15",
-    column: "bg-brand-soft/[0.18]",
+    header: "bg-gradient-to-br from-brand-soft/30 to-white",
+    avatar: "bg-brand-soft text-brand-primary-text ring-brand-primary-text/20",
+    column: "bg-brand-soft/[0.08]",
   },
   {
-    header: "bg-gradient-to-br from-brand-secondary/20 to-brand-nude/40",
-    avatar: "bg-brand-secondary/20 text-brand-primary ring-brand-secondary/30",
-    column: "bg-brand-secondary/[0.08]",
+    header: "bg-gradient-to-br from-brand-secondary/12 to-white",
+    avatar: "bg-brand-secondary/20 text-brand-primary-text ring-brand-secondary/30",
+    column: "bg-brand-secondary/[0.04]",
   },
   {
-    header: "bg-gradient-to-br from-brand-success-soft to-brand-nude/30",
+    header: "bg-gradient-to-br from-brand-success-soft/70 to-white",
     avatar: "bg-brand-success-soft text-brand-success ring-brand-success/20",
-    column: "bg-brand-success-soft/[0.35]",
+    column: "bg-brand-success-soft/[0.22]",
   },
   {
-    header: "bg-gradient-to-br from-brand-accent/20 to-brand-nude/50",
+    header: "bg-gradient-to-br from-brand-accent/12 to-white",
     avatar: "bg-brand-accent/20 text-brand-warning ring-brand-accent/25",
-    column: "bg-brand-accent/[0.08]",
+    column: "bg-brand-accent/[0.04]",
   },
   {
-    header: "bg-gradient-to-br from-brand-warning-soft to-brand-nude/30",
+    header: "bg-gradient-to-br from-brand-warning-soft/70 to-white",
     avatar: "bg-brand-warning-soft text-brand-warning ring-brand-warning/20",
-    column: "bg-brand-warning-soft/[0.35]",
+    column: "bg-brand-warning-soft/[0.22]",
   },
   {
-    header: "bg-gradient-to-br from-brand-nude/60 to-brand-soft/30",
+    header: "bg-gradient-to-br from-brand-nude/35 to-white",
     avatar: "bg-brand-nude text-brand-ink ring-brand-border-strong/60",
-    column: "bg-brand-nude/[0.25]",
+    column: "bg-brand-nude/[0.12]",
   },
 ];
 
@@ -44,7 +44,7 @@ export function normalizeCalendarState(state) {
   return ["PENDING", "CONFIRMED", "CANCELLED"].includes(key) ? key : "PENDING";
 }
 
-/** Soft Nails Boutique palette — warm pastels, low saturation */
+/** Appointment state colors. Blue tones follow the logo; status hues stay distinct. */
 const STATE_STYLES = {
   CONFIRMED: {
     label: "Confirmada",

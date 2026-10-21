@@ -38,28 +38,26 @@ export default function Sidebar({
       />
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-[260px] max-w-[85%] shrink-0 flex-col border-r border-white/10 bg-brand-ink transition-transform duration-300 ease-out lg:static lg:z-auto lg:w-[248px] lg:max-w-none lg:translate-x-0 ${
+        className={`nb-sidebar fixed inset-y-0 left-0 z-50 flex w-[260px] max-w-[85%] shrink-0 flex-col border-r border-white/10 transition-transform duration-300 ease-out lg:static lg:z-auto lg:w-[248px] lg:max-w-none lg:translate-x-0 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
         aria-label="Navegación principal"
       >
         <div className="flex items-start justify-between gap-2 border-b border-white/10 px-4 py-4">
           <div className="min-w-0 flex-1">
-            <div className="inline-flex max-w-full items-center rounded-brand bg-brand-surface px-2.5 py-2 shadow-brand">
-              <img
-                src="/logo-nails-boutique.png"
-                alt="Nails Boutique Puebla"
-                className="h-11 w-auto max-w-[190px] object-contain object-left"
-              />
-            </div>
+            <img
+              src="/logo.jpg"
+              alt="SD"
+              className="block h-auto w-full max-w-[8.4375rem] rounded-brand object-contain shadow-brand"
+            />
             {user?.username ? (
-              <p className="mt-2.5 truncate text-xs text-white/55">{user.username}</p>
+              <p className="mt-2.5 truncate text-xs text-white/80">{user.username}</p>
             ) : null}
           </div>
           <button
             type="button"
             onClick={() => onClose?.()}
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-brand text-white/60 transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-secondary/60 lg:hidden"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-brand text-white/80 transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-secondary/60 lg:hidden"
             aria-label="Cerrar menú"
           >
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
@@ -78,7 +76,7 @@ export default function Sidebar({
                 onClick={() => onClose?.()}
                 className={`rounded-brand px-3 py-2.5 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-secondary/50 ${
                   isActive
-                    ? "bg-brand-primary text-white shadow-brand"
+                    ? "bg-brand-primary text-brand-ink shadow-brand"
                     : "text-white/70 hover:bg-white/10 hover:text-white"
                 }`}
                 aria-current={isActive ? "page" : undefined}
@@ -94,7 +92,7 @@ export default function Sidebar({
             <button
               type="button"
               onClick={() => onEnableNotifications?.()}
-              className="mb-1 flex w-full items-center gap-2 rounded-brand px-3 py-2.5 text-sm font-medium text-white/55 transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-secondary/50"
+              className="mb-1 flex w-full items-center gap-2 rounded-brand px-3 py-2.5 text-sm font-medium text-white/80 transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-secondary/50"
             >
               <Bell className="h-4 w-4 shrink-0" aria-hidden />
               Activar notificaciones

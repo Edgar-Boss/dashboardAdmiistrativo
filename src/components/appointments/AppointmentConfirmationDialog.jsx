@@ -12,13 +12,13 @@ const COPY = {
     title: "Enviar confirmación",
     description: "¿Deseas enviar la confirmación por WhatsApp a este cliente?",
     icon: "send",
-    iconClass: "bg-brand-soft text-brand-primary",
+    iconClass: "bg-brand-soft text-brand-primary-text",
   },
   [CONFIRMATION_DIALOG_STATUS.SENDING]: {
     title: "Enviando mensaje...",
     description: "Estamos enviando la confirmación por WhatsApp.",
     icon: "spinner",
-    iconClass: "bg-brand-soft text-brand-primary",
+    iconClass: "bg-brand-soft text-brand-primary-text",
   },
   [CONFIRMATION_DIALOG_STATUS.SUCCESS]: {
     title: "Mensaje enviado",
