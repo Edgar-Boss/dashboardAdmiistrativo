@@ -162,8 +162,9 @@ export default function AppointmentCalendarCard({
 }) {
   const { row, startKey, slotCount, variant = CARD_VARIANT.COMPACT } = block;
   const display = { ...row, appointmentTime: startKey, slotCount };
-  const timeRange = formatAppointmentTimeRange(display);
-  const duration = formatAppointmentDuration(display);
+  const timeRange = block.timeLabel ?? formatAppointmentTimeRange(display);
+  const duration = block.durationLabel ?? formatAppointmentDuration(display);
+  const continuation = block.continuationLabel ?? null;
   const stateStyle = getStateStyle(row?.state);
   const patientName = row?.name ?? row?.patientName ?? "\u2014";
   const phone = formatPhone(row?.phoneNumber ?? row?.phone_number);
@@ -197,6 +198,7 @@ export default function AppointmentCalendarCard({
   return (
     <div
       data-testid="appointment-calendar-card"
+      data-appointment-id={row?.id}
       className={`${CARD_BASE} ${isMenuOpen ? "z-40 hover:z-40" : "z-20 hover:z-30"} ${VARIANT_STYLES[variant] ?? VARIANT_STYLES[CARD_VARIANT.LARGE]} ${stateStyle.border} ${stateStyle.card}`}
       style={{
         ...style,
@@ -212,8 +214,13 @@ export default function AppointmentCalendarCard({
         onMouseDown={handleCardMouseDown}
         title={fullTooltip}
         className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden pr-8 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/20"
-        aria-label={`Cita de ${patientName}, ${timeRange}${duration ? `, ${duration}` : ""}${phone ? `, ${phone}` : ""}`}
+        aria-label={`Cita de ${patientName}, ${timeRange}${duration ? `, ${duration}` : ""}${continuation ? `, ${continuation}` : ""}${phone ? `, ${phone}` : ""}`}
       >
+        {continuation ? (
+          <p className="truncate text-[10px] font-medium leading-tight text-brand-text">
+            {continuation}
+          </p>
+        ) : null}
         {variant === CARD_VARIANT.COMPACT ? (
           <CompactCardContent
             patientName={patientName}

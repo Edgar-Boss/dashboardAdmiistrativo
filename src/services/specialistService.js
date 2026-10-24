@@ -76,15 +76,37 @@ export function normalizeSpecialistEntry(raw) {
 
 /**
  * Active when the active flag is exactly "Y" (case-insensitive).
- * Arrays: only index 3. Objects: normalized activeFlag.
+ * Arrays: only index 3 (`ACTIVE`). Objects: normalized activeFlag.
  * @param {unknown} raw
  */
 export function isSpecialistActiveEntry(raw) {
+  return explicitActivityFlag(raw) === "Y";
+}
+
+/**
+ * Activity from GET_ALL_SPECIALISTS column ACTIVE (tuple index 3 / activeFlag).
+ * The API stores "Y" or "N". Anything else, including a missing flag, stays unknown.
+ * Do not use Boolean(): Boolean("N") is true.
+ * @param {unknown} raw
+ * @returns {"active"|"inactive"|"unknown"}
+ */
+export function specialistActivity(raw) {
+  const flag = explicitActivityFlag(raw);
+  if (flag === "Y") return "active";
+  if (flag === "N") return "inactive";
+  return "unknown";
+}
+
+function explicitActivityFlag(raw) {
   if (Array.isArray(raw)) {
-    return String(raw[3] ?? "").trim().toUpperCase() === "Y";
+    return String(raw[3] ?? "").trim().toUpperCase();
   }
-  const normalized = normalizeSpecialistEntry(raw);
-  return String(normalized.activeFlag ?? "").trim().toUpperCase() === "Y";
+  if (raw != null && typeof raw === "object") {
+    const value =
+      raw.activeFlag ?? raw.active_flag ?? raw.active ?? raw.ACTIVE ?? null;
+    return String(value ?? "").trim().toUpperCase();
+  }
+  return "";
 }
 
 /**

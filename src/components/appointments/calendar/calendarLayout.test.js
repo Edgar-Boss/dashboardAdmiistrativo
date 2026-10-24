@@ -10,6 +10,8 @@ import {
   buildVisualTimeSlots,
   getCurrentTimePosition,
 } from "./calendarLayout";
+import { visibleDaySegment } from "../appointmentTemporal";
+import { proposedDurationMinutes } from "../appointmentTemporal";
 
 function labels(config) {
   return buildVisualTimeSlots(config)
@@ -118,5 +120,130 @@ describe("buildAppointmentBlocks outside hours", () => {
     expect(blocks[0].row.id).toBe(2);
     expect(warn).toHaveBeenCalled();
     warn.mockRestore();
+  });
+
+  it("keeps a V1 appointment on slot count times the grid slot", () => {
+    const config = calendarConfigForRange("09:00", "18:00", { slotMinutes: 30 });
+    const blocks = buildAppointmentBlocks(
+      [{ id: 4, appointmentTime: "10:00", slotCount: 2, doctorId: 1 }],
+      config,
+    );
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0].presentation).toBe("card");
+    expect(blocks[0].durationMinutes).toBe(60);
+  });
+});
+
+describe("V2 civil appointment segments", () => {
+  const fullDay = calendarConfigForRange("00:00", "24:00", { slotMinutes: 60 });
+  const overnight = {
+    id: 77,
+    doctorId: 3,
+    name: "Nocturna",
+    appointmentTime: "23:00",
+    slotCount: 2,
+    slotMinutesAtBooking: 30,
+    durationMinutes: 120,
+    startAt: "2026-10-27T23:00:00",
+    endAt: "2026-10-28T01:00:00",
+    temporalStatus: "OK",
+  };
+
+  it("draws the same appointment on both civil days", () => {
+    const first = buildAppointmentBlocks([overnight], fullDay, "2026-10-27");
+    const second = buildAppointmentBlocks([overnight], fullDay, "2026-10-28");
+
+    expect(first).toHaveLength(1);
+    expect(second).toHaveLength(1);
+    expect(first[0].row.id).toBe(77);
+    expect(second[0].row.id).toBe(77);
+    expect(first[0].startMin).toBe(23 * 60);
+    expect(first[0].endMin).toBe(24 * 60);
+    expect(second[0].startMin).toBe(0);
+    expect(second[0].endMin).toBe(60);
+    expect(first[0].continuationLabel).toContain("Termina el día siguiente");
+    expect(second[0].continuationLabel).toContain("Comenzó el día anterior");
+    expect(first[0].timeLabel).toBe("23:00 – 01:00");
+    expect(first[0].durationMinutes).toBe(120);
+  });
+
+  it("does not give the next day a segment that ends at midnight", () => {
+    const row = {
+      ...overnight,
+      id: 78,
+      startAt: "2026-10-27T22:00:00",
+      endAt: "2026-10-28T00:00:00",
+      durationMinutes: 120,
+    };
+    expect(visibleDaySegment(row.startAt, row.endAt, "2026-10-28")).toBeNull();
+    expect(buildAppointmentBlocks([row], fullDay, "2026-10-28")).toEqual([]);
+    expect(buildAppointmentBlocks([row], fullDay, "2026-10-27")).toHaveLength(1);
+  });
+
+  it("uses the historical duration instead of the grid slot", () => {
+    const grid60 = calendarConfigForRange("09:00", "18:00", { slotMinutes: 60 });
+    expect(proposedDurationMinutes(2, 30)).toBe(60);
+    expect(proposedDurationMinutes(2, 60)).toBe(120);
+
+    const halfHour = buildAppointmentBlocks(
+      [
+        {
+          id: 1,
+          doctorId: 1,
+          appointmentTime: "10:00",
+          slotCount: 2,
+          slotMinutesAtBooking: 30,
+          durationMinutes: 60,
+          startAt: "2026-10-27T10:00:00",
+          endAt: "2026-10-27T11:00:00",
+          temporalStatus: "OK",
+        },
+      ],
+      grid60,
+      "2026-10-27",
+    );
+    const hour = buildAppointmentBlocks(
+      [
+        {
+          id: 2,
+          doctorId: 1,
+          appointmentTime: "12:00",
+          slotCount: 2,
+          slotMinutesAtBooking: 60,
+          durationMinutes: 120,
+          startAt: "2026-10-27T12:00:00",
+          endAt: "2026-10-27T14:00:00",
+          temporalStatus: "OK",
+        },
+      ],
+      grid60,
+      "2026-10-27",
+    );
+
+    expect(halfHour[0].durationMinutes).toBe(60);
+    expect(halfHour[0].heightPx).toBeLessThan(70);
+    expect(hour[0].durationMinutes).toBe(120);
+    expect(hour[0].heightPx).toBeGreaterThan(100);
+  });
+
+  it("keeps an unknown temporal status off the legacy bar", () => {
+    const config = calendarConfigForRange("09:00", "18:00");
+    const blocks = buildAppointmentBlocks(
+      [
+        {
+          id: 9,
+          doctorId: 1,
+          appointmentTime: "10:00",
+          slotCount: 4,
+          temporalStatus: "WHATEVER",
+        },
+      ],
+      config,
+      "2026-10-27",
+    );
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0].presentation).toBe("list");
+    expect(blocks[0].durationLabel).toBe("Duración no disponible");
+    expect(blocks[0].heightPx).toBeUndefined();
   });
 });

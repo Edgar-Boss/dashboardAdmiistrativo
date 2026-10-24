@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { updateAppointment } from "../../services/appointmentService";
 import AppointmentEditDrawer from "./AppointmentEditDrawer";
 
 vi.mock("../../services/appointmentService", () => ({
@@ -174,5 +175,92 @@ describe("AppointmentEditDrawer appointment info", () => {
 
     expect(screen.getByText("Teléfono del cliente")).toBeInTheDocument();
     expect(screen.getByText("—")).toBeInTheDocument();
+  });
+});
+
+describe("AppointmentEditDrawer historical duration", () => {
+  it("labels two historical blocks from the booking snapshot", () => {
+    renderDrawer({
+      appointment: {
+        ...confirmedAppointment,
+        slotCount: 2,
+        slotMinutesAtBooking: 30,
+        durationMinutes: 60,
+        startAt: "2026-10-27T23:00:00",
+        endAt: "2026-10-28T01:00:00",
+        temporalStatus: "OK",
+      },
+    });
+
+    expect(screen.getByRole("option", { name: "1 hora" })).toBeInTheDocument();
+    expect(screen.getByText("2026-10-27 23:00")).toBeInTheDocument();
+    expect(screen.getByText("2026-10-28 01:00")).toBeInTheDocument();
+  });
+
+  it("labels a 60 minute snapshot without using a 30 minute default", () => {
+    renderDrawer({
+      appointment: {
+        ...confirmedAppointment,
+        slotCount: 2,
+        slotMinutesAtBooking: 60,
+        durationMinutes: 120,
+        startAt: "2026-10-27T12:00:00",
+        endAt: "2026-10-27T14:00:00",
+        temporalStatus: "OK",
+      },
+    });
+
+    expect(screen.getByRole("option", { name: "2 horas" })).toBeInTheDocument();
+  });
+
+  it("does not allow a duration change when the snapshot is missing", async () => {
+    const user = userEvent.setup();
+    const onSave = vi.fn();
+    updateAppointment.mockResolvedValue({});
+    renderDrawer({
+      appointment: {
+        ...confirmedAppointment,
+        name: "Histórica",
+        slotCount: null,
+        temporalStatus: "UNMIGRATED_BOOKING",
+      },
+      onSave,
+    });
+
+    const duration = screen.getByLabelText("Duración de la cita");
+    expect(duration).toBeDisabled();
+    expect(screen.getByText("Duración no disponible")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "La duración histórica no está disponible, así que no se puede modificar.",
+      ),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
+
+    expect(updateAppointment).toHaveBeenCalledWith(
+      confirmedAppointment.id,
+      expect.objectContaining({ name: "Histórica", slotCount: null }),
+    );
+    expect(onSave).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not announce success when the backend rejects the edit", async () => {
+    const user = userEvent.setup();
+    const onSave = vi.fn();
+    updateAppointment.mockRejectedValue(new Error("UNMIGRATED_BOOKING"));
+    renderDrawer({
+      appointment: {
+        ...confirmedAppointment,
+        temporalStatus: "UNMIGRATED_BOOKING",
+        slotCount: null,
+      },
+      onSave,
+    });
+
+    await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("UNMIGRATED_BOOKING");
+    expect(onSave).not.toHaveBeenCalled();
   });
 });

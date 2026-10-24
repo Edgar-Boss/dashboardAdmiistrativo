@@ -1,4 +1,9 @@
 import { timeToMinutes } from "../appointmentHelpers";
+import {
+  hasIntervalSchedule,
+  sharedSlotMinutes,
+  shiftsForCivilDate,
+} from "./scheduleIntervals";
 
 /** Visual/structural calendar defaults. Day range comes from the tenant schedule. */
 export const CALENDAR_CONFIG = {
@@ -63,8 +68,50 @@ export function formatMinutesAsTime(totalMinutes) {
  * Derived per-date config. Does not mutate {@link CALENDAR_CONFIG}.
  * Prefer {@code dayStartMinutes}/{@code dayEndMinutes}; hour fields are a fallback.
  */
+export function buildCalendarConfigFromDoctorSchedules(
+  schedules,
+  civilDate,
+  base = CALENDAR_CONFIG,
+) {
+  const shiftsByDoctor = new Map();
+  const visible = [];
+  for (const schedule of schedules ?? []) {
+    if (!hasIntervalSchedule(schedule)) {
+      shiftsByDoctor.set(String(schedule?.doctorId), []);
+      continue;
+    }
+    const shifts = shiftsForCivilDate(schedule.intervals, civilDate);
+    shiftsByDoctor.set(String(schedule.doctorId), shifts);
+    for (const shift of shifts) {
+      if (shift.visibleStart != null) visible.push(shift);
+    }
+  }
+  if (visible.length === 0) return null;
+  return {
+    ...base,
+    slotMinutes: sharedSlotMinutes(visible, base.slotMinutes),
+    dayStartMinutes: Math.min(...visible.map((shift) => shift.visibleStart)),
+    dayEndMinutes: Math.max(...visible.map((shift) => shift.visibleEnd)),
+    intervalMode: true,
+    shiftsByDoctor,
+  };
+}
+
 export function buildCalendarConfigFromSchedule(schedule, base = CALENDAR_CONFIG) {
   if (!schedule?.open) return null;
+  if (hasIntervalSchedule(schedule)) {
+    const shifts = shiftsForCivilDate(schedule.intervals, schedule.date);
+    const visible = shifts.filter((shift) => shift.visibleStart != null);
+    if (visible.length === 0) return null;
+    return {
+      ...base,
+      slotMinutes: sharedSlotMinutes(visible, base.slotMinutes),
+      dayStartMinutes: Math.min(...visible.map((shift) => shift.visibleStart)),
+      dayEndMinutes: Math.max(...visible.map((shift) => shift.visibleEnd)),
+      intervalMode: true,
+      sharedShifts: shifts,
+    };
+  }
   const dayStartMinutes = parseTimeToMinutes(schedule.startTime);
   const dayEndMinutes = parseTimeToMinutes(schedule.endTime);
   if (dayStartMinutes == null || dayEndMinutes == null) return null;

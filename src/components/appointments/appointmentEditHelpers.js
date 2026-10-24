@@ -3,6 +3,12 @@ import {
   normalizeTimeKey,
   timeToMinutes,
 } from "./appointmentHelpers";
+import {
+  describeAppointmentTemporal,
+  durationChangeLocked,
+  formatCivilClock,
+  parseCivilDateTime,
+} from "./appointmentTemporal";
 
 /** Each slot represents 30 minutes (e.g. 3 slots = 1 h 30 min). */
 export const DEFAULT_SLOT_MINUTES = 30;
@@ -174,26 +180,67 @@ export function normalizeAppointments(appointments) {
   return appointments.map((item) => normalizeAppointment(item));
 }
 
-/** Human duration label from slotCount (e.g. "1 h 30 min"). */
+const DURATION_UNAVAILABLE = "Duración no disponible";
+
+/**
+ * Stored V2 interval. Clocks and dates come from the civil text.
+ * A missing or inverted end is not replaced with slotCount × grid minutes.
+ */
+function formatStoredCivilRange(startAt, endAt) {
+  const start = parseCivilDateTime(startAt);
+  const end = parseCivilDateTime(endAt);
+  if (!start || !end) return "—";
+  const endsBeforeStart =
+    end.date < start.date ||
+    (end.date === start.date && end.minutes <= start.minutes);
+  if (endsBeforeStart) return "—";
+  const startClock = formatCivilClock(start.minutes);
+  const endClock = formatCivilClock(end.minutes);
+  if (start.date === end.date) return `${startClock} – ${endClock}`;
+  return `${start.date} ${startClock} – ${end.date} ${endClock}`;
+}
+
+/**
+ * V2 rows with temporalStatus OK use durationMinutes.
+ * UNMIGRATED_BOOKING, an unknown status, or an incomplete OK row do not invent a length.
+ * A row that omits temporalStatus keeps the V1 slotCount × grid calculation.
+ */
 export function formatAppointmentDuration(
   appointment,
   slotMinutes = DEFAULT_SLOT_MINUTES,
 ) {
-  return formatDurationLabel(resolveSlotCount(appointment), slotMinutes);
+  const temporal = describeAppointmentTemporal(appointment);
+  if (temporal.kind === "legacy") {
+    return formatDurationLabel(resolveSlotCount(appointment), slotMinutes);
+  }
+  if (temporal.kind === "ok" && temporal.durationMinutes != null) {
+    return formatDurationLabel(temporal.durationMinutes, 1);
+  }
+  return DURATION_UNAVAILABLE;
 }
 
-/** Start–end time range from appointment time + slotCount. */
+/**
+ * V2 rows with temporalStatus OK use startAt and endAt.
+ * Midnight crossings keep both civil dates. Legacy rows keep the slot grid.
+ */
 export function formatAppointmentTimeRange(
   appointment,
   slotMinutes = DEFAULT_SLOT_MINUTES,
 ) {
-  const summary = getDurationSummary(
-    getAppointmentTimeRaw(appointment),
-    resolveSlotCount(appointment),
-    slotMinutes,
-  );
-  if (summary.start === "—") return "—";
-  return `${summary.start} – ${summary.end}`;
+  const temporal = describeAppointmentTemporal(appointment);
+  if (temporal.kind === "legacy") {
+    const summary = getDurationSummary(
+      getAppointmentTimeRaw(appointment),
+      resolveSlotCount(appointment),
+      slotMinutes,
+    );
+    if (summary.start === "—") return "—";
+    return `${summary.start} – ${summary.end}`;
+  }
+  if (temporal.kind === "ok") {
+    return formatStoredCivilRange(temporal.startAt, temporal.endAt);
+  }
+  return "—";
 }
 
 /** Max options in the duration select (includes the appointment's current value). */
@@ -291,19 +338,22 @@ export function isAppointmentEditFormDirty(appointment, form) {
   const persistedNotes = String(getNotes(appointment)).trim();
   const persistedSlots = resolveSlotCount(appointment);
   const persistedState = normalizeAppointmentState(appointment?.state);
+  const slotsChanged = durationChangeLocked(appointment)
+    ? false
+    : Number(form?.slotCount) !== persistedSlots;
   return (
     String(form?.patientName ?? "").trim() !== persistedName ||
-    Number(form?.slotCount) !== persistedSlots ||
+    slotsChanged ||
     normalizeAppointmentState(form?.state) !== persistedState ||
     String(form?.notes ?? "").trim() !== persistedNotes
   );
 }
 
-export function buildUpdateAppointmentPayload(form) {
+export function buildUpdateAppointmentPayload(form, appointment) {
   const reason = form.notes.trim();
   return {
     name: form.patientName.trim(),
-    slotCount: form.slotCount,
+    slotCount: durationChangeLocked(appointment) ? null : form.slotCount,
     reason: reason || null,
   };
 }

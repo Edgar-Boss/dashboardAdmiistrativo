@@ -8,8 +8,8 @@ import CalendarView from "../components/appointments/CalendarView";
 import CalendarFilterTabs from "../components/appointments/calendar/CalendarFilterTabs";
 import CalendarToolbar from "../components/appointments/calendar/CalendarToolbar";
 import FilterTabs from "../components/appointments/FilterTabs";
-import { mergeCalendarAppointment } from "../components/appointments/appointmentEditHelpers";
 import { appointmentDateKey } from "../components/appointments/appointmentHelpers";
+import { selectCalendarDay } from "../components/appointments/calendar/calendarDaySelection";
 import {
   CANCELLED_CANNOT_REACTIVATE_MESSAGE,
   isCancelledReactivation,
@@ -35,6 +35,9 @@ function normalizeState(state) {
     ? normalized
     : "PENDING";
 }
+
+const SAVED_VIEW_TITLE = "La cita se guardó.";
+const SAVED_VIEW_DETAIL = "No se pudo actualizar la vista.";
 
 function todayIsoDate() {
   const d = new Date();
@@ -69,6 +72,7 @@ export default function AppointmentsPage() {
   const [savingIds, setSavingIds] = useState(() => new Set());
   const [sendingConfirmationId, setSendingConfirmationId] = useState(null);
   const sendingConfirmationIdRef = useRef(null);
+  const stateChangeIdsRef = useRef(new Set());
   const [confirmationDialog, setConfirmationDialog] = useState(
     getClosedConfirmationDialog
   );
@@ -77,9 +81,21 @@ export default function AppointmentsPage() {
   const [viewType, setViewType] = useState("list");
   const [selectedDate, setSelectedDate] = useState(() => todayIsoDate());
   const [calendarLoading, setCalendarLoading] = useState(false);
+  const [calendarRefreshing, setCalendarRefreshing] = useState(false);
   const [calendarError, setCalendarError] = useState(null);
+  const [calendarRefreshError, setCalendarRefreshError] = useState(null);
   const [calendarRows, setCalendarRows] = useState([]);
+  const [calendarRowsDate, setCalendarRowsDate] = useState(null);
+  const [calendarAttempt, setCalendarAttempt] = useState(0);
   const [calendarSummary, setCalendarSummary] = useState(null);
+  const dayLoadGeneration = useRef(0);
+  const catalogGeneration = useRef(0);
+  const calendarQueryRef = useRef({
+    date: selectedDate,
+    filter,
+    viewType,
+  });
+  calendarQueryRef.current = { date: selectedDate, filter, viewType };
   const [editingAppointment, setEditingAppointment] = useState(null);
   const [createDrawerOpen, setCreateDrawerOpen] = useState(false);
 
@@ -96,33 +112,26 @@ export default function AppointmentsPage() {
     [appointments]
   );
 
-  const calendarAppointments = useMemo(() => {
-    const catalogForDay = filteredAppointments.filter(
-      (a) => appointmentDateKey(a) === selectedDate
-    );
-
-    // Prefer main catalog (includes slotCount from GET /api/admin/appointments).
-    if (catalogForDay.length > 0) {
-      return catalogForDay;
-    }
-
-    // Fallback: day search rows enriched with slotCount from catalog when possible.
-    return calendarRows
-      .filter((row) => {
-        const state = normalizeState(row.state);
-        if (filter === "ALL") return state !== "CANCELLED";
-        return state === filter;
-      })
-      .map((row) =>
-        mergeCalendarAppointment(row, appointmentsById.get(row.id))
-      );
-  }, [
-    filteredAppointments,
-    selectedDate,
-    calendarRows,
-    appointmentsById,
-    filter,
-  ]);
+  const calendarSelection = useMemo(
+    () =>
+      selectCalendarDay({
+        dailyRows: calendarRows,
+        dailyDate: calendarRowsDate,
+        selectedDate,
+        dailyError: calendarError,
+        catalogById: appointmentsById,
+        filter,
+      }),
+    [
+      calendarRows,
+      calendarRowsDate,
+      selectedDate,
+      calendarError,
+      appointmentsById,
+      filter,
+    ],
+  );
+  const calendarAppointments = calendarSelection.appointments;
 
   function handleAppointmentUpdate(updated) {
     setActionError(null);
@@ -132,6 +141,71 @@ export default function AppointmentsPage() {
     setCalendarRows((prev) =>
       prev.map((a) => (a.id === updated.id ? { ...a, ...updated } : a))
     );
+  }
+
+  async function reloadAfterAppointmentSave() {
+    const requestedDate = calendarQueryRef.current.date;
+    const requestedFilter = calendarQueryRef.current.filter;
+    const requestedView = calendarQueryRef.current.viewType;
+    const refreshDay = requestedView === "calendar" && Boolean(requestedDate);
+    const token = ++dayLoadGeneration.current;
+    const catalogToken = ++catalogGeneration.current;
+
+    setCalendarRefreshing(true);
+    if (refreshDay) setCalendarLoading(true);
+    setCalendarRefreshError(null);
+
+    const dayPromise = refreshDay
+      ? fetchAppointmentsByDate({
+          date: requestedDate,
+          doctorId: null,
+          state: requestedFilter === "ALL" ? null : requestedFilter,
+        })
+      : Promise.resolve(null);
+
+    try {
+      const [settledDay, settledCatalog] = await Promise.allSettled([
+        dayPromise,
+        fetchAppointments(),
+      ]);
+
+      const dayStillCurrent =
+        token === dayLoadGeneration.current &&
+        calendarQueryRef.current.date === requestedDate &&
+        calendarQueryRef.current.filter === requestedFilter &&
+        calendarQueryRef.current.viewType === requestedView;
+      const dayFailed = refreshDay && settledDay.status === "rejected";
+      const catalogFailed = settledCatalog.status === "rejected";
+
+      if (dayStillCurrent && (dayFailed || (!refreshDay && catalogFailed))) {
+        setCalendarRefreshError(SAVED_VIEW_DETAIL);
+        return;
+      }
+
+      if (
+        !dayFailed &&
+        settledCatalog.status === "fulfilled" &&
+        catalogToken === catalogGeneration.current
+      ) {
+        const data = Array.isArray(settledCatalog.value) ? settledCatalog.value : [];
+        setAppointments(data);
+        rememberAppointmentIds(data.map((item) => item.id));
+      }
+
+      if (!dayStillCurrent || !refreshDay || settledDay.status !== "fulfilled") return;
+
+      const { appointments: rows, summary } = settledDay.value ?? {};
+      setCalendarRows(Array.isArray(rows) ? rows : []);
+      setCalendarRowsDate(requestedDate);
+      setCalendarSummary(summary ?? null);
+      setCalendarError(null);
+      setCalendarRefreshError(null);
+    } finally {
+      if (token === dayLoadGeneration.current) {
+        setCalendarRefreshing(false);
+        if (refreshDay) setCalendarLoading(false);
+      }
+    }
   }
 
   async function handleAppointmentCreated(created) {
@@ -174,10 +248,17 @@ export default function AppointmentsPage() {
     }
   }
 
-  async function handleStateChange(appointmentId, nextState) {
-    setActionError(null);
+  function appointmentInView(appointmentId) {
+    const inCalendar = calendarRows.find((row) => row?.id === appointmentId) ?? null;
+    const inCatalog = appointments.find((row) => row?.id === appointmentId) ?? null;
+    if (viewType === "calendar") return inCalendar ?? inCatalog;
+    return inCatalog ?? inCalendar;
+  }
 
-    const current = appointments.find((a) => a.id === appointmentId);
+  async function handleStateChange(appointmentId, nextState) {
+    if (stateChangeIdsRef.current.has(appointmentId)) return;
+
+    const current = appointmentInView(appointmentId);
     const previousState = current?.state;
     if (!current || previousState === nextState) {
       return;
@@ -188,25 +269,26 @@ export default function AppointmentsPage() {
       return;
     }
 
-    // Optimistic update
+    stateChangeIdsRef.current.add(appointmentId);
+    setActionError(null);
+    setCalendarRefreshError(null);
     setAppointments((prev) =>
-      prev.map((a) =>
-        a.id === appointmentId ? { ...a, state: nextState } : a
+      prev.map((row) =>
+        row.id === appointmentId ? { ...row, state: nextState } : row
       )
     );
-
     setSavingIds((prev) => new Set([...prev, appointmentId]));
 
+    let saved = false;
     try {
       await updateAppointmentState({ id: appointmentId, change: nextState });
+      saved = true;
     } catch (e) {
-      // Revert on failure — keep previous state (e.g. CANCELLED)
       setAppointments((prev) =>
-        prev.map((a) =>
-          a.id === appointmentId ? { ...a, state: previousState } : a
+        prev.map((row) =>
+          row.id === appointmentId ? { ...row, state: previousState } : row
         )
       );
-
       setActionError(
         e instanceof Error
           ? e.message
@@ -218,6 +300,17 @@ export default function AppointmentsPage() {
         next.delete(appointmentId);
         return next;
       });
+    }
+
+    if (!saved) {
+      stateChangeIdsRef.current.delete(appointmentId);
+      return;
+    }
+
+    try {
+      await reloadAfterAppointmentSave();
+    } finally {
+      stateChangeIdsRef.current.delete(appointmentId);
     }
   }
 
@@ -332,40 +425,46 @@ export default function AppointmentsPage() {
     if (viewType !== "calendar") return;
     if (!selectedDate) return;
 
-    let cancelled = false;
+    const requestedDate = selectedDate;
+    const requestedFilter = filter;
+    const token = ++dayLoadGeneration.current;
+    setCalendarRefreshing(false);
+    setCalendarRefreshError(null);
+
     async function loadCalendarDay() {
       setCalendarLoading(true);
       setCalendarError(null);
+      setCalendarRowsDate(null);
       try {
         const { appointments: rows, summary } = await fetchAppointmentsByDate({
-          date: selectedDate,
+          date: requestedDate,
           doctorId: null,
-          state: filter === "ALL" ? null : filter,
+          state: requestedFilter === "ALL" ? null : requestedFilter,
         });
-        if (!cancelled) {
-          setCalendarRows(Array.isArray(rows) ? rows : []);
-          setCalendarSummary(summary ?? null);
-        }
+        if (token !== dayLoadGeneration.current) return;
+        setCalendarRows(Array.isArray(rows) ? rows : []);
+        setCalendarRowsDate(requestedDate);
+        setCalendarSummary(summary ?? null);
       } catch (e) {
-        if (!cancelled) {
-          setCalendarRows([]);
-          setCalendarSummary(null);
-          setCalendarError(
-            e instanceof Error
-              ? e.message
-              : "No se pudo cargar el día del calendario."
-          );
-        }
+        if (token !== dayLoadGeneration.current) return;
+        setCalendarRows([]);
+        setCalendarRowsDate(requestedDate);
+        setCalendarSummary(null);
+        setCalendarError(
+          e instanceof Error
+            ? e.message
+            : "No se pudo cargar el día del calendario."
+        );
       } finally {
-        if (!cancelled) setCalendarLoading(false);
+        if (token === dayLoadGeneration.current) setCalendarLoading(false);
       }
     }
 
     loadCalendarDay();
     return () => {
-      cancelled = true;
+      dayLoadGeneration.current += 1;
     };
-  }, [viewType, selectedDate, filter]);
+  }, [viewType, selectedDate, filter, calendarAttempt]);
 
   return (
     <div className="min-h-screen bg-brand-background">
@@ -437,6 +536,36 @@ export default function AppointmentsPage() {
               role="status"
             >
               <p className="font-medium">{actionSuccess}</p>
+            </div>
+          )}
+
+          {!loading && !error && calendarRefreshing && (
+            <p
+              className="mb-4 text-sm font-medium text-brand-text-muted"
+              role="status"
+              aria-live="polite"
+            >
+              Actualizando la agenda…
+            </p>
+          )}
+
+          {!loading && !error && calendarRefreshError && (
+            <div
+              className="mb-4 rounded-brand border border-brand-danger/25 bg-brand-danger-soft px-4 py-3 text-sm text-brand-danger"
+              role="alert"
+            >
+              <p className="font-medium">{SAVED_VIEW_TITLE}</p>
+              <p className="mt-1">{calendarRefreshError}</p>
+              <button
+                type="button"
+                onClick={() => {
+                  void reloadAfterAppointmentSave();
+                }}
+                disabled={calendarRefreshing}
+                className="mt-3 rounded-brand border border-brand-danger/30 bg-brand-surface px-3 py-1.5 text-xs font-medium text-brand-danger disabled:opacity-50"
+              >
+                Reintentar
+              </button>
             </div>
           )}
 
@@ -552,21 +681,29 @@ export default function AppointmentsPage() {
 
                   {calendarError ? (
                     <div
-                      className="mb-4 rounded-brand border border-brand-warning/30 bg-brand-warning-soft px-4 py-3 text-sm text-brand-warning"
-                      role="status"
+                      className="rounded-brand border border-brand-danger/25 bg-brand-danger-soft px-4 py-3 text-sm text-brand-danger"
+                      role="alert"
                     >
-                      {calendarError}. Mostrando las citas del listado principal.
+                      <p className="font-medium">No se pudieron cargar las citas de este día.</p>
+                      <p className="mt-1">{calendarError}</p>
+                      <button
+                        type="button"
+                        onClick={() => setCalendarAttempt((attempt) => attempt + 1)}
+                        className="mt-3 rounded-brand border border-brand-danger/30 bg-brand-surface px-3 py-1.5 text-xs font-medium text-brand-danger"
+                      >
+                        Reintentar
+                      </button>
                     </div>
-                  ) : null}
-
-                  <CalendarView
-                    appointments={calendarAppointments}
-                    loading={calendarLoading}
-                    selectedDate={selectedDate}
-                    onAppointmentClick={setEditingAppointment}
-                    onStateChange={handleStateChange}
-                    savingIds={savingIds}
-                  />
+                  ) : (
+                    <CalendarView
+                      appointments={calendarAppointments}
+                      loading={calendarLoading || calendarSelection.status === "pending"}
+                      selectedDate={selectedDate}
+                      onAppointmentClick={setEditingAppointment}
+                      onStateChange={handleStateChange}
+                      savingIds={savingIds}
+                    />
+                  )}
                 </div>
               )}
             </>
@@ -584,8 +721,8 @@ export default function AppointmentsPage() {
         appointment={editingAppointment}
         isOpen={editingAppointment !== null}
         onClose={() => setEditingAppointment(null)}
-        onSave={(updated) => {
-          handleAppointmentUpdate(updated);
+        onSave={async () => {
+          await reloadAfterAppointmentSave();
           setEditingAppointment(null);
         }}
         onSendConfirmation={requestSendConfirmation}
