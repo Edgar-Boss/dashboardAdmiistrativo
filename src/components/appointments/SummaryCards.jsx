@@ -32,16 +32,16 @@ function IconX({ className }) {
 
 function Card({ icon: Icon, label, value, iconWrapClass }) {
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+    <div className="nb-card p-5">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-3xl font-semibold tracking-tight text-gray-900 tabular-nums">
+          <p className="text-3xl font-semibold tracking-tight text-brand-text tabular-nums">
             {value}
           </p>
-          <p className="mt-1.5 text-sm font-medium text-gray-500">{label}</p>
+          <p className="mt-1.5 text-sm font-medium text-brand-text-muted">{label}</p>
         </div>
         <div
-          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${iconWrapClass}`}
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-brand ${iconWrapClass}`}
         >
           <Icon className="h-5 w-5" />
         </div>
@@ -114,25 +114,25 @@ export default function SummaryCards({ appointments = [], summary = null }) {
         icon={IconCalendar}
         label="Total citas"
         value={total}
-        iconWrapClass="bg-sky-50 text-sky-600"
+        iconWrapClass="bg-brand-soft text-brand-primary-text"
       />
       <Card
         icon={IconClock}
         label="Pendientes"
         value={pending}
-        iconWrapClass="bg-amber-50 text-amber-600"
+        iconWrapClass="bg-brand-warning-soft text-brand-warning"
       />
       <Card
         icon={IconCheck}
         label="Confirmadas"
         value={confirmed}
-        iconWrapClass="bg-emerald-50 text-emerald-600"
+        iconWrapClass="bg-brand-success-soft text-brand-success"
       />
       <Card
         icon={IconX}
         label="Canceladas"
         value={cancelled}
-        iconWrapClass="bg-rose-50 text-rose-600"
+        iconWrapClass="bg-brand-danger-soft text-brand-danger"
       />
     </div>
   );

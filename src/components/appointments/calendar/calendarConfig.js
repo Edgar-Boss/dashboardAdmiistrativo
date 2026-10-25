@@ -1,27 +1,161 @@
+import { timeToMinutes } from "../appointmentHelpers";
+import {
+  hasIntervalSchedule,
+  sharedSlotMinutes,
+  shiftsForCivilDate,
+} from "./scheduleIntervals";
+
+/** Visual/structural calendar defaults. Day range comes from the tenant schedule. */
 export const CALENDAR_CONFIG = {
-  dayStartHour: 7,
-  dayEndHour: 21,
   slotMinutes: 30,
-  rowHeightPx: 48,
+  /** Tall enough for name/badge + time/phone inside a 30 min slot without clipping */
+  rowHeightPx: 60,
   timeColumnWidthPx: 72,
-  doctorColumnWidthPx: 280,
+  doctorColumnWidthPx: 300,
   gridLineIntervalMinutes: 60,
   /** Vertical gap between card edge and slot boundary */
   cardVerticalInsetPx: 2,
-  /** Min inner content area for 30 min cards (name + badge + time) */
-  compactMinHeightPx: 52,
-  /** Min height for 60 min cards */
-  normalMinHeightPx: 56,
-  /** Min height for long appointments */
-  largeMinHeightPx: 72,
 };
 
+/**
+ * Max viewport width that uses one full specialist “page” + scroll snap.
+ * Matches Tailwind `md` (`max-width: 767px`). From `md` up, keep the multi-column grid.
+ */
+export const CALENDAR_PAGED_MAX_WIDTH_PX = 767;
+
+export function getDoctorColumnWidthPx(
+  containerWidthPx,
+  isPaged,
+  config = CALENDAR_CONFIG,
+) {
+  if (!isPaged) return config.doctorColumnWidthPx;
+  const timeWidth = config.timeColumnWidthPx ?? 0;
+  const containerWidth = Number(containerWidthPx);
+  if (!Number.isFinite(containerWidth) || containerWidth <= timeWidth) {
+    return config.doctorColumnWidthPx;
+  }
+  return Math.round(containerWidth - timeWidth);
+}
+
+export function getCalendarGridWidthPx(
+  columnCount,
+  doctorColumnWidthPx,
+  config = CALENDAR_CONFIG,
+) {
+  const n = Math.max(0, Number(columnCount) || 0);
+  const doctorWidth = Number(doctorColumnWidthPx);
+  const safeDoctorWidth = Number.isFinite(doctorWidth)
+    ? doctorWidth
+    : config.doctorColumnWidthPx;
+  return (config.timeColumnWidthPx ?? 0) + n * safeDoctorWidth;
+}
+
+export function parseTimeToMinutes(time) {
+  if (time == null || time === "") return null;
+  const minutes = timeToMinutes(time);
+  return Number.isFinite(minutes) ? minutes : null;
+}
+
+export function formatMinutesAsTime(totalMinutes) {
+  if (!Number.isFinite(totalMinutes)) return null;
+  const wrapped = ((Math.round(totalMinutes) % 1440) + 1440) % 1440;
+  const h = Math.floor(wrapped / 60);
+  const m = wrapped % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+/**
+ * Derived per-date config. Does not mutate {@link CALENDAR_CONFIG}.
+ * Prefer {@code dayStartMinutes}/{@code dayEndMinutes}; hour fields are a fallback.
+ */
+export function buildCalendarConfigFromDoctorSchedules(
+  schedules,
+  civilDate,
+  base = CALENDAR_CONFIG,
+) {
+  const shiftsByDoctor = new Map();
+  const visible = [];
+  for (const schedule of schedules ?? []) {
+    if (!hasIntervalSchedule(schedule)) {
+      shiftsByDoctor.set(String(schedule?.doctorId), []);
+      continue;
+    }
+    const shifts = shiftsForCivilDate(schedule.intervals, civilDate);
+    shiftsByDoctor.set(String(schedule.doctorId), shifts);
+    for (const shift of shifts) {
+      if (shift.visibleStart != null) visible.push(shift);
+    }
+  }
+  if (visible.length === 0) return null;
+  return {
+    ...base,
+    slotMinutes: sharedSlotMinutes(visible, base.slotMinutes),
+    dayStartMinutes: Math.min(...visible.map((shift) => shift.visibleStart)),
+    dayEndMinutes: Math.max(...visible.map((shift) => shift.visibleEnd)),
+    intervalMode: true,
+    shiftsByDoctor,
+  };
+}
+
+export function buildCalendarConfigFromSchedule(schedule, base = CALENDAR_CONFIG) {
+  if (!schedule?.open) return null;
+  if (hasIntervalSchedule(schedule)) {
+    const shifts = shiftsForCivilDate(schedule.intervals, schedule.date);
+    const visible = shifts.filter((shift) => shift.visibleStart != null);
+    if (visible.length === 0) return null;
+    return {
+      ...base,
+      slotMinutes: sharedSlotMinutes(visible, base.slotMinutes),
+      dayStartMinutes: Math.min(...visible.map((shift) => shift.visibleStart)),
+      dayEndMinutes: Math.max(...visible.map((shift) => shift.visibleEnd)),
+      intervalMode: true,
+      sharedShifts: shifts,
+    };
+  }
+  const dayStartMinutes = parseTimeToMinutes(schedule.startTime);
+  const dayEndMinutes = parseTimeToMinutes(schedule.endTime);
+  if (dayStartMinutes == null || dayEndMinutes == null) return null;
+  if (dayEndMinutes <= dayStartMinutes) return null;
+
+  const slotMinutes = Number(schedule.slotMinutes);
+  return {
+    ...base,
+    slotMinutes:
+      Number.isFinite(slotMinutes) && slotMinutes > 0
+        ? slotMinutes
+        : base.slotMinutes,
+    dayStartMinutes,
+    dayEndMinutes,
+  };
+}
+
+export function calendarConfigForRange(
+  startTime,
+  endTime,
+  extra = {},
+  base = CALENDAR_CONFIG,
+) {
+  return buildCalendarConfigFromSchedule(
+    {
+      open: true,
+      startTime,
+      endTime,
+      slotMinutes: extra.slotMinutes ?? base.slotMinutes,
+    },
+    { ...base, ...extra },
+  );
+}
+
 export function getDayStartMinutes(config = CALENDAR_CONFIG) {
-  return config.dayStartHour * 60;
+  if (Number.isFinite(config?.dayStartMinutes)) return config.dayStartMinutes;
+  if (Number.isFinite(config?.dayStartHour)) return config.dayStartHour * 60;
+  return 0;
 }
 
 export function getDayEndMinutes(config = CALENDAR_CONFIG) {
-  return config.dayEndHour * 60;
+  if (Number.isFinite(config?.dayEndMinutes)) return config.dayEndMinutes;
+  if (Number.isFinite(config?.dayEndHour)) return config.dayEndHour * 60;
+  return 0;
 }
 
 export function minutesToTopPx(minutesFromDayStart, config = CALENDAR_CONFIG) {
@@ -30,5 +164,6 @@ export function minutesToTopPx(minutesFromDayStart, config = CALENDAR_CONFIG) {
 
 export function getGridHeightPx(config = CALENDAR_CONFIG) {
   const totalMinutes = getDayEndMinutes(config) - getDayStartMinutes(config);
+  if (totalMinutes <= 0) return 0;
   return (totalMinutes / config.slotMinutes) * config.rowHeightPx;
 }

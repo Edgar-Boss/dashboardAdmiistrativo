@@ -3,6 +3,8 @@ import DoctorCard from "../components/doctors/DoctorCard";
 import DoctorDrawer from "../components/doctors/DoctorDrawer";
 import DoctorForm from "../components/doctors/DoctorForm";
 import DoctorsFilters from "../components/doctors/DoctorsFilters";
+import TechnicianWeekEditor from "../components/doctors/TechnicianWeekEditor";
+import Button from "../components/ui/Button";
 import {
   createSpecialist,
   fetchSpecialists,
@@ -13,25 +15,25 @@ function normalize(text) {
   return String(text ?? "").trim().toLowerCase();
 }
 
-function SummaryCard({ label, value, tone = "slate" }) {
+function SummaryCard({ label, value, tone = "neutral" }) {
   const toneStyles =
-    tone === "emerald"
-      ? "bg-emerald-50 text-emerald-700"
-      : tone === "rose"
-        ? "bg-rose-50 text-rose-700"
-        : "bg-slate-50 text-slate-700";
+    tone === "success"
+      ? "bg-brand-success-soft text-brand-success"
+      : tone === "danger"
+        ? "bg-brand-danger-soft text-brand-danger"
+        : "bg-brand-soft text-brand-primary-text";
 
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+    <div className="nb-card p-5">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-3xl font-semibold tracking-tight text-gray-900 tabular-nums">
+          <p className="text-3xl font-semibold tracking-tight text-brand-text tabular-nums">
             {value}
           </p>
-          <p className="mt-1.5 text-sm font-medium text-gray-500">{label}</p>
+          <p className="mt-1.5 text-sm font-medium text-brand-text-muted">{label}</p>
         </div>
         <div
-          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${toneStyles}`}
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-brand ${toneStyles}`}
           aria-hidden
         >
           <span className="text-sm font-semibold tabular-nums">{value}</span>
@@ -52,6 +54,7 @@ export default function DoctorsPage() {
   const [specialty, setSpecialty] = useState("all");
   const [status, setStatus] = useState("all");
   const [sort, setSort] = useState("name-asc");
+  const [scheduleDoctor, setScheduleDoctor] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -77,6 +80,8 @@ export default function DoctorsPage() {
               status: active ? "active" : "inactive",
               email: null,
               phone: null,
+              whatsappPhone: s.whatsappPhone ?? "",
+              notificationsEnabled: Boolean(s.notificationsEnabled),
               appointmentsThisMonth,
             };
           });
@@ -85,7 +90,7 @@ export default function DoctorsPage() {
       } catch (e) {
         if (!cancelled) {
           setDoctors([]);
-          setLoadError(e instanceof Error ? e.message : "Failed to load specialists.");
+          setLoadError(e instanceof Error ? e.message : "No se pudieron cargar las especialistas.");
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -156,6 +161,9 @@ export default function DoctorsPage() {
   }
 
   async function handleSubmitDoctor(values) {
+    const whatsappPhone = String(values.whatsappPhone ?? "");
+    const notificationsEnabled = Boolean(values.notificationsEnabled);
+
     if (mode === "create") {
       const name = String(values.name ?? "").trim();
       const specialty = String(values.specialty ?? "").trim();
@@ -163,6 +171,8 @@ export default function DoctorsPage() {
         name,
         specialty,
         active: values.active ? "Y" : "N",
+        whatsappPhone,
+        notificationsEnabled,
       });
       const doctorId = result?.doctorId;
       if (!Number.isFinite(Number(doctorId))) {
@@ -176,6 +186,8 @@ export default function DoctorsPage() {
           status: values.active ? "active" : "inactive",
           email: null,
           phone: null,
+          whatsappPhone,
+          notificationsEnabled,
           appointmentsThisMonth: 0,
         },
         ...prev,
@@ -194,13 +206,22 @@ export default function DoctorsPage() {
       name: String(values.name ?? "").trim(),
       specialty: String(values.specialty ?? "").trim(),
       active: values.active ? "Y" : "N",
+      whatsappPhone,
+      notificationsEnabled,
     });
 
     const nextStatus = values.active ? "active" : "inactive";
     setDoctors((prev) =>
       prev.map((d) =>
         Number(d.id) === doctorId
-          ? { ...d, name: values.name, specialty: values.specialty, status: nextStatus }
+          ? {
+              ...d,
+              name: values.name,
+              specialty: values.specialty,
+              status: nextStatus,
+              whatsappPhone,
+              notificationsEnabled,
+            }
           : d
       )
     );
@@ -208,34 +229,41 @@ export default function DoctorsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-brand-background">
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-8 sm:py-12 lg:px-10">
         <header className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0">
-            <h1 className="text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl">
+            <h1 className="font-display text-2xl font-semibold tracking-tight text-brand-text sm:text-3xl">
               Especialistas
             </h1>
-            <p className="mt-2 text-sm text-gray-500">
-              Administra los especialistas y especialidades de la clínica
+            <p className="mt-2 text-sm text-brand-text-muted">
+              Administra las especialistas y servicios de la boutique
             </p>
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
-            <button
-              type="button"
-              onClick={handleNewDoctor}
-              className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:ring-offset-1"
-            >
+            <Button type="button" onClick={handleNewDoctor}>
               + Nuevo especialista
-            </button>
+            </Button>
           </div>
         </header>
 
         <section className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
-          <SummaryCard label="Total especialistas" value={summary.total} tone="slate" />
-          <SummaryCard label="Activos" value={summary.active} tone="emerald" />
-          <SummaryCard label="Inactivos" value={summary.inactive} tone="rose" />
+          <SummaryCard label="Total especialistas" value={summary.total} tone="neutral" />
+          <SummaryCard label="Activas" value={summary.active} tone="success" />
+          <SummaryCard label="Inactivas" value={summary.inactive} tone="danger" />
         </section>
+
+        {scheduleDoctor ? (
+          <div className="mb-8">
+            <TechnicianWeekEditor
+              key={scheduleDoctor.id}
+              doctorId={scheduleDoctor.id}
+              doctorName={scheduleDoctor.name}
+              onClose={() => setScheduleDoctor(null)}
+            />
+          </div>
+        ) : null}
 
         <div className="mb-6">
           <DoctorsFilters
@@ -251,41 +279,46 @@ export default function DoctorsPage() {
           />
         </div>
 
-        <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
+        <section className="nb-card p-6 sm:p-8">
           <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
-            <p className="text-sm font-semibold text-gray-900">
+            <p className="text-sm font-semibold text-brand-text">
               {filtered.length} especialista{filtered.length !== 1 ? "s" : ""}
             </p>
             {loading ? (
-              <p className="text-xs text-gray-500" role="status" aria-live="polite">
+              <p className="text-xs text-brand-text-muted" role="status" aria-live="polite">
                 Cargando especialistas...
               </p>
             ) : loadError ? (
-              <p className="text-xs text-rose-700" role="status">
+              <p className="text-xs text-brand-danger" role="status">
                 {loadError}
               </p>
             ) : (
-              <p className="text-xs text-gray-500">Fuente: API de especialistas</p>
+              <p className="text-xs text-brand-text-muted">Datos actualizados</p>
             )}
           </div>
 
           {loading ? (
-            <div className="flex min-h-[180px] items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-gray-50/60 px-6 py-12 text-center text-sm font-medium text-gray-600">
+            <div className="flex min-h-[180px] items-center justify-center rounded-brand-md border border-dashed border-brand-border bg-brand-soft/40 px-6 py-12 text-center text-sm font-medium text-brand-text-muted">
               Cargando...
             </div>
           ) : filtered.length === 0 ? (
-            <div className="flex min-h-[180px] flex-col items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-gray-50/60 px-6 py-12 text-center">
-              <p className="text-sm font-medium text-gray-600">
+            <div className="flex min-h-[180px] flex-col items-center justify-center rounded-brand-md border border-dashed border-brand-border bg-brand-soft/40 px-6 py-12 text-center">
+              <p className="text-sm font-medium text-brand-text-muted">
                 No hay especialistas que coincidan con los filtros.
               </p>
-              <p className="mt-1 max-w-md text-xs text-gray-500">
+              <p className="mt-1 max-w-md text-xs text-brand-text-muted">
                 Prueba con otro término de búsqueda o ajusta los filtros.
               </p>
             </div>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {filtered.map((doctor) => (
-                <DoctorCard key={doctor.id} doctor={doctor} onEdit={handleEdit} />
+                <DoctorCard
+                  key={doctor.id}
+                  doctor={doctor}
+                  onEdit={handleEdit}
+                  onSchedule={setScheduleDoctor}
+                />
               ))}
             </div>
           )}

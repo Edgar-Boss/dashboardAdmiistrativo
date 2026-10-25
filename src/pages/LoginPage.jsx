@@ -1,9 +1,6 @@
 import { useState } from "react";
-import { LogIn } from "lucide-react";
 import { login } from "../services/authService";
-
-const inputClass =
-  "w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm transition placeholder:text-gray-400 hover:border-gray-300 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-200 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:opacity-60";
+import Button from "../components/ui/Button";
 
 export default function LoginPage({ onSuccess }) {
   const [username, setUsername] = useState("");
@@ -31,28 +28,29 @@ export default function LoginPage({ onSuccess }) {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12">
-      <div className="w-full max-w-md">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-12">
+      <div className="nb-login-bg pointer-events-none absolute inset-0" aria-hidden />
+
+      <div className="relative w-full max-w-md">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-sm">
-            <LogIn className="h-6 w-6" strokeWidth={2} aria-hidden />
-          </div>
-          <h1 className="text-2xl font-semibold tracking-tight text-gray-900">
-            Panel Administrativo
-          </h1>
-          <p className="mt-2 text-sm text-gray-500">
+          <img
+            src="/logo.jpg"
+            alt="SD"
+            className="mx-auto mb-6 w-[min(100%,22rem)] object-contain"
+          />
+          <p className="text-sm text-brand-text-muted">
             Inicia sesión para continuar
           </p>
         </div>
 
         <form
           onSubmit={handleSubmit}
-          className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm ring-1 ring-gray-900/[0.03] sm:p-8"
+          className="rounded-brand-md border border-brand-border bg-brand-surface p-6 shadow-brand-md sm:p-8"
           noValidate
         >
           {error ? (
             <div
-              className="mb-5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800"
+              className="mb-5 rounded-brand border border-brand-danger/25 bg-brand-danger-soft px-4 py-3 text-sm text-brand-danger"
               role="alert"
             >
               {error}
@@ -61,10 +59,7 @@ export default function LoginPage({ onSuccess }) {
 
           <div className="space-y-5">
             <div>
-              <label
-                htmlFor="login-username"
-                className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-500"
-              >
+              <label htmlFor="login-username" className="nb-label">
                 Usuario
               </label>
               <input
@@ -75,16 +70,13 @@ export default function LoginPage({ onSuccess }) {
                 disabled={loading}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className={inputClass}
+                className="nb-input"
                 placeholder="admin"
               />
             </div>
 
             <div>
-              <label
-                htmlFor="login-password"
-                className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-500"
-              >
+              <label htmlFor="login-password" className="nb-label">
                 Contraseña
               </label>
               <input
@@ -95,19 +87,20 @@ export default function LoginPage({ onSuccess }) {
                 disabled={loading}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className={inputClass}
+                className="nb-input"
                 placeholder="••••••••"
               />
             </div>
           </div>
 
-          <button
+          <Button
             type="submit"
-            disabled={loading || !username.trim() || !password}
-            className="mt-6 inline-flex w-full items-center justify-center rounded-xl bg-blue-600 px-4 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50"
+            loading={loading}
+            disabled={!username.trim() || !password}
+            className="mt-6 w-full"
           >
-            {loading ? "Iniciando sesión…" : "Iniciar sesión"}
-          </button>
+            Iniciar sesión
+          </Button>
         </form>
       </div>
     </div>

@@ -6,9 +6,10 @@ import {
   buildDurationOptions,
   getDurationSummary,
 } from "./appointmentEditHelpers";
+import { formatCivilDateTime } from "./appointmentTemporal";
 
 const selectClass =
-  "w-full appearance-none rounded-xl border border-gray-200 bg-white py-2.5 pl-3.5 pr-10 text-sm font-medium text-gray-900 shadow-sm transition duration-150 ease-out hover:border-gray-300 hover:bg-gray-50/50 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:opacity-60 dark:border-gray-700 dark:bg-white dark:text-gray-900";
+  "w-full appearance-none rounded-brand border border-brand-border bg-brand-surface py-2.5 pl-3.5 pr-10 text-sm font-medium text-brand-text shadow-brand transition duration-150 ease-out hover:border-brand-border-strong hover:bg-brand-soft/40 focus:border-brand-primary/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25 disabled:cursor-not-allowed disabled:bg-brand-soft disabled:opacity-60";
 
 export default function AppointmentDurationSelect({
   slotCount,
@@ -17,6 +18,11 @@ export default function AppointmentDurationSelect({
   appointmentTime,
   disabled = false,
   maxSlotCount = DEFAULT_MAX_SLOT_COUNT,
+  unavailable = false,
+  unavailableReason = "La duración histórica no está disponible, así que no se puede modificar.",
+  startAt = null,
+  endAt = null,
+  recordedDurationLabel = null,
 }) {
   const durationOptions = useMemo(() => {
     const optionCount = Math.max(maxSlotCount, slotCount);
@@ -31,6 +37,26 @@ export default function AppointmentDurationSelect({
   const safeSlotCount = durationOptions.some((o) => o.slotCount === slotCount)
     ? slotCount
     : durationOptions[0]?.slotCount ?? 1;
+  const realStart = formatCivilDateTime(startAt);
+  const realEnd = formatCivilDateTime(endAt);
+
+  if (unavailable) {
+    return (
+      <div className="space-y-2">
+        <select
+          id="appointment-duration"
+          disabled
+          aria-label="Duración de la cita"
+          className={`${selectClass} cursor-not-allowed`}
+          value="unavailable"
+          onChange={() => {}}
+        >
+          <option value="unavailable">Duración no disponible</option>
+        </select>
+        <p className="text-xs leading-snug text-brand-text-muted">{unavailableReason}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-0">
@@ -50,7 +76,7 @@ export default function AppointmentDurationSelect({
           ))}
         </select>
         <ChevronDown
-          className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 transition-colors duration-150"
+          className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text-muted transition-colors duration-150"
           strokeWidth={2}
           aria-hidden
         />
@@ -59,24 +85,42 @@ export default function AppointmentDurationSelect({
       {summary.start !== "—" ? (
         <div
           key={`${summary.start}-${summary.end}-${summary.totalLabel}`}
-          className="mt-3 space-y-1.5 border-t border-gray-100 pt-3 transition-opacity duration-200 ease-out"
+          className="mt-3 space-y-1.5 border-t border-brand-border pt-3 transition-opacity duration-200 ease-out"
         >
           <p className="flex items-baseline justify-between gap-3 text-xs">
-            <span className="text-gray-400">Hora inicio</span>
-            <span className="font-medium tabular-nums text-gray-600">
+            <span className="text-brand-text-muted">Hora inicio</span>
+            <span className="font-medium tabular-nums text-brand-text">
               {summary.start}
             </span>
           </p>
           <p className="flex items-baseline justify-between gap-3 text-xs">
-            <span className="text-gray-400">Hora fin estimada</span>
-            <span className="font-medium tabular-nums text-gray-600">
+            <span className="text-brand-text-muted">Hora fin estimada</span>
+            <span className="font-medium tabular-nums text-brand-text">
               {summary.end}
             </span>
           </p>
           <p className="flex items-baseline justify-between gap-3 text-[11px]">
-            <span className="text-gray-400">Duración total</span>
-            <span className="font-medium text-gray-500">{summary.totalLabel}</span>
+            <span className="text-brand-text-muted">Duración total</span>
+            <span className="font-medium text-brand-text-muted">{summary.totalLabel}</span>
           </p>
+          {realStart ? (
+            <p className="flex items-baseline justify-between gap-3 text-[11px]">
+              <span className="text-brand-text-muted">Inicio real</span>
+              <span className="font-medium tabular-nums text-brand-text">{realStart}</span>
+            </p>
+          ) : null}
+          {realEnd ? (
+            <p className="flex items-baseline justify-between gap-3 text-[11px]">
+              <span className="text-brand-text-muted">Fin real</span>
+              <span className="font-medium tabular-nums text-brand-text">{realEnd}</span>
+            </p>
+          ) : null}
+          {recordedDurationLabel ? (
+            <p className="flex items-baseline justify-between gap-3 text-[11px]">
+              <span className="text-brand-text-muted">Duración registrada</span>
+              <span className="font-medium text-brand-text">{recordedDurationLabel}</span>
+            </p>
+          ) : null}
         </div>
       ) : null}
     </div>

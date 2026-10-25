@@ -11,24 +11,24 @@ export default function CalendarToolbar({
       <button
         type="button"
         onClick={onToday}
-        className="inline-flex items-center gap-2 rounded-xl border border-gray-200/80 bg-white px-4 py-2.5 text-sm font-medium text-gray-800 shadow-sm transition hover:border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+        className="inline-flex items-center gap-2 rounded-brand border border-brand-border bg-brand-surface px-4 py-2.5 text-sm font-medium text-brand-text shadow-brand transition hover:border-brand-border-strong hover:bg-brand-soft focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25"
       >
         Hoy
       </button>
 
-      <label className="relative inline-flex items-center gap-2 rounded-xl border border-gray-200/80 bg-white px-3 py-2 shadow-sm transition hover:border-gray-300 focus-within:ring-2 focus-within:ring-blue-500/20">
-        <CalendarDays className="h-4 w-4 text-gray-400" aria-hidden />
+      <label className="relative inline-flex items-center gap-2 rounded-brand border border-brand-border bg-brand-surface px-3 py-2 shadow-brand transition hover:border-brand-border-strong focus-within:ring-2 focus-within:ring-brand-primary/25">
+        <CalendarDays className="h-4 w-4 text-brand-text-muted" aria-hidden />
         <input
           type="date"
           value={selectedDate}
           onChange={(e) => onDateChange?.(e.target.value)}
-          className="border-0 bg-transparent p-0 text-sm text-gray-800 focus:outline-none focus:ring-0"
+          className="border-0 bg-transparent p-0 text-sm text-brand-text focus:outline-none focus:ring-0"
           aria-label="Fecha"
         />
       </label>
 
       {formattedDateLabel ? (
-        <p className="hidden text-sm font-medium capitalize text-gray-500 sm:block">
+        <p className="hidden text-sm font-medium capitalize text-brand-text-muted sm:block">
           {formattedDateLabel}
         </p>
       ) : null}

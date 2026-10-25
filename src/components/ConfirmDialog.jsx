@@ -1,18 +1,19 @@
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
+import Button from "./ui/Button";
 
 const VARIANT_STYLES = {
   success: {
-    icon: "bg-emerald-100 text-emerald-600",
-    confirm:
-      "bg-emerald-600 text-white hover:bg-emerald-700 focus:ring-emerald-500/30",
+    icon: "bg-brand-success-soft text-brand-success",
+    confirmVariant: "primary",
   },
   danger: {
-    icon: "bg-rose-100 text-rose-600",
-    confirm: "bg-rose-600 text-white hover:bg-rose-700 focus:ring-rose-500/30",
+    icon: "bg-brand-danger-soft text-brand-danger",
+    confirmVariant: "danger",
   },
   default: {
-    icon: "bg-gray-100 text-gray-600",
-    confirm: "bg-gray-900 text-white hover:bg-gray-800 focus:ring-gray-500/30",
+    icon: "bg-brand-soft text-brand-primary-text",
+    confirmVariant: "primary",
   },
 };
 
@@ -43,14 +44,16 @@ export default function ConfirmDialog({
   }, [open, loading, onCancel]);
 
   if (!open) return null;
+  if (typeof document === "undefined" || !document.body) return null;
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center p-4"
       role="presentation"
+      data-testid="confirm-dialog-root"
     >
       <div
-        className="absolute inset-0 bg-gray-900/40 animate-menu-in"
+        className="nb-overlay absolute inset-0 animate-menu-in"
         aria-hidden
         onClick={() => {
           if (!loading) onCancel?.();
@@ -62,7 +65,7 @@ export default function ConfirmDialog({
         aria-modal="true"
         aria-labelledby="confirm-dialog-title"
         aria-describedby="confirm-dialog-description"
-        className="relative w-full max-w-md rounded-2xl border border-gray-100 bg-white p-6 shadow-xl shadow-gray-200/60 animate-menu-in"
+        className="relative max-h-[min(90vh,640px)] w-full max-w-[min(28rem,calc(100vw-2rem))] overflow-y-auto rounded-brand-md border border-brand-border bg-brand-surface p-6 shadow-brand-lg animate-menu-in"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex gap-4">
@@ -94,34 +97,39 @@ export default function ConfirmDialog({
           </div>
 
           <div className="min-w-0 flex-1">
-            <h2 id="confirm-dialog-title" className="text-base font-semibold text-gray-900">
+            <h2
+              id="confirm-dialog-title"
+              className="font-display text-xl font-semibold text-brand-text"
+            >
               {title}
             </h2>
-            <p id="confirm-dialog-description" className="mt-2 text-sm leading-relaxed text-gray-600">
+            <p
+              id="confirm-dialog-description"
+              className="mt-2 text-sm leading-relaxed text-brand-text-muted"
+            >
               {description}
             </p>
           </div>
         </div>
 
         <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <button
-            type="button"
+          <Button
+            variant="outline"
             disabled={loading}
             onClick={() => onCancel?.()}
-            className="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-1 disabled:opacity-50"
           >
             {cancelLabel}
-          </button>
-          <button
-            type="button"
-            disabled={loading}
+          </Button>
+          <Button
+            variant={styles.confirmVariant}
+            loading={loading}
             onClick={() => onConfirm?.()}
-            className={`inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-50 ${styles.confirm}`}
           >
-            {loading ? "Procesando…" : confirmLabel}
-          </button>
+            {confirmLabel}
+          </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

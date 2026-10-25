@@ -1,3 +1,4 @@
+import Button from "../ui/Button";
 import DoctorStatusBadge from "./DoctorStatusBadge";
 
 function initials(name) {
@@ -14,22 +15,22 @@ function formatDisplay(value) {
   return s || "—";
 }
 
-export default function DoctorCard({ doctor, onEdit }) {
+export default function DoctorCard({ doctor, onEdit, onSchedule }) {
   return (
-    <article className="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+    <article className="group nb-card p-5 transition hover:-translate-y-0.5 hover:shadow-brand-md">
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-50 text-sm font-semibold text-blue-700 ring-1 ring-blue-100">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-soft text-sm font-semibold text-brand-primary-text ring-1 ring-brand-primary-text/20">
             {initials(doctor?.name)}
           </div>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="truncate text-sm font-semibold text-gray-900">
+              <h3 className="truncate text-sm font-semibold text-brand-text">
                 {formatDisplay(doctor?.name)}
               </h3>
               <DoctorStatusBadge status={doctor?.status} />
             </div>
-            <p className="mt-1 truncate text-xs text-gray-500">
+            <p className="mt-1 truncate text-xs text-brand-text-muted">
               {formatDisplay(doctor?.specialty)}
             </p>
           </div>
@@ -37,13 +38,12 @@ export default function DoctorCard({ doctor, onEdit }) {
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={() => onEdit?.(doctor)}
-          className="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 shadow-sm transition hover:border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-1"
-        >
+        <Button type="button" variant="outline" size="sm" onClick={() => onEdit?.(doctor)}>
           Editar
-        </button>
+        </Button>
+        <Button type="button" variant="secondary" size="sm" onClick={() => onSchedule?.(doctor)}>
+          Turnos
+        </Button>
       </div>
     </article>
   );

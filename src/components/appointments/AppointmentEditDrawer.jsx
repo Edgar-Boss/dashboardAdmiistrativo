@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Calendar,
   Clock,
   Hash,
-  Stethoscope,
+  Phone,
+  Send,
+  Sparkles,
   X,
 } from "lucide-react";
 import { normalizeTimeKey } from "./appointmentHelpers";
@@ -15,22 +17,46 @@ import {
   DEFAULT_SLOT_MINUTES,
   STATE_OPTIONS,
   buildUpdateAppointmentPayload,
-  buildUpdatedAppointment,
   formatAppointmentDateLong,
+  formatDurationLabel,
   getAppointmentDateRaw,
   getNotes,
   getPatientName,
   getEditDurationMaxSlots,
   resolveSlotCount,
   normalizeAppointmentState,
+  isAppointmentEditFormDirty,
 } from "./appointmentEditHelpers";
+import {
+  describeAppointmentTemporal,
+  durationChangeLocked,
+} from "./appointmentTemporal";
+import {
+  canSendAppointmentConfirmation,
+  isSendingAppointmentConfirmation,
+} from "./appointmentConfirmationAction";
+import {
+  CANCELLED_CANNOT_REACTIVATE_MESSAGE,
+  CANCELLED_INFO_MESSAGE,
+  isCancelledAppointment,
+  isCancelledReactivation,
+} from "./appointmentStateConfirm";
 import AppointmentDurationSelect from "./AppointmentDurationSelect";
+import Button from "../ui/Button";
 
-const inputClass =
-  "w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition placeholder:text-gray-400 hover:border-gray-300 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200/80 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:opacity-60";
+const inputClass = "nb-input disabled:bg-brand-soft";
 
-const labelClass =
-  "mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-500";
+const labelClass = "nb-label";
+
+function getClientPhone(appointment) {
+  const raw =
+    appointment?.phoneNumber ??
+    appointment?.phone_number ??
+    appointment?.phone ??
+    "";
+  const phone = String(raw).trim();
+  return phone || "—";
+}
 
 function ReadOnlyInfo({ appointment }) {
   const dateRaw = getAppointmentDateRaw(appointment);
@@ -46,31 +72,39 @@ function ReadOnlyInfo({ appointment }) {
       value: normalizeTimeKey(appointment?.appointmentTime),
     },
     {
-      icon: Stethoscope,
-      label: "Doctor",
+      icon: Sparkles,
+      label: "Especialista",
       value: appointment?.doctorName ?? appointment?.doctor ?? "—",
     },
     {
+      icon: Phone,
+      label: "Teléfono del cliente",
+      value: getClientPhone(appointment),
+      valueClass: "tabular-nums",
+    },
+    {
       icon: Hash,
-      label: "ID de cita",
+      label: "Folio de cita",
       value: appointment?.id != null ? String(appointment.id) : "—",
     },
   ];
 
   return (
-    <div className="rounded-xl border border-gray-100 bg-gray-50/90 p-4">
-      <p className="mb-3 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+    <div className="rounded-brand-md border border-brand-border bg-brand-soft/60 p-4">
+      <p className="mb-3 text-[10px] font-semibold uppercase tracking-wider text-brand-text-muted">
         Información de la cita
       </p>
       <dl className="space-y-3">
-        {items.map(({ icon: Icon, label, value }) => (
+        {items.map(({ icon: Icon, label, value, valueClass = "" }) => (
           <div key={label} className="flex gap-3">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-gray-400 shadow-sm ring-1 ring-gray-100">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-brand bg-brand-surface text-brand-text-muted shadow-brand ring-1 ring-brand-border">
               <Icon className="h-4 w-4" strokeWidth={2} aria-hidden />
             </div>
             <div className="min-w-0 flex-1">
-              <dt className="text-[11px] font-medium text-gray-500">{label}</dt>
-              <dd className="mt-0.5 text-sm font-medium text-gray-900">{value}</dd>
+              <dt className="text-[11px] font-medium text-brand-text-muted">{label}</dt>
+              <dd className={`mt-0.5 text-sm font-medium text-brand-text ${valueClass}`.trim()}>
+                {value}
+              </dd>
             </div>
           </div>
         ))}
@@ -84,6 +118,8 @@ export default function AppointmentEditDrawer({
   isOpen,
   onClose,
   onSave,
+  onSendConfirmation,
+  sendingConfirmationId,
 }) {
   const [patientName, setPatientName] = useState("");
   const [slotCount, setSlotCount] = useState(1);
@@ -91,6 +127,7 @@ export default function AppointmentEditDrawer({
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
+  const savingRef = useRef(false);
 
   useEffect(() => {
     if (!appointment || !isOpen) return;
@@ -113,39 +150,74 @@ export default function AppointmentEditDrawer({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [isOpen, saving, onClose]);
 
+  const previousState = normalizeAppointmentState(appointment?.state);
+  const isCancelled = isCancelledAppointment(previousState);
+  const effectiveState = isCancelled ? "CANCELLED" : state;
+  const canSendWhatsappConfirmation = canSendAppointmentConfirmation(previousState);
+  const isSendingConfirmation = isSendingAppointmentConfirmation(
+    sendingConfirmationId,
+    appointment?.id,
+  );
+  const isDirty = isAppointmentEditFormDirty(appointment, {
+    patientName,
+    slotCount,
+    state: effectiveState,
+    notes,
+  });
+  const sendDisabled = saving || isDirty || isSendingConfirmation;
+  const stateOptions = isCancelled
+    ? STATE_OPTIONS.filter((option) => option.value === "CANCELLED")
+    : STATE_OPTIONS;
   const stateOption =
-    STATE_OPTIONS.find((o) => o.value === state) ?? STATE_OPTIONS[0];
+    STATE_OPTIONS.find((o) => o.value === effectiveState) ?? STATE_OPTIONS[0];
+  const temporal = describeAppointmentTemporal(appointment);
+  const durationLocked = durationChangeLocked(appointment);
+  const durationSlotMinutes =
+    temporal.kind === "ok" && temporal.slotMinutesAtBooking
+      ? temporal.slotMinutesAtBooking
+      : DEFAULT_SLOT_MINUTES;
+  const recordedDurationLabel = Number.isFinite(temporal.durationMinutes)
+    ? formatDurationLabel(temporal.durationMinutes, 1)
+    : null;
 
   async function handleSubmit(event) {
     event.preventDefault();
-    if (!appointment || saving) return;
+    if (!appointment || savingRef.current) return;
 
     const trimmedName = patientName.trim();
     if (!trimmedName) return;
 
+    const nextState = isCancelled ? "CANCELLED" : state;
+    if (isCancelledReactivation(previousState, nextState)) {
+      setSaveError(CANCELLED_CANNOT_REACTIVATE_MESSAGE);
+      return;
+    }
+
+    savingRef.current = true;
     setSaving(true);
     setSaveError(null);
 
     const form = {
       patientName: trimmedName,
       slotCount,
-      state,
+      state: nextState,
       notes,
     };
 
     try {
       await updateAppointment(
         appointment.id,
-        buildUpdateAppointmentPayload(form),
+        buildUpdateAppointmentPayload(form, appointment),
       );
 
-      const previousState = normalizeAppointmentState(appointment.state);
-      if (state !== previousState) {
-        await updateAppointmentState({ id: appointment.id, change: state });
+      if (nextState !== previousState) {
+        await updateAppointmentState({
+          id: appointment.id,
+          change: nextState,
+        });
       }
 
-      const updated = buildUpdatedAppointment(appointment, form);
-      onSave?.(updated);
+      await onSave?.();
     } catch (error) {
       setSaveError(
         error instanceof Error
@@ -153,6 +225,7 @@ export default function AppointmentEditDrawer({
           : "No se pudieron guardar los cambios.",
       );
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   }
@@ -168,7 +241,7 @@ export default function AppointmentEditDrawer({
       aria-hidden={!isOpen}
     >
       <div
-        className={`absolute inset-0 bg-gray-900/40 transition-opacity duration-200 ${
+        className={`nb-overlay absolute inset-0 transition-opacity duration-200 ${
           isOpen ? "opacity-100" : "opacity-0"
         }`}
         aria-hidden
@@ -179,22 +252,22 @@ export default function AppointmentEditDrawer({
         role="dialog"
         aria-modal="true"
         aria-label="Editar cita"
-        className={`absolute right-0 top-0 flex h-full w-full flex-col border-l border-gray-100 bg-white shadow-2xl transition-transform duration-300 ease-out sm:max-w-[420px] ${
+        className={`absolute right-0 top-0 flex h-full w-full flex-col border-l border-brand-border bg-brand-surface shadow-brand-lg transition-transform duration-300 ease-out sm:max-w-[420px] ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        <header className="flex shrink-0 items-start justify-between gap-3 border-b border-gray-100 px-5 py-5 sm:px-6">
+        <header className="flex shrink-0 items-start justify-between gap-3 border-b border-brand-border px-5 py-5 sm:px-6">
           <div className="min-w-0">
-            <h2 className="text-base font-semibold text-gray-900">Editar cita</h2>
-            <p className="mt-1 text-xs text-gray-500">
-              Actualiza los datos editables de la cita
+            <h2 className="font-display text-base font-semibold text-brand-text">Editar cita</h2>
+            <p className="mt-1 text-xs text-brand-text-muted">
+              Actualiza los datos de la cita
             </p>
           </div>
           <button
             type="button"
             onClick={handleClose}
             disabled={saving}
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 shadow-sm transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-1 disabled:opacity-50"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-brand border border-brand-border bg-brand-surface text-brand-text-muted shadow-brand transition hover:bg-brand-soft focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25 disabled:opacity-50"
             aria-label="Cerrar"
           >
             <X className="h-4 w-4" strokeWidth={2} />
@@ -213,7 +286,7 @@ export default function AppointmentEditDrawer({
 
                 <div>
                   <label htmlFor="patient-name" className={labelClass}>
-                    Paciente
+                    Clienta
                   </label>
                   <input
                     id="patient-name"
@@ -223,7 +296,7 @@ export default function AppointmentEditDrawer({
                     value={patientName}
                     onChange={(e) => setPatientName(e.target.value)}
                     className={inputClass}
-                    placeholder="Nombre del paciente"
+                    placeholder="Nombre de la clienta"
                     autoComplete="name"
                   />
                 </div>
@@ -235,10 +308,16 @@ export default function AppointmentEditDrawer({
                   <AppointmentDurationSelect
                     slotCount={slotCount}
                     onChange={setSlotCount}
-                    slotMinutes={DEFAULT_SLOT_MINUTES}
-                    maxSlotCount={getEditDurationMaxSlots(resolveSlotCount(appointment))}
+                    slotMinutes={durationSlotMinutes}
+                    maxSlotCount={getEditDurationMaxSlots(
+                      durationLocked ? 1 : resolveSlotCount(appointment),
+                    )}
                     appointmentTime={appointment.appointmentTime}
-                    disabled={saving}
+                    disabled={saving || durationLocked}
+                    unavailable={durationLocked}
+                    startAt={temporal.kind === "ok" ? temporal.startAt : null}
+                    endAt={temporal.kind === "ok" ? temporal.endAt : null}
+                    recordedDurationLabel={recordedDurationLabel}
                   />
                 </div>
 
@@ -248,23 +327,30 @@ export default function AppointmentEditDrawer({
                   </label>
                   <select
                     id="appointment-state"
-                    disabled={saving}
-                    value={state}
+                    disabled={saving || isCancelled}
+                    value={effectiveState}
                     onChange={(e) => setState(e.target.value)}
-                    className={`${inputClass} cursor-pointer font-medium ${stateOption.selectClass}`}
+                    className={`${inputClass} font-medium ${stateOption.selectClass} ${
+                      isCancelled ? "cursor-not-allowed opacity-80" : "cursor-pointer"
+                    }`}
                   >
-                    {STATE_OPTIONS.map((option) => (
+                    {stateOptions.map((option) => (
                       <option key={option.value} value={option.value}>
                         {option.label}
                       </option>
                     ))}
                   </select>
+                  {isCancelled ? (
+                    <p className="mt-2 text-xs leading-snug text-brand-text-muted">
+                      {CANCELLED_INFO_MESSAGE}
+                    </p>
+                  ) : null}
                 </div>
 
                 <div>
                   <label htmlFor="appointment-notes" className={labelClass}>
                     Notas{" "}
-                    <span className="font-normal normal-case tracking-normal text-gray-400">
+                    <span className="font-normal normal-case tracking-normal text-brand-text-muted">
                       (opcional)
                     </span>
                   </label>
@@ -275,38 +361,63 @@ export default function AppointmentEditDrawer({
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     className={`${inputClass} resize-none`}
-                    placeholder="Motivo, indicaciones u observaciones…"
+                    placeholder="Servicio, preferencias u observaciones…"
                   />
                 </div>
+
+                {canSendWhatsappConfirmation ? (
+                  <section className="border-t border-brand-border pt-6">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-brand-text-muted">
+                      Confirmación por WhatsApp
+                    </p>
+                    <p className="mt-1 text-xs leading-snug text-brand-text-muted">
+                      Envía al cliente los datos confirmados de su cita.
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="mt-3 min-h-11 w-full sm:w-auto"
+                      disabled={sendDisabled}
+                      aria-busy={isSendingConfirmation || undefined}
+                      onClick={() => {
+                        if (sendDisabled) return;
+                        onSendConfirmation?.(appointment);
+                      }}
+                    >
+                      <Send className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
+                      {isSendingConfirmation ? "Enviando..." : "Enviar confirmación"}
+                    </Button>
+                    {isDirty ? (
+                      <p className="mt-2 text-xs leading-snug text-brand-text-muted">
+                        Guarda los cambios antes de enviar la confirmación.
+                      </p>
+                    ) : null}
+                  </section>
+                ) : null}
               </div>
             ) : null}
           </div>
 
-          <footer className="shrink-0 border-t border-gray-100 bg-white px-5 py-4 sm:px-6">
+          <footer className="shrink-0 border-t border-brand-border bg-brand-surface px-5 py-4 sm:px-6">
             {saveError ? (
               <div
-                className="mb-3 rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-xs text-rose-800"
+                className="mb-3 rounded-brand border border-brand-danger/30 bg-brand-danger-soft px-3.5 py-2.5 text-xs text-brand-danger"
                 role="alert"
               >
                 {saveError}
               </div>
             ) : null}
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-              <button
-                type="button"
-                disabled={saving}
-                onClick={handleClose}
-                className="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-1 disabled:opacity-50"
-              >
+              <Button type="button" variant="outline" disabled={saving} onClick={handleClose}>
                 Cancelar
-              </button>
-              <button
+              </Button>
+              <Button
                 type="submit"
-                disabled={saving || !patientName.trim()}
-                className="inline-flex items-center justify-center rounded-xl bg-gray-900 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500/30 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={!patientName.trim()}
+                loading={saving}
               >
-                {saving ? "Guardando…" : "Guardar cambios"}
-              </button>
+                <span>{saving ? "Guardando…" : "Guardar cambios"}</span>
+              </Button>
             </div>
           </footer>
         </form>

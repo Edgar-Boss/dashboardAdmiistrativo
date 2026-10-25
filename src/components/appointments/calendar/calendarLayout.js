@@ -1,5 +1,11 @@
-import { resolveSlotCount } from "../appointmentEditHelpers";
+import { formatDurationLabel, resolveSlotCount } from "../appointmentEditHelpers";
 import { doctorNameMatchesAppointment, normalizeTimeKey, timeToMinutes } from "../appointmentHelpers";
+import {
+  describeAppointmentTemporal,
+  formatCivilClock,
+  parseCivilDateTime,
+  visibleDaySegment,
+} from "../appointmentTemporal";
 import {
   computeCardBlockHeight,
   getCardVariant,
@@ -12,30 +18,61 @@ import {
 } from "./calendarConfig";
 
 export function buildVisualTimeSlots(config = CALENDAR_CONFIG) {
+  const start = getDayStartMinutes(config);
+  const end = getDayEndMinutes(config);
+  if (end <= start) return [];
+
+  const interval = config.gridLineIntervalMinutes || 60;
+  const seen = new Set();
   const slots = [];
-  const interval = config.gridLineIntervalMinutes;
-  for (let m = getDayStartMinutes(config); m < getDayEndMinutes(config); m += interval) {
-    const h = Math.floor(m / 60);
-    const min = m % 60;
+
+  function addSlot(minutes, { forceLabel = false } = {}) {
+    if (!Number.isFinite(minutes) || minutes < start || minutes > end) return;
+    if (seen.has(minutes)) return;
+    seen.add(minutes);
+    const h = Math.floor(minutes / 60);
+    const min = minutes % 60;
+    const isHour = min === 0;
     slots.push({
-      minutes: m,
-      label: min === 0 ? `${String(h).padStart(2, "0")}:00` : null,
-      isHour: min === 0,
-      topPx: ((m - getDayStartMinutes(config)) / config.slotMinutes) * config.rowHeightPx,
+      minutes,
+      label:
+        forceLabel || isHour
+          ? `${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`
+          : null,
+      isHour,
+      topPx: ((minutes - start) / config.slotMinutes) * config.rowHeightPx,
     });
   }
-  return slots;
+
+  addSlot(start, { forceLabel: true });
+  const firstTick = Math.ceil((start + 1) / interval) * interval;
+  for (let m = firstTick; m < end; m += interval) {
+    addSlot(m);
+  }
+  addSlot(end, { forceLabel: true });
+
+  return slots.sort((a, b) => a.minutes - b.minutes);
 }
 
-export function buildDoctorColumns({ specialists, appointments }) {
+export function buildDoctorColumns({ specialists, appointments, columnStates = [] }) {
+  const stateById = new Map(
+    columnStates.map((state) => [String(state.doctorId), state]),
+  );
   if (Array.isArray(specialists) && specialists.length > 0) {
-    return specialists.map((s, index) => ({
-      key: `sp-${s.id ?? s.name}`,
-      doctorId: s.id,
-      doctorName: s.name,
-      specialty: s.specialty || "",
-      themeIndex: index,
-    }));
+    return specialists.map((s, index) => {
+      const columnState = stateById.get(String(s.id));
+      return {
+        key: `sp-${s.id ?? s.name}`,
+        doctorId: s.id,
+        doctorName: s.name,
+        specialty: s.specialty || "",
+        themeIndex: index,
+        availability:
+          columnState?.status ??
+          (explicitInactive(s) ? "inactive" : "open"),
+        scheduleError: columnState?.message ?? null,
+      };
+    });
   }
 
   const map = new Map();
@@ -58,43 +95,138 @@ export function buildDoctorColumns({ specialists, appointments }) {
   );
 }
 
-export function buildAppointmentBlocks(appointments, config = CALENDAR_CONFIG) {
+function explicitInactive(specialist) {
+  const flag = String(specialist?.activeFlag ?? specialist?.active ?? "")
+    .trim()
+    .toUpperCase();
+  return flag === "N";
+}
+
+/**
+ * Maps appointments onto the visible business-hours grid.
+ *
+ * Appointments whose start is outside {@code dayStartMinutes}…{@code dayEndMinutes}
+ * are skipped (not drawn). The grid is not expanded to fit them — CLINIC_SCHEDULE
+ * remains the range source. Height is clamped so a card cannot paint past close.
+ */
+export function buildAppointmentBlocks(
+  appointments,
+  config = CALENDAR_CONFIG,
+  selectedDate,
+) {
   const dayStart = getDayStartMinutes(config);
   const dayEnd = getDayEndMinutes(config);
 
   return appointments
     .map((row) => {
-      const slotCount = resolveSlotCount(row);
-      const startKey = normalizeTimeKey(
-        row?.appointmentTime ?? row?.appointment_time
-      );
-      const startMin = timeToMinutes(startKey);
-      if (startKey === "—" || startMin < dayStart || startMin >= dayEnd) {
-        return null;
+      const temporal = describeAppointmentTemporal(row);
+      if (temporal.kind !== "legacy") {
+        return temporalBlock(row, temporal, config, selectedDate, dayStart, dayEnd);
       }
-
-      const durationMinutes = slotCount * config.slotMinutes;
-      const variant = getCardVariant(durationMinutes, config.slotMinutes);
-
-      const topPx =
-        ((startMin - dayStart) / config.slotMinutes) * config.rowHeightPx;
-      const heightPx = computeCardBlockHeight(slotCount, variant, config);
-
-      return {
-        row,
-        doctorId: row?.doctorId ?? row?.doctor_id ?? "—",
-        doctorName: row?.doctorName ?? row?.doctor_name ?? "",
-        startKey,
-        startMin,
-        slotCount,
-        durationMinutes,
-        variant,
-        topPx,
-        heightPx,
-        minHeightPx: heightPx,
-      };
+      return legacyBlock(row, config, dayStart, dayEnd);
     })
     .filter(Boolean);
+}
+
+function legacyBlock(row, config, dayStart, dayEnd) {
+  const slotCount = resolveSlotCount(row);
+  const startKey = normalizeTimeKey(row?.appointmentTime ?? row?.appointment_time);
+  const startMin = timeToMinutes(startKey);
+  if (startKey === "—" || startMin < dayStart || startMin >= dayEnd) {
+    if (startKey !== "—") {
+      console.warn(
+        "Calendar skipped appointment outside business hours",
+        row?.id,
+        startKey,
+      );
+    }
+    return null;
+  }
+
+  const durationMinutes = slotCount * config.slotMinutes;
+  const variant = getCardVariant(durationMinutes, config.slotMinutes);
+  const visibleMinutes = Math.max(
+    config.slotMinutes,
+    Math.min(durationMinutes, dayEnd - startMin),
+  );
+  const visibleSlots = Math.max(1, Math.round(visibleMinutes / config.slotMinutes));
+  const topPx = ((startMin - dayStart) / config.slotMinutes) * config.rowHeightPx;
+  const heightPx = computeCardBlockHeight(visibleSlots, variant, config);
+
+  return {
+    presentation: "card",
+    row,
+    doctorId: row?.doctorId ?? row?.doctor_id ?? "—",
+    doctorName: row?.doctorName ?? row?.doctor_name ?? "",
+    startKey,
+    startMin,
+    slotCount,
+    durationMinutes,
+    variant,
+    topPx,
+    heightPx,
+  };
+}
+
+function temporalBlock(row, temporal, config, selectedDate, dayStart, dayEnd) {
+  const base = {
+    row,
+    doctorId: row?.doctorId ?? row?.doctor_id ?? "—",
+    doctorName: row?.doctorName ?? row?.doctor_name ?? "",
+    slotCount: row?.slotCount ?? null,
+  };
+  if (temporal.kind !== "ok" || !temporal.startAt || !temporal.endAt || !selectedDate) {
+    return {
+      ...base,
+      presentation: "list",
+      durationLabel: "Duración no disponible",
+      timeLabel: null,
+      continuationLabel: null,
+    };
+  }
+
+  const segment = visibleDaySegment(temporal.startAt, temporal.endAt, selectedDate);
+  if (!segment) return null;
+
+  const start = parseCivilDateTime(temporal.startAt);
+  const end = parseCivilDateTime(temporal.endAt);
+  const continuation = [
+    segment.startedPreviousDay ? "Comenzó el día anterior" : null,
+    segment.endsNextDay ? "Termina el día siguiente" : null,
+  ].filter(Boolean);
+  const durationMinutes = temporal.durationMinutes;
+  const drawStart = Math.max(segment.startMinute, dayStart);
+  const drawEnd = Math.min(segment.endMinute, dayEnd);
+  const described = {
+    ...base,
+    startKey: formatCivilClock(start.minutes),
+    endKey: formatCivilClock(end.minutes),
+    startMin: segment.startMinute,
+    endMin: segment.endMinute,
+    durationMinutes,
+    timeLabel: `${formatCivilClock(start.minutes)} – ${formatCivilClock(end.minutes)}`,
+    durationLabel: Number.isFinite(durationMinutes)
+      ? formatDurationLabel(durationMinutes, 1)
+      : "Duración no disponible",
+    continuationLabel: continuation.join(". ") || null,
+  };
+  if (drawEnd <= drawStart) {
+    return { ...described, presentation: "list" };
+  }
+
+  const pixelsPerMinute = config.rowHeightPx / config.slotMinutes;
+  const inset = config.cardVerticalInsetPx ?? 2;
+  const visibleMinutes = drawEnd - drawStart;
+  return {
+    ...described,
+    presentation: "card",
+    variant: getCardVariant(
+      Number.isFinite(durationMinutes) ? durationMinutes : visibleMinutes,
+      config.slotMinutes,
+    ),
+    topPx: (drawStart - dayStart) * pixelsPerMinute,
+    heightPx: Math.max(0, visibleMinutes * pixelsPerMinute - inset * 2),
+  };
 }
 
 export function blockMatchesColumn(block, column) {

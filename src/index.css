@@ -2,8 +2,214 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* Sampled from Logo_mejorado.jpg: cross #00ADEF, letter navy #172856, ice #DFF6FC */
+  --color-primary: #00adef;
+  --color-primary-hover: #009fdc;
+  --color-primary-text: #0764aa;
+  --color-primary-text-hover: #045fa8;
+  --color-secondary: #0e8ecf;
+  --color-accent: #00adef;
+  --color-background: #dff6fc;
+  --color-calendar: #f8feff;
+  --color-surface: #ffffff;
+  --color-surface-soft: #d7f1fa;
+  --color-surface-muted: #c5e7f6;
+  --color-nude: #e7f6fc;
+  --color-text: #172856;
+  --color-text-muted: #3e5f86;
+  --color-border: #c5deea;
+  --color-border-strong: #a9cde0;
+  --color-success: #2f6f4e;
+  --color-success-soft: #e8f3ec;
+  --color-warning: #8a5a12;
+  --color-warning-soft: #f8f1e3;
+  --color-danger: #b42318;
+  --color-danger-soft: #fdecec;
+  --color-ink: #172856;
+  --color-ink-soft: #1f4693;
+  --color-gold-light: #d2eef9;
+
+  --shadow-sm: 0 4px 14px rgba(23, 40, 86, 0.08);
+  --shadow-md: 0 12px 30px rgba(23, 40, 86, 0.12);
+  --shadow-lg: 0 22px 48px rgba(23, 40, 86, 0.16);
+
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+
+  --font-display: "Cormorant Garamond", "Times New Roman", Georgia, serif;
+  --font-body: "Poppins", system-ui, -apple-system, sans-serif;
+}
+
 @layer base {
-  body {
-    @apply antialiased text-slate-800;
+  html {
+    @apply scroll-smooth;
   }
+
+  body {
+    margin: 0;
+    font-family: var(--font-body);
+    color: var(--color-text);
+    background-color: var(--color-background);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    color: var(--color-text);
+    letter-spacing: -0.01em;
+  }
+
+  h1 {
+    @apply text-3xl font-semibold sm:text-4xl;
+  }
+
+  h2 {
+    @apply text-2xl font-semibold sm:text-3xl;
+  }
+
+  h3 {
+    @apply text-xl font-semibold;
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--color-primary) 22%, white);
+    color: var(--color-text);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-primary-text);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .nb-card {
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .nb-input {
+    @apply w-full px-4 py-3 text-sm transition disabled:cursor-not-allowed disabled:opacity-60;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .nb-input::placeholder {
+    color: color-mix(in srgb, var(--color-text-muted) 70%, white);
+  }
+
+  .nb-input:hover:not(:disabled) {
+    border-color: var(--color-border-strong);
+  }
+
+  .nb-input:focus {
+    outline: none;
+    border-color: var(--color-primary-text);
+    box-shadow: 0 0 0 3px rgba(7, 100, 170, 0.28);
+  }
+
+  .nb-label {
+    @apply mb-2 block text-xs font-medium uppercase tracking-wider;
+    color: var(--color-text-muted);
+  }
+
+  .nb-overlay {
+    background: rgba(23, 40, 86, 0.46);
+  }
+
+  .nb-sidebar {
+    background-color: var(--color-ink);
+    background-image:
+      linear-gradient(
+        165deg,
+        color-mix(in srgb, var(--color-primary) 34%, transparent) 0%,
+        transparent 46%
+      ),
+      linear-gradient(180deg, var(--color-ink) 0%, var(--color-ink-soft) 100%);
+  }
+
+  .nb-login-bg {
+    background:
+      radial-gradient(
+        ellipse 72% 58% at 12% -8%,
+        color-mix(in srgb, var(--color-primary) 30%, transparent) 0%,
+        transparent 58%
+      ),
+      radial-gradient(
+        ellipse 48% 42% at 100% 100%,
+        color-mix(in srgb, var(--color-ink) 12%, transparent) 0%,
+        transparent 52%
+      ),
+      var(--color-background);
+  }
+
+  .calendar-scroll {
+    container-type: inline-size;
+  }
+
+  .calendar-grid-inner {
+    width: calc(
+      var(--calendar-time-col) +
+        (var(--calendar-col-count) * var(--calendar-doctor-col))
+    );
+  }
+
+  .calendar-doctor-col {
+    width: var(--calendar-doctor-col);
+  }
+
+  @media (max-width: 767px) {
+    .calendar-scroll {
+      scroll-snap-type: x mandatory;
+      scroll-padding-left: var(--calendar-time-col);
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .calendar-scroll::-webkit-scrollbar {
+      width: 0;
+      height: 0;
+    }
+
+    .calendar-grid-inner {
+      width: calc(
+        var(--calendar-time-col) +
+          (var(--calendar-col-count) * (100cqw - var(--calendar-time-col)))
+      );
+    }
+
+    .calendar-doctor-col {
+      width: calc(100cqw - var(--calendar-time-col));
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.focus-visible\:ring-brand-primary\/20:focus-visible,
+.focus-visible\:ring-brand-primary\/25:focus-visible,
+.focus-visible\:ring-brand-primary\/30:focus-visible,
+.focus-visible\:ring-brand-primary\/35:focus-visible {
+  --tw-ring-color: rgb(7 100 170 / 0.55);
 }

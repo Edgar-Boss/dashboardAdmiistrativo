@@ -7,7 +7,7 @@ const TABS = [
 
 export default function CalendarFilterTabs({ value, onChange }) {
   return (
-    <div className="inline-flex flex-wrap gap-1 rounded-xl border border-gray-200/80 bg-gray-50/80 p-1 shadow-sm">
+    <div className="inline-flex flex-wrap gap-1 rounded-brand border border-brand-border bg-brand-soft/60 p-1 shadow-brand">
       {TABS.map((tab) => {
         const active = value === tab.id;
         return (
@@ -17,10 +17,10 @@ export default function CalendarFilterTabs({ value, onChange }) {
             role="tab"
             aria-selected={active}
             onClick={() => onChange?.(tab.id)}
-            className={`rounded-lg px-3.5 py-2 text-sm font-medium transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500/25 ${
+            className={`rounded-brand px-3.5 py-2 text-sm font-medium transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25 ${
               active
-                ? "bg-white text-gray-900 shadow-sm ring-1 ring-gray-200/60"
-                : "text-gray-600 hover:bg-white/60 hover:text-gray-900"
+                ? "bg-brand-surface text-brand-text shadow-brand ring-1 ring-brand-border"
+                : "text-brand-text-muted hover:bg-brand-surface/60 hover:text-brand-text"
             }`}
           >
             {tab.label}
