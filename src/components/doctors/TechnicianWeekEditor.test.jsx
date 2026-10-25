@@ -158,7 +158,7 @@ describe("TechnicianWeekEditor", () => {
     expect(within(legacy).getAllByRole("listitem")).toHaveLength(7);
     expect(within(legacy).getByText("Domingo: Descanso")).toBeInTheDocument();
     expect(within(legacy).getByText("Lunes: 10:00–14:00")).toBeInTheDocument();
-    expect(screen.getByRole("radio", { name: "Heredar horario del negocio" })).not.toBeChecked();
+    expect(screen.getByRole("radio", { name: "Heredar horario de la clínica" })).not.toBeChecked();
     expect(screen.getByRole("radio", { name: "Personalizado" })).not.toBeChecked();
 
     await user.click(screen.getByRole("button", { name: "Guardar turnos" }));
@@ -169,7 +169,7 @@ describe("TechnicianWeekEditor", () => {
     expect(screen.getAllByDisplayValue("10:00")).toHaveLength(6);
     expect(saveDoctorWeek).not.toHaveBeenCalled();
 
-    await user.click(screen.getByRole("radio", { name: "Heredar horario del negocio" }));
+    await user.click(screen.getByRole("radio", { name: "Heredar horario de la clínica" }));
     await user.click(screen.getByRole("button", { name: "Guardar turnos" }));
     expect(await screen.findByRole("alert")).toHaveTextContent(/revisaste los turnos/i);
     expect(saveDoctorWeek).not.toHaveBeenCalled();

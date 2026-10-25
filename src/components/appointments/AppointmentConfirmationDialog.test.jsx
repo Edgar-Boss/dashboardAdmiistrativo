@@ -35,7 +35,7 @@ describe("AppointmentConfirmationDialog", () => {
 
     expect(screen.getByRole("dialog", { name: "Enviar confirmación" })).toBeInTheDocument();
     expect(
-      screen.getByText("¿Deseas enviar la confirmación por WhatsApp a este cliente?")
+      screen.getByText("¿Deseas enviar la confirmación por WhatsApp a este paciente?")
     ).toBeInTheDocument();
     expect(onConfirm).not.toHaveBeenCalled();
 

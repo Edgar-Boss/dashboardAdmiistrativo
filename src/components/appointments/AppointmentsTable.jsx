@@ -83,7 +83,7 @@ export default function AppointmentsTable({
               <dl className="mt-3 space-y-1.5 text-sm">
                 <div className="flex gap-2">
                   <dt className="w-20 shrink-0 text-xs font-medium uppercase tracking-wider text-brand-text-muted">
-                    Especialista
+                    Doctor
                   </dt>
                   <dd className="min-w-0 text-brand-text">
                     {formatDisplay(row.doctorName)}
@@ -91,7 +91,7 @@ export default function AppointmentsTable({
                 </div>
                 <div className="flex gap-2">
                   <dt className="w-20 shrink-0 text-xs font-medium uppercase tracking-wider text-brand-text-muted">
-                    Servicio
+                    Motivo
                   </dt>
                   <dd className="min-w-0 text-brand-text-muted">{reasonCell}</dd>
                 </div>
@@ -114,13 +114,13 @@ export default function AppointmentsTable({
                   Horario
                 </th>
                 <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-brand-text-muted">
-                  Clienta
+                  Paciente
                 </th>
                 <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-brand-text-muted">
-                  Servicio
+                  Motivo
                 </th>
                 <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-brand-text-muted">
-                  Especialista
+                  Doctor
                 </th>
                 <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-brand-text-muted">
                   Estado

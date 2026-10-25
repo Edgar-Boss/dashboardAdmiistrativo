@@ -650,7 +650,7 @@ export default function AppointmentsPage() {
                             : "text-brand-text-muted hover:text-brand-text"
                         }`}
                       >
-                        Por especialista
+                        Por doctor
                       </button>
                     </div>
                   </div>

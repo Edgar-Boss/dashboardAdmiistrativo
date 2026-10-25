@@ -34,9 +34,9 @@ function CalendarSkeleton() {
 function EmptyDoctors() {
   return (
     <div className="flex min-h-[320px] flex-col items-center justify-center rounded-brand-md border border-dashed border-brand-border bg-brand-soft/40 px-6 text-center">
-      <p className="text-sm font-medium text-brand-text">Sin especialistas para mostrar</p>
+      <p className="text-sm font-medium text-brand-text">Sin doctores para mostrar</p>
       <p className="mt-1 max-w-sm text-xs text-brand-text-muted">
-        Agrega especialistas o citas del día para ver la agenda.
+        Agrega doctores o citas del día para ver la agenda.
       </p>
     </div>
   );
@@ -298,7 +298,7 @@ export default function MedicalCalendarGrid({
 }
 
 function columnStatusLabel(column) {
-  if (column.availability === "inactive") return "Especialista inactivo";
+  if (column.availability === "inactive") return "Doctor inactivo";
   if (column.availability === "closed") return "Sin turno";
   if (column.availability === "error") return "No se pudo cargar el horario.";
   return null;

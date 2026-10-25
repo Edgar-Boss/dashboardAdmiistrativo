@@ -1,7 +1,7 @@
 const STATUS_OPTIONS = [
-  { value: "all", label: "Todas" },
-  { value: "active", label: "Activas" },
-  { value: "inactive", label: "Inactivas" },
+  { value: "all", label: "Todos" },
+  { value: "active", label: "Activos" },
+  { value: "inactive", label: "Inactivos" },
 ];
 
 const SORT_OPTIONS = [
@@ -44,15 +44,15 @@ export default function DoctorsFilters({
           <input
             value={query}
             onChange={(e) => onQueryChange?.(e.target.value)}
-            placeholder="Buscar especialista..."
+            placeholder="Buscar doctor..."
             className="min-w-0 flex-1 bg-transparent text-sm text-brand-text placeholder:text-brand-text-muted focus:outline-none"
-            aria-label="Buscar especialista"
+            aria-label="Buscar doctor"
           />
         </div>
 
         <div className="grid gap-3 sm:grid-cols-3 md:flex md:items-center">
           <label className="sr-only" htmlFor="specialty">
-            Servicio
+            Especialidad
           </label>
           <select
             id="specialty"
@@ -60,7 +60,7 @@ export default function DoctorsFilters({
             onChange={(e) => onSpecialtyChange?.(e.target.value)}
             className="w-full rounded-brand border border-brand-border bg-brand-surface px-3 py-2 text-sm text-brand-text shadow-brand transition hover:border-brand-border-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25 md:w-56"
           >
-            <option value="all">Todos los servicios</option>
+            <option value="all">Todas las especialidades</option>
             {specialties.map((s) => (
               <option key={s} value={s}>
                 {s}

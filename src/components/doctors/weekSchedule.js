@@ -79,7 +79,7 @@ export function buildWeekPayload(mode, drafts) {
     return { payload: { mode: "INHERIT", shifts: [] } };
   }
   if (mode !== "CUSTOM") {
-    return { error: "Elige heredar el horario del negocio o personalizado." };
+    return { error: "Elige heredar el horario de la clínica o uno personalizado." };
   }
   const error = validateDrafts(drafts);
   if (error) return { error };

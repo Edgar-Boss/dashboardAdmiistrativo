@@ -69,8 +69,8 @@ describe("DoctorForm WhatsApp fields", () => {
       />
     );
 
-    await user.type(screen.getByPlaceholderText("Ej: Ana López"), "Ana López");
-    await user.click(screen.getByRole("button", { name: "Crear especialista" }));
+    await user.type(screen.getByPlaceholderText("Ej: Dr. Luis García"), "Ana López");
+    await user.click(screen.getByRole("button", { name: "Crear doctor" }));
 
     expect(onSubmit).toHaveBeenCalledTimes(1);
     expect(onSubmit).toHaveBeenCalledWith({
@@ -90,12 +90,12 @@ describe("DoctorForm WhatsApp fields", () => {
       <DoctorForm mode="create" onSubmit={onSubmit} onCancel={vi.fn()} />
     );
 
-    await user.type(screen.getByPlaceholderText("Ej: Ana López"), "Ana");
+    await user.type(screen.getByPlaceholderText("Ej: Dr. Luis García"), "Ana");
     await user.type(
       screen.getByLabelText("Número WhatsApp para notificaciones"),
       "12345"
     );
-    await user.click(screen.getByRole("button", { name: "Crear especialista" }));
+    await user.click(screen.getByRole("button", { name: "Crear doctor" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       /exactamente 10 dígitos/i
@@ -111,12 +111,12 @@ describe("DoctorForm WhatsApp fields", () => {
       <DoctorForm mode="create" onSubmit={onSubmit} onCancel={vi.fn()} />
     );
 
-    await user.type(screen.getByPlaceholderText("Ej: Ana López"), "Ana");
+    await user.type(screen.getByPlaceholderText("Ej: Dr. Luis García"), "Ana");
     await user.type(
       screen.getByLabelText("Número WhatsApp para notificaciones"),
       "2221234567#"
     );
-    await user.click(screen.getByRole("button", { name: "Crear especialista" }));
+    await user.click(screen.getByRole("button", { name: "Crear doctor" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       /dígitos, espacios, \+ y guiones/i
@@ -132,12 +132,12 @@ describe("DoctorForm WhatsApp fields", () => {
       <DoctorForm mode="create" onSubmit={onSubmit} onCancel={vi.fn()} />
     );
 
-    await user.type(screen.getByPlaceholderText("Ej: Ana López"), "Ana");
+    await user.type(screen.getByPlaceholderText("Ej: Dr. Luis García"), "Ana");
     await user.type(
       screen.getByLabelText("Número WhatsApp para notificaciones"),
       "22212345678"
     );
-    await user.click(screen.getByRole("button", { name: "Crear especialista" }));
+    await user.click(screen.getByRole("button", { name: "Crear doctor" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       /exactamente 10 dígitos/i
@@ -167,9 +167,9 @@ describe("DoctorForm WhatsApp fields", () => {
       <DoctorForm mode="create" onSubmit={onSubmit} onCancel={vi.fn()} />
     );
 
-    await user.type(screen.getByPlaceholderText("Ej: Ana López"), "Ana López");
+    await user.type(screen.getByPlaceholderText("Ej: Dr. Luis García"), "Ana López");
     await user.type(
-      screen.getByPlaceholderText("Ej: Uñas gel, Pedicure spa"),
+      screen.getByPlaceholderText("Ej: Medicina general, Cardiología"),
       "Uñas gel"
     );
     await user.type(
@@ -179,7 +179,7 @@ describe("DoctorForm WhatsApp fields", () => {
     await user.click(
       screen.getByRole("button", { name: "Recibir notificaciones de nuevas citas" })
     );
-    await user.click(screen.getByRole("button", { name: "Crear especialista" }));
+    await user.click(screen.getByRole("button", { name: "Crear doctor" }));
 
     expect(onSubmit).toHaveBeenCalledTimes(1);
     expect(onSubmit).toHaveBeenCalledWith({

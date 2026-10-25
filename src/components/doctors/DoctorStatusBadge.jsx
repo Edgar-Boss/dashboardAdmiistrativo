@@ -5,7 +5,7 @@ import {
 
 export default function DoctorStatusBadge({ status }) {
   const key = normalizeDoctorStatus(status);
-  const label = key === "active" ? "Activa" : "Inactiva";
+  const label = key === "active" ? "Activo" : "Inactivo";
   const styles = DOCTOR_STATUS_STYLES[key];
 
   return (

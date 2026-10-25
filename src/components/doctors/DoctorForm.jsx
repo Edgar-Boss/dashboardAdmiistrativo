@@ -182,7 +182,7 @@ export default function DoctorForm({ mode, doctor, onSubmit, onCancel }) {
     }
   }
 
-  const primaryLabel = isEdit ? "Guardar cambios" : "Crear especialista";
+  const primaryLabel = isEdit ? "Guardar cambios" : "Crear doctor";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
@@ -192,18 +192,18 @@ export default function DoctorForm({ mode, doctor, onSubmit, onCancel }) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           className="mt-2 w-full rounded-brand border border-brand-border bg-brand-surface px-3.5 py-2.5 text-sm text-brand-text shadow-brand transition placeholder:text-brand-text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25"
-          placeholder="Ej: Ana López"
+          placeholder="Ej: Dr. Luis García"
           autoFocus
         />
       </div>
 
       <div>
-        <label className="block text-xs font-semibold text-brand-text-muted">Servicio</label>
+        <label className="block text-xs font-semibold text-brand-text-muted">Especialidad</label>
         <input
           value={specialty}
           onChange={(e) => setSpecialty(e.target.value)}
           className="mt-2 w-full rounded-brand border border-brand-border bg-brand-surface px-3.5 py-2.5 text-sm text-brand-text shadow-brand transition placeholder:text-brand-text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25"
-          placeholder="Ej: Uñas gel, Pedicure spa"
+          placeholder="Ej: Medicina general, Cardiología"
         />
       </div>
 
@@ -224,7 +224,7 @@ export default function DoctorForm({ mode, doctor, onSubmit, onCancel }) {
           autoComplete="tel"
         />
         <p className="mt-2 text-xs text-brand-text-muted">
-          La especialista debe enviar un mensaje al WhatsApp del negocio para
+          El doctor debe enviar un mensaje al WhatsApp de la clínica para
           habilitar la ventana de notificaciones durante 24 horas.
         </p>
       </div>
@@ -250,7 +250,7 @@ export default function DoctorForm({ mode, doctor, onSubmit, onCancel }) {
             <Toggle
               checked={active}
               onChange={setActive}
-              label={active ? "Activa" : "Inactiva"}
+              label={active ? "Activo" : "Inactivo"}
             />
           </div>
         </div>

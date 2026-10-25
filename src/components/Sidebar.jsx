@@ -4,7 +4,7 @@ import { getStoredUser } from "../services/authService";
 
 const ITEMS = [
   { id: "citas", label: "Citas" },
-  { id: "doctores", label: "Especialistas" },
+  { id: "doctores", label: "Doctores" },
 ];
 
 export default function Sidebar({

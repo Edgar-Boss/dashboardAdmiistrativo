@@ -132,7 +132,7 @@ describe("CalendarView business hours", () => {
     );
 
     expect(
-      await screen.findByText("El negocio no labora este día.")
+      await screen.findByText("La clínica no labora este día.")
     ).toBeInTheDocument();
     expect(screen.queryByText("Hora")).not.toBeInTheDocument();
     expect(screen.queryByText("09:00")).not.toBeInTheDocument();
@@ -150,7 +150,7 @@ describe("CalendarView business hours", () => {
     );
 
     expect(
-      await screen.findByText("No se pudo cargar el horario del negocio.")
+      await screen.findByText("No se pudo cargar el horario de la clínica.")
     ).toBeInTheDocument();
     expect(screen.queryByText("07:00")).not.toBeInTheDocument();
   });
@@ -239,7 +239,7 @@ describe("CalendarView business hours", () => {
     expect(screen.getByText("06:00")).toBeInTheDocument();
     expect(screen.getByText("23:00")).toBeInTheDocument();
     expect(
-      screen.queryByText("El negocio no labora este día.")
+      screen.queryByText("La clínica no labora este día.")
     ).not.toBeInTheDocument();
     expect(screen.getAllByText("Sin turno").length).toBeGreaterThan(0);
     expect(screen.getByText("Cliente Confirmada")).toBeInTheDocument();
@@ -278,7 +278,7 @@ describe("CalendarView business hours", () => {
     expect(screen.getByText("06:00")).toBeInTheDocument();
     expect(screen.queryByText("12:00")).not.toBeInTheDocument();
     expect(
-      screen.queryByText("El negocio no labora este día.")
+      screen.queryByText("La clínica no labora este día.")
     ).not.toBeInTheDocument();
     expect(screen.getAllByText("Sin turno").length).toBeGreaterThan(0);
   });
@@ -295,7 +295,7 @@ describe("CalendarView business hours", () => {
     );
 
     expect(
-      await screen.findByText("El negocio no labora este día.")
+      await screen.findByText("La clínica no labora este día.")
     ).toBeInTheDocument();
     expect(screen.queryByText("26 oct 19:00 – 27 oct 07:00")).not.toBeInTheDocument();
     expect(screen.queryByText("Sin turno")).not.toBeInTheDocument();
@@ -335,7 +335,7 @@ describe("CalendarView business hours", () => {
     expect(within(luis).getAllByText("Sin turno").length).toBeGreaterThan(0);
     expect(within(ana).getByText("Cliente Confirmada")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /reservar/i })).not.toBeInTheDocument();
-    expect(screen.queryByText("El negocio no labora este día.")).not.toBeInTheDocument();
+    expect(screen.queryByText("La clínica no labora este día.")).not.toBeInTheDocument();
   });
 
   it("shows a specialist schedule failure without inventing availability", async () => {
@@ -454,7 +454,7 @@ describe("CalendarView business hours", () => {
     const luis = await screen.findByTestId("calendar-doctor-col-sp-2");
     const luisHeader = screen.getByTestId("calendar-doctor-header-sp-2");
     expect(luis).toHaveAttribute("data-availability", "inactive");
-    expect(within(luisHeader).getByText("Especialista inactivo")).toBeInTheDocument();
+    expect(within(luisHeader).getByText("Doctor inactivo")).toBeInTheDocument();
     expect(within(luis).queryByRole("button", { name: "Reintentar" })).not.toBeInTheDocument();
     expect(within(luisHeader).queryByRole("button", { name: "Reintentar" })).not.toBeInTheDocument();
     expect(within(luisHeader).queryByTestId("calendar-shifts")).not.toBeInTheDocument();
@@ -465,7 +465,7 @@ describe("CalendarView business hours", () => {
     const ana = screen.getByTestId("calendar-doctor-col-sp-1");
     const anaHeader = screen.getByTestId("calendar-doctor-header-sp-1");
     expect(ana).toHaveAttribute("data-availability", "loaded");
-    expect(within(anaHeader).queryByText("Especialista inactivo")).not.toBeInTheDocument();
+    expect(within(anaHeader).queryByText("Doctor inactivo")).not.toBeInTheDocument();
     expect(within(anaHeader).getByText("09:00–18:00")).toBeInTheDocument();
   });
 
@@ -515,7 +515,7 @@ describe("CalendarView business hours", () => {
 
     const ines = await screen.findByTestId("calendar-doctor-col-sp-8");
     const inesHeader = screen.getByTestId("calendar-doctor-header-sp-8");
-    expect(within(inesHeader).getByText("Especialista inactivo")).toBeInTheDocument();
+    expect(within(inesHeader).getByText("Doctor inactivo")).toBeInTheDocument();
     expect(within(ines).queryByRole("button", { name: "Reintentar" })).not.toBeInTheDocument();
     expect(within(inesHeader).queryByRole("button", { name: "Reintentar" })).not.toBeInTheDocument();
     expect(within(ines).queryByRole("button", { name: /reservar|nueva cita/i })).not.toBeInTheDocument();
@@ -562,7 +562,7 @@ describe("CalendarView business hours", () => {
       "No se pudo cargar el horario.",
     );
     expect(within(rita).getByRole("button", { name: "Reintentar" })).toBeInTheDocument();
-    expect(within(rita).queryByText("Especialista inactivo")).not.toBeInTheDocument();
+    expect(within(rita).queryByText("Doctor inactivo")).not.toBeInTheDocument();
     expect(within(rita).queryByText("Sin turno")).not.toBeInTheDocument();
     expect(within(rita).queryByText("09:00–18:00")).not.toBeInTheDocument();
     expect(fetchBusinessSchedule).toHaveBeenCalledWith("2026-10-27", 8);

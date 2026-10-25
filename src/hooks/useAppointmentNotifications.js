@@ -71,8 +71,8 @@ function buildNotificationBody(appointment) {
 
   return [
     "Se ha registrado una nueva cita.",
-    `Cliente: ${client}`,
-    `Especialista: ${specialist}`,
+    `Paciente: ${client}`,
+    `Doctor: ${specialist}`,
     `Fecha: ${date}`,
     `Hora: ${time}`,
   ].join("\n");

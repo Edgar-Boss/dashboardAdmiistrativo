@@ -375,7 +375,7 @@ describe("off-shift labels on 24 October", () => {
     expect(rolando).toHaveAttribute("data-availability", "inactive");
     expect(
       within(screen.getByTestId("calendar-doctor-header-sp-2")).getByText(
-        "Especialista inactivo",
+        "Doctor inactivo",
       ),
     ).toBeInTheDocument();
     expect(within(rolando).queryByText("Sin turno")).not.toBeInTheDocument();

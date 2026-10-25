@@ -51,7 +51,7 @@ describe("AppointmentEditDrawer WhatsApp confirmation", () => {
 
     expect(screen.getByText("Confirmación por WhatsApp")).toBeInTheDocument();
     expect(
-      screen.getByText("Envía al cliente los datos confirmados de su cita.")
+      screen.getByText("Envía al paciente los datos confirmados de su cita.")
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Enviar confirmación" })
@@ -113,8 +113,8 @@ describe("AppointmentEditDrawer WhatsApp confirmation", () => {
     const onSendConfirmation = vi.fn();
     renderDrawer({ onSendConfirmation });
 
-    await user.clear(screen.getByLabelText("Clienta"));
-    await user.type(screen.getByLabelText("Clienta"), "Nombre nuevo");
+    await user.clear(screen.getByLabelText("Paciente"));
+    await user.type(screen.getByLabelText("Paciente"), "Nombre nuevo");
 
     const action = screen.getByRole("button", { name: "Enviar confirmación" });
     expect(action).toBeDisabled();
@@ -164,7 +164,7 @@ describe("AppointmentEditDrawer appointment info", () => {
   it("shows the client phone number in the read-only info section", () => {
     renderDrawer();
 
-    expect(screen.getByText("Teléfono del cliente")).toBeInTheDocument();
+    expect(screen.getByText("Teléfono del paciente")).toBeInTheDocument();
     expect(screen.getByText("522221234567")).toBeInTheDocument();
   });
 
@@ -173,7 +173,7 @@ describe("AppointmentEditDrawer appointment info", () => {
       appointment: { ...confirmedAppointment, phoneNumber: "" },
     });
 
-    expect(screen.getByText("Teléfono del cliente")).toBeInTheDocument();
+    expect(screen.getByText("Teléfono del paciente")).toBeInTheDocument();
     expect(screen.getByText("—")).toBeInTheDocument();
   });
 });

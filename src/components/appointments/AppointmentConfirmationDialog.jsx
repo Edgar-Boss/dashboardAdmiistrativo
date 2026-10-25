@@ -10,7 +10,7 @@ import {
 const COPY = {
   [CONFIRMATION_DIALOG_STATUS.CONFIRM]: {
     title: "Enviar confirmación",
-    description: "¿Deseas enviar la confirmación por WhatsApp a este cliente?",
+    description: "¿Deseas enviar la confirmación por WhatsApp a este paciente?",
     icon: "send",
     iconClass: "bg-brand-soft text-brand-primary-text",
   },

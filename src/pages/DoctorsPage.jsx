@@ -90,7 +90,7 @@ export default function DoctorsPage() {
       } catch (e) {
         if (!cancelled) {
           setDoctors([]);
-          setLoadError(e instanceof Error ? e.message : "No se pudieron cargar las especialistas.");
+          setLoadError(e instanceof Error ? e.message : "No se pudieron cargar los doctores.");
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -176,7 +176,7 @@ export default function DoctorsPage() {
       });
       const doctorId = result?.doctorId;
       if (!Number.isFinite(Number(doctorId))) {
-        throw new Error("La API no devolvió un identificador válido para el especialista.");
+        throw new Error("La API no devolvió un identificador válido para el doctor.");
       }
       setDoctors((prev) => [
         {
@@ -198,7 +198,7 @@ export default function DoctorsPage() {
 
     const doctorId = Number(selectedDoctor?.id);
     if (!Number.isFinite(doctorId)) {
-      throw new Error("No se pudo identificar al especialista.");
+      throw new Error("No se pudo identificar al doctor.");
     }
 
     await updateSpecialist({
@@ -234,24 +234,24 @@ export default function DoctorsPage() {
         <header className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0">
             <h1 className="font-display text-2xl font-semibold tracking-tight text-brand-text sm:text-3xl">
-              Especialistas
+              Doctores
             </h1>
             <p className="mt-2 text-sm text-brand-text-muted">
-              Administra las especialistas y servicios de la boutique
+              Administra los doctores y las especialidades de la clínica
             </p>
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
             <Button type="button" onClick={handleNewDoctor}>
-              + Nuevo especialista
+              + Nuevo doctor
             </Button>
           </div>
         </header>
 
         <section className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
-          <SummaryCard label="Total especialistas" value={summary.total} tone="neutral" />
-          <SummaryCard label="Activas" value={summary.active} tone="success" />
-          <SummaryCard label="Inactivas" value={summary.inactive} tone="danger" />
+          <SummaryCard label="Total doctores" value={summary.total} tone="neutral" />
+          <SummaryCard label="Activos" value={summary.active} tone="success" />
+          <SummaryCard label="Inactivos" value={summary.inactive} tone="danger" />
         </section>
 
         {scheduleDoctor ? (
@@ -282,11 +282,11 @@ export default function DoctorsPage() {
         <section className="nb-card p-6 sm:p-8">
           <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
             <p className="text-sm font-semibold text-brand-text">
-              {filtered.length} especialista{filtered.length !== 1 ? "s" : ""}
+              {filtered.length} doctor{filtered.length !== 1 ? "es" : ""}
             </p>
             {loading ? (
               <p className="text-xs text-brand-text-muted" role="status" aria-live="polite">
-                Cargando especialistas...
+                Cargando doctores...
               </p>
             ) : loadError ? (
               <p className="text-xs text-brand-danger" role="status">
@@ -304,7 +304,7 @@ export default function DoctorsPage() {
           ) : filtered.length === 0 ? (
             <div className="flex min-h-[180px] flex-col items-center justify-center rounded-brand-md border border-dashed border-brand-border bg-brand-soft/40 px-6 py-12 text-center">
               <p className="text-sm font-medium text-brand-text-muted">
-                No hay especialistas que coincidan con los filtros.
+                No hay doctores que coincidan con los filtros.
               </p>
               <p className="mt-1 max-w-md text-xs text-brand-text-muted">
                 Prueba con otro término de búsqueda o ajusta los filtros.

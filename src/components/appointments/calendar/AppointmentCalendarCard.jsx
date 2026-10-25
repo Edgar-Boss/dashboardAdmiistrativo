@@ -17,7 +17,7 @@ function formatPhone(value) {
 function buildTooltipText({ patientName, timeRange, duration, reason, phone }) {
   const lines = [patientName, timeRange];
   if (duration) lines.push(`Duración: ${duration}`);
-  if (reason) lines.push(`Servicio: ${reason}`);
+  if (reason) lines.push(`Motivo: ${reason}`);
   if (phone) lines.push(`Tel: ${phone}`);
   return lines.join("\n");
 }

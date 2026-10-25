@@ -35,7 +35,7 @@ export default function LoginPage({ onSuccess }) {
         <div className="mb-8 text-center">
           <img
             src="/logo.jpg"
-            alt="SD"
+            alt="Logo de la clínica"
             className="mx-auto mb-6 w-[min(100%,22rem)] object-contain"
           />
           <p className="text-sm text-brand-text-muted">

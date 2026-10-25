@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 
 function getTitle(mode) {
-  return mode === "edit" ? "Editar especialista" : "Nuevo especialista";
+  return mode === "edit" ? "Editar doctor" : "Nuevo doctor";
 }
 
 export default function DoctorDrawer({ open, onClose, mode, doctor, children }) {
@@ -42,7 +42,7 @@ export default function DoctorDrawer({ open, onClose, mode, doctor, children }) 
             <p className="mt-1 text-xs text-brand-text-muted">
               {mode === "edit"
                 ? `ID: ${doctor?.id ?? "—"}`
-                : "Completa los datos del especialista"}
+                : "Completa los datos del doctor"}
             </p>
           </div>
           <button

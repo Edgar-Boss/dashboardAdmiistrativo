@@ -23,7 +23,7 @@ const MOCK_SCHEDULE = {
 };
 
 function ClosedDayState({
-  title = "El negocio no labora este día.",
+  title = "La clínica no labora este día.",
 }) {
   return (
     <div className="flex min-h-[280px] flex-col items-center justify-center rounded-brand-md border border-dashed border-brand-border bg-brand-soft/40 px-6 text-center">
@@ -77,7 +77,7 @@ export default function CalendarView({
           setLoadError(
             e instanceof Error
               ? e.message
-              : "No se pudieron cargar los especialistas."
+              : "No se pudieron cargar los doctores."
           );
         }
       }
@@ -153,7 +153,7 @@ export default function CalendarView({
       setColumnStates(doctors);
       if (!business) {
         setScheduleState("error");
-        setScheduleError("No se pudo cargar el horario del negocio.");
+        setScheduleError("No se pudo cargar el horario de la clínica.");
         return;
       }
       setScheduleState("ok");
@@ -227,8 +227,8 @@ export default function CalendarView({
           <ClosedDayState
             title={
               businessClosed
-                ? "El negocio no labora este día."
-                : "Ningún técnico tiene turno este día."
+                ? "La clínica no labora este día."
+                : "Ningún doctor tiene turno este día."
             }
           />
           <DayAppointmentList

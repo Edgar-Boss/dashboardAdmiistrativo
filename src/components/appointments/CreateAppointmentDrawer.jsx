@@ -118,7 +118,7 @@ export default function CreateAppointmentDrawer({
 
               ? error.message
 
-              : "No se pudieron cargar las especialistas.",
+              : "No se pudieron cargar los doctores.",
 
           );
 

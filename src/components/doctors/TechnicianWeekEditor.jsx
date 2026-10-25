@@ -66,7 +66,7 @@ export default function TechnicianWeekEditor({ doctorId, doctorName, onClose }) 
         setWeek(null);
         setPhase("error");
         setError(
-          err instanceof Error ? err.message : "No se pudo cargar la semana del técnico.",
+          err instanceof Error ? err.message : "No se pudo cargar la semana del doctor.",
         );
       }
     }
@@ -186,7 +186,7 @@ export default function TechnicianWeekEditor({ doctorId, doctorName, onClose }) 
 
     if (week?.mode === "LEGACY" && mode !== "INHERIT" && mode !== "CUSTOM") {
       setError(
-        "Elige heredar el horario del negocio o personalizado, y revisa los turnos antes de guardar.",
+        "Elige heredar el horario de la clínica o uno personalizado, y revisa los turnos antes de guardar.",
       );
       return;
     }
@@ -235,7 +235,7 @@ export default function TechnicianWeekEditor({ doctorId, doctorName, onClose }) 
     return (
       <section className="nb-card p-5" aria-label="Turnos semanales">
         <p className="text-sm font-medium text-brand-danger" role="alert">
-          {error || "No se pudo cargar la semana del técnico."}
+          {error || "No se pudo cargar la semana del doctor."}
         </p>
       </section>
     );
@@ -251,11 +251,11 @@ export default function TechnicianWeekEditor({ doctorId, doctorName, onClose }) 
       <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="font-display text-lg font-semibold text-brand-text">
-            Turnos de {doctorName || "técnico"}
+            Turnos de {doctorName || "doctor"}
           </h2>
           <p className="mt-1 max-w-2xl text-sm text-brand-text-muted">
             Semana de lunes a domingo. Los horarios se leen y se guardan tal como
-            están en la semana del técnico.
+            están en la semana del doctor.
           </p>
         </div>
         {onClose ? (
@@ -270,8 +270,8 @@ export default function TechnicianWeekEditor({ doctorId, doctorName, onClose }) 
           <div className="rounded-brand border border-brand-border bg-brand-soft/50 p-4">
             <h3 className="text-sm font-semibold text-brand-text">Horario anterior</h3>
             <p className="mt-1 text-sm text-brand-text-muted">
-              Este técnico todavía usa el horario anterior. Elige heredar el horario
-              del negocio o personalizado, y revisa los turnos antes de guardar.
+              Este doctor todavía usa el horario anterior. Elige heredar el horario
+              de la clínica o uno personalizado, y revisa los turnos antes de guardar.
             </p>
             <ul aria-label="Horario anterior" className="mt-3 space-y-1">
               {legacyRows.map((day) => (
@@ -294,7 +294,7 @@ export default function TechnicianWeekEditor({ doctorId, doctorName, onClose }) 
                 checked={mode === "INHERIT"}
                 onChange={() => chooseMode("INHERIT")}
               />
-              Heredar horario del negocio
+              Heredar horario de la clínica
             </label>
             <label className="flex items-center gap-2 rounded-brand border border-brand-border bg-brand-surface px-3 py-2 text-sm text-brand-text">
               <input
@@ -461,7 +461,7 @@ export default function TechnicianWeekEditor({ doctorId, doctorName, onClose }) 
       <ConfirmDialog
         open={confirmClosed}
         title="Semana cerrada"
-        description="Personalizado sin turnos cierra la semana: el técnico no tendrá horario. Confirma solo si quieres guardar esa semana cerrada."
+        description="Personalizado sin turnos cierra la semana: el doctor no tendrá horario. Confirma solo si quieres guardar esa semana cerrada."
         confirmLabel="Guardar semana cerrada"
         cancelLabel="Cancelar"
         variant="danger"

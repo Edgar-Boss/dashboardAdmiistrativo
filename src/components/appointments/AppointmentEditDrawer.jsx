@@ -73,12 +73,12 @@ function ReadOnlyInfo({ appointment }) {
     },
     {
       icon: Sparkles,
-      label: "Especialista",
+      label: "Doctor",
       value: appointment?.doctorName ?? appointment?.doctor ?? "—",
     },
     {
       icon: Phone,
-      label: "Teléfono del cliente",
+      label: "Teléfono del paciente",
       value: getClientPhone(appointment),
       valueClass: "tabular-nums",
     },
@@ -286,7 +286,7 @@ export default function AppointmentEditDrawer({
 
                 <div>
                   <label htmlFor="patient-name" className={labelClass}>
-                    Clienta
+                    Paciente
                   </label>
                   <input
                     id="patient-name"
@@ -296,7 +296,7 @@ export default function AppointmentEditDrawer({
                     value={patientName}
                     onChange={(e) => setPatientName(e.target.value)}
                     className={inputClass}
-                    placeholder="Nombre de la clienta"
+                    placeholder="Nombre del paciente"
                     autoComplete="name"
                   />
                 </div>
@@ -361,7 +361,7 @@ export default function AppointmentEditDrawer({
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     className={`${inputClass} resize-none`}
-                    placeholder="Servicio, preferencias u observaciones…"
+                    placeholder="Motivo, síntomas u observaciones…"
                   />
                 </div>
 
@@ -371,7 +371,7 @@ export default function AppointmentEditDrawer({
                       Confirmación por WhatsApp
                     </p>
                     <p className="mt-1 text-xs leading-snug text-brand-text-muted">
-                      Envía al cliente los datos confirmados de su cita.
+                      Envía al paciente los datos confirmados de su cita.
                     </p>
                     <Button
                       type="button"

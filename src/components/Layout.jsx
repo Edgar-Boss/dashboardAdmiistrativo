@@ -38,7 +38,7 @@ export default function Layout({
           <div className="min-w-0">
             <img
               src="/logo.jpg"
-              alt="SD"
+              alt="Logo de la clínica"
               className="h-[1.6875rem] w-auto max-w-[7.125rem] object-contain object-left"
             />
           </div>
