@@ -168,6 +168,14 @@
     width: var(--calendar-doctor-col);
   }
 
+  .calendar-off-shift-cell {
+    background-color: #f1f5f9;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 16px;
+  }
+
   @media (max-width: 767px) {
     .calendar-scroll {
       scroll-snap-type: x mandatory;

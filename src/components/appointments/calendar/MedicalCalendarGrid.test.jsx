@@ -101,6 +101,11 @@ describe("MedicalCalendarGrid", () => {
     expect(css).toContain("scroll-snap-align: start");
     expect(css).toContain("scroll-padding-left: var(--calendar-time-col)");
     expect(css).toContain("100cqw - var(--calendar-time-col)");
+    expect(css).toContain(".calendar-off-shift-cell");
+    expect(css).toContain("background-color: #f1f5f9");
+    expect(css).toContain("color: #64748b");
+    expect(css).toContain("font-size: 12px");
+    expect(css).toContain("font-weight: 400");
   });
 
   it("still renders AppointmentCalendarCard with the same appointment data", () => {
@@ -174,7 +179,7 @@ function minuteRange(start, end, step) {
 
 function labelStarts(column) {
   return within(column)
-    .getAllByTestId("calendar-off-shift-label")
+    .getAllByTestId("calendar-off-shift")
     .map((node) => Number(node.getAttribute("data-start-minutes")));
 }
 
@@ -228,20 +233,24 @@ describe("off-shift labels on 24 October", () => {
     expect(luisStarts).not.toContain(18 * 60);
     expect(luisStarts).not.toContain(18 * 60 + 30);
     expect(luisStarts).toContain(19 * 60);
+    expect(rolandoStarts).not.toContain(6 * 60 + 30);
+    expect(rolandoStarts[0]).toBe(7 * 60);
     expect(rolandoStarts).toEqual(minuteRange(7 * 60, 19 * 60, 30));
     expect(rolandoStarts).not.toContain(19 * 60);
     expect(within(luis).getAllByText("Sin turno")).toHaveLength(luisStarts.length);
     expect(within(rolando).getAllByText("Sin turno")).toHaveLength(rolandoStarts.length);
+    expect(within(luis).getAllByTestId("calendar-grid-line").length).toBeGreaterThan(0);
 
     for (const column of [luis, rolando]) {
-      const bands = within(column).getAllByTestId("calendar-off-shift");
-      expect(bands.length).toBeGreaterThan(0);
-      for (const band of bands) {
-        expect(band).toHaveClass("bg-brand-background/85");
+      const cells = within(column).getAllByTestId("calendar-off-shift");
+      expect(cells).toHaveLength(
+        column === luis ? luisStarts.length : rolandoStarts.length,
+      );
+      for (const cell of cells) {
+        expect(cell).toHaveClass("calendar-off-shift-cell");
+        expect(cell).toHaveTextContent("Sin turno");
       }
     }
-    expect(within(luis).getAllByTestId("calendar-off-shift")).toHaveLength(2);
-    expect(within(rolando).getAllByTestId("calendar-off-shift")).toHaveLength(1);
 
     const luisVisit = within(luis).getByRole("button", { name: /Noche Luis/ });
     const rolandoVisit = within(rolando).getByRole("button", { name: /Mediodía Rolando/ });
@@ -269,11 +278,78 @@ describe("off-shift labels on 24 October", () => {
     });
 
     const column = screen.getByTestId("calendar-doctor-col-sp-1");
+    const cells = within(column).getAllByTestId("calendar-off-shift");
     expect(labelStarts(column)).toEqual(minuteRange(7 * 60, 19 * 60, 30));
-    expect(within(column).getByTestId("calendar-off-shift")).toHaveClass(
-      "bg-brand-background/85",
-    );
+    expect(cells).toHaveLength(24);
+    for (const cell of cells) {
+      expect(cell).toHaveClass("calendar-off-shift-cell");
+    }
     expect(screen.getByTestId("column-status")).toHaveTextContent("Sin turno");
+  });
+
+  it("uses the configured block size when a shift ends at 07:00", () => {
+    const config = buildCalendarConfigFromDoctorSchedules(
+      [
+        {
+          doctorId: 2,
+          intervals: [
+            {
+              start: "2026-10-23T19:00:00",
+              end: "2026-10-24T07:00:00",
+              slotMinutes: 60,
+            },
+            {
+              start: "2026-10-24T19:00:00",
+              end: "2026-10-25T07:00:00",
+              slotMinutes: 60,
+            },
+          ],
+        },
+      ],
+      OCTOBER_24,
+    );
+
+    renderGrid({
+      appointments: [
+        {
+          id: 77,
+          name: "Cita fuera de turno",
+          appointmentTime: "12:00",
+          state: "CONFIRMED",
+          doctorId: 2,
+          doctorName: "Rolando",
+          slotCount: 1,
+        },
+      ],
+      specialists: [{ id: 2, name: "Rolando", specialty: "Medicina" }],
+      selectedDate: OCTOBER_24,
+      config,
+      columnStates: [{ doctorId: 2, status: "loaded" }],
+      onAppointmentClick: vi.fn(),
+    });
+
+    const column = screen.getByTestId("calendar-doctor-col-sp-2");
+    const starts = labelStarts(column);
+    expect(config.slotMinutes).toBe(60);
+    expect(starts).not.toContain(6 * 60);
+    expect(starts).toContain(7 * 60);
+    expect(starts).not.toContain(7 * 60 + 30);
+    expect(within(column).getByRole("button", { name: /Cita fuera de turno/ })).toBeInTheDocument();
+  });
+
+  it("does not present an unknown schedule state as Sin turno", () => {
+    renderGrid({
+      appointments: [],
+      specialists: [{ id: 1, name: "Luis", specialty: "Medicina" }],
+      selectedDate: OCTOBER_24,
+      config: october24Config(),
+      columnStates: [{ doctorId: 1, status: "pending" }],
+    });
+
+    const column = screen.getByTestId("calendar-doctor-col-sp-1");
+    expect(column).toHaveAttribute("data-availability", "pending");
+    expect(within(column).queryByText("Sin turno")).not.toBeInTheDocument();
+    expect(within(column).queryByTestId("calendar-off-shift")).not.toBeInTheDocument();
   });
 
   it("keeps a schedule error and an inactive specialist out of Sin turno", () => {

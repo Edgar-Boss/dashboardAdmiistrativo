@@ -219,10 +219,23 @@ export default function MedicalCalendarGrid({
                       </button>
                     ))}
                   <div className="relative" style={{ height: gridHeight }}>
+                    {offShiftLabelCells(calendarConfig, col).map((cell) => (
+                      <div
+                        key={`${col.key}-off-${cell.start}`}
+                        data-testid="calendar-off-shift"
+                        data-start-minutes={cell.start}
+                        className="calendar-off-shift-cell pointer-events-none absolute left-0 right-0 z-0 flex items-center justify-center border-b border-brand-border/50 px-2 text-center"
+                        style={bandStyle(cell.start, cell.end, calendarConfig)}
+                      >
+                        <span data-testid="calendar-off-shift-label">Sin turno</span>
+                      </div>
+                    ))}
+
                     {timeSlots.map((slot) => (
                       <div
                         key={`${col.key}-${slot.minutes}`}
-                        className="absolute left-0 right-0 border-t border-brand-border/50"
+                        data-testid="calendar-grid-line"
+                        className="pointer-events-none absolute left-0 right-0 z-[1] border-t border-brand-border/50"
                         style={{ top: slot.topPx }}
                         aria-hidden
                       />
@@ -246,30 +259,6 @@ export default function MedicalCalendarGrid({
                         </button>
                       </div>
                     ) : null}
-
-                    {offShiftRanges(calendarConfig, col).map((gap) => (
-                      <div
-                        key={`${col.key}-off-${gap.start}`}
-                        data-testid="calendar-off-shift"
-                        aria-hidden
-                        className="pointer-events-none absolute left-0 right-0 bg-brand-background/85"
-                        style={bandStyle(gap.start, gap.end, calendarConfig)}
-                      />
-                    ))}
-
-                    {offShiftLabelCells(calendarConfig, col).map((cell) => (
-                      <div
-                        key={`${col.key}-off-label-${cell.start}`}
-                        data-testid="calendar-off-shift-label"
-                        data-start-minutes={cell.start}
-                        className="pointer-events-none absolute left-0 right-0 flex items-center justify-center"
-                        style={bandStyle(cell.start, cell.end, calendarConfig)}
-                      >
-                        <span className="px-2 text-center text-[11px] font-medium text-brand-text-muted">
-                          Sin turno
-                        </span>
-                      </div>
-                    ))}
 
                     {colBlocks
                       .filter((block) => block.presentation !== "list")
@@ -320,10 +309,13 @@ function shiftLabels(config, column) {
 }
 
 function offShiftRanges(config, column) {
+  const availability = column.availability;
+  if (availability !== "open" && availability !== "loaded" && availability !== "closed") {
+    return [];
+  }
   const dayStart = getDayStartMinutes(config);
   const dayEnd = getDayEndMinutes(config);
-  if (column.availability === "inactive" || column.availability === "error") return [];
-  if (column.availability === "closed" && dayEnd > dayStart) {
+  if (availability === "closed" && dayEnd > dayStart) {
     return [{ start: dayStart, end: dayEnd }];
   }
   if (!config?.intervalMode) return [];
