@@ -59,6 +59,33 @@ export function nonWorkingRanges(dayStart, dayEnd, shifts) {
   return gaps;
 }
 
+/**
+ * Slot-sized blocks that lie entirely inside {@code ranges}.
+ * A block that only partly overlaps a range is omitted.
+ * Blocks are aligned to {@code dayStart} and step by {@code blockMinutes}.
+ */
+export function fullBlocksWithinRanges(dayStart, dayEnd, blockMinutes, ranges) {
+  if (!Number.isFinite(blockMinutes) || blockMinutes <= 0) return [];
+  if (!Number.isFinite(dayStart) || !Number.isFinite(dayEnd) || dayEnd <= dayStart) return [];
+  const blocks = [];
+  for (let start = dayStart; start + blockMinutes <= dayEnd; start += blockMinutes) {
+    const end = start + blockMinutes;
+    const covered = (ranges ?? []).some((range) => start >= range.start && end <= range.end);
+    if (covered) blocks.push({ start, end });
+  }
+  return blocks;
+}
+
+/** Full visual blocks whose entire interval is outside {@code shifts}. */
+export function offShiftSlotBlocks(dayStart, dayEnd, blockMinutes, shifts) {
+  return fullBlocksWithinRanges(
+    dayStart,
+    dayEnd,
+    blockMinutes,
+    nonWorkingRanges(dayStart, dayEnd, shifts),
+  );
+}
+
 export function formatShiftRange(shift) {
   if (!shift) return "";
   if (!shift.crossesMidnight) {

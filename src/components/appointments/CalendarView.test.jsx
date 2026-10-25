@@ -200,7 +200,7 @@ describe("CalendarView business hours", () => {
       await screen.findByText("26 oct 19:00 – 27 oct 07:00")
     ).toBeInTheDocument();
     expect(screen.getByText("27 oct 19:00 – 28 oct 07:00")).toBeInTheDocument();
-    expect(screen.getByText("Sin turno")).toBeInTheDocument();
+    expect(screen.getAllByText("Sin turno")).toHaveLength(24);
     expect(screen.queryByText("07:00–19:00")).not.toBeInTheDocument();
     expect(fetchBusinessSchedule).toHaveBeenCalledWith("2026-10-27");
     expect(fetchBusinessSchedule).toHaveBeenCalledWith("2026-10-27", 1);

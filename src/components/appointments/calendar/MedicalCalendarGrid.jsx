@@ -13,7 +13,11 @@ import AppointmentCalendarCard from "./AppointmentCalendarCard";
 import CurrentTimeIndicator from "./CurrentTimeIndicator";
 import DoctorColumnHeader from "./DoctorColumnHeader";
 import { useCurrentTime } from "./useCurrentTime";
-import { formatShiftRange, nonWorkingRanges } from "./scheduleIntervals";
+import {
+  formatShiftRange,
+  fullBlocksWithinRanges,
+  nonWorkingRanges,
+} from "./scheduleIntervals";
 import { getDayEndMinutes, getDayStartMinutes } from "./calendarConfig";
 
 function CalendarSkeleton() {
@@ -247,8 +251,19 @@ export default function MedicalCalendarGrid({
                       <div
                         key={`${col.key}-off-${gap.start}`}
                         data-testid="calendar-off-shift"
-                        className="absolute left-0 right-0 flex items-center justify-center bg-brand-background/85"
+                        aria-hidden
+                        className="pointer-events-none absolute left-0 right-0 bg-brand-background/85"
                         style={bandStyle(gap.start, gap.end, calendarConfig)}
+                      />
+                    ))}
+
+                    {offShiftLabelCells(calendarConfig, col).map((cell) => (
+                      <div
+                        key={`${col.key}-off-label-${cell.start}`}
+                        data-testid="calendar-off-shift-label"
+                        data-start-minutes={cell.start}
+                        className="pointer-events-none absolute left-0 right-0 flex items-center justify-center"
+                        style={bandStyle(cell.start, cell.end, calendarConfig)}
                       >
                         <span className="px-2 text-center text-[11px] font-medium text-brand-text-muted">
                           Sin turno
@@ -313,6 +328,15 @@ function offShiftRanges(config, column) {
   }
   if (!config?.intervalMode) return [];
   return nonWorkingRanges(dayStart, dayEnd, columnShifts(config, column));
+}
+
+function offShiftLabelCells(config, column) {
+  return fullBlocksWithinRanges(
+    getDayStartMinutes(config),
+    getDayEndMinutes(config),
+    config?.slotMinutes,
+    offShiftRanges(config, column),
+  );
 }
 
 function columnShifts(config, column) {
