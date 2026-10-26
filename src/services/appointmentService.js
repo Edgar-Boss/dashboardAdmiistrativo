@@ -2,6 +2,7 @@ import { normalizeAppointment, normalizeAppointments } from "../components/appoi
 import { normalizeTimeKey } from "../components/appointments/appointmentHelpers";
 import { API_BASE_URL } from "../config/api";
 import { apiFetch } from "./apiClient";
+import { buildAppointmentApiError, fetchAppointmentWrite } from "./appointmentApiError";
 
 const APPOINTMENTS_LIST_URL = `${API_BASE_URL}/api/admin/appointments`;
 const APPOINTMENTS_BY_DATE_URL = `${API_BASE_URL}/appointments/search`;
@@ -263,23 +264,29 @@ export function toApiStateChange(state) {
  * @returns {Promise<{ status?: string, success?: boolean, message?: string } | null>}
  */
 export async function updateAppointment(id, payload) {
-  const response = await apiFetch(`${APPOINTMENT_UPDATE_URL}/${id}`, {
-    method: "PATCH",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
+  const response = await fetchAppointmentWrite(() =>
+    apiFetch(`${APPOINTMENT_UPDATE_URL}/${id}`, {
+      method: "PATCH",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    }),
+  );
 
   if (!response.ok) {
-    const message = `Request failed (${response.status} ${response.statusText})`;
-    throw new Error(message);
+    throw await buildAppointmentApiError(response);
   }
 
   const text = await response.text();
   if (!text) return null;
-  return JSON.parse(text);
+  try {
+    return JSON.parse(text);
+  } catch {
+    // The write already succeeded; an unreadable acknowledgement is not a failure.
+    return null;
+  }
 }
 
 /**
@@ -292,17 +299,19 @@ export async function updateAppointmentState(payload) {
     change: toApiStateChange(payload.change),
   };
 
-  const response = await apiFetch(APPOINTMENT_STATE_URL, {
-    method: "PATCH",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
+  const response = await fetchAppointmentWrite(() =>
+    apiFetch(APPOINTMENT_STATE_URL, {
+      method: "PATCH",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    }),
+  );
 
   if (!response.ok) {
-    throw new Error(await parseAppointmentApiError(response));
+    throw await buildAppointmentApiError(response);
   }
 
   const text = await response.text();

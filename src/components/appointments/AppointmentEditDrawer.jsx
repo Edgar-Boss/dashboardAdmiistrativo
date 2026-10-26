@@ -43,6 +43,13 @@ import {
 } from "./appointmentStateConfirm";
 import AppointmentDurationSelect from "./AppointmentDurationSelect";
 import Button from "../ui/Button";
+import { getSaveErrorMessage } from "../../services/appointmentApiError";
+
+const SAVED_RELOAD_FAILED_MESSAGE =
+  "Los cambios se guardaron, pero no se pudo actualizar la agenda. Recarga la página para verlos.";
+
+const PARTIAL_SAVE_MESSAGE =
+  "Los datos de la cita se guardaron, pero no se pudo cambiar su estado.";
 
 const inputClass = "nb-input disabled:bg-brand-soft";
 
@@ -118,6 +125,7 @@ export default function AppointmentEditDrawer({
   isOpen,
   onClose,
   onSave,
+  onPartialSave,
   onSendConfirmation,
   sendingConfirmationId,
 }) {
@@ -127,7 +135,11 @@ export default function AppointmentEditDrawer({
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
+  // Set when the field edit was persisted but the follow-up state change failed:
+  // { nextState, stateMessage, reloadFailed }.
+  const [partialSave, setPartialSave] = useState(null);
   const savingRef = useRef(false);
+  const appointmentId = appointment?.id ?? null;
 
   useEffect(() => {
     if (!appointment || !isOpen) return;
@@ -135,9 +147,17 @@ export default function AppointmentEditDrawer({
     setSlotCount(resolveSlotCount(appointment));
     setState(normalizeAppointmentState(appointment?.state));
     setNotes(getNotes(appointment));
-    setSaving(false);
+    // The appointment is refreshed from the agenda reload while a save is still
+    // finishing; keep the in-flight guard in charge of the loading state then.
+    if (!savingRef.current) setSaving(false);
     setSaveError(null);
   }, [appointment, isOpen]);
+
+  // A partial result belongs to one appointment: drop it when the editor closes
+  // or switches appointment (a refresh of the same appointment keeps it).
+  useEffect(() => {
+    setPartialSave(null);
+  }, [appointmentId, isOpen]);
 
   useEffect(() => {
     if (!isOpen || saving) return undefined;
@@ -165,6 +185,10 @@ export default function AppointmentEditDrawer({
     notes,
   });
   const sendDisabled = saving || isDirty || isSendingConfirmation;
+  const fieldsLocked = saving || Boolean(partialSave);
+  const partialStateLabel = partialSave
+    ? STATE_OPTIONS.find((o) => o.value === partialSave.nextState)?.label ?? null
+    : null;
   const stateOptions = isCancelled
     ? STATE_OPTIONS.filter((option) => option.value === "CANCELLED")
     : STATE_OPTIONS;
@@ -204,26 +228,97 @@ export default function AppointmentEditDrawer({
       notes,
     };
 
+    let fieldsSaved = false;
     try {
-      await updateAppointment(
-        appointment.id,
-        buildUpdateAppointmentPayload(form, appointment),
-      );
+      try {
+        await updateAppointment(
+          appointment.id,
+          buildUpdateAppointmentPayload(form, appointment),
+        );
+        fieldsSaved = true;
 
-      if (nextState !== previousState) {
-        await updateAppointmentState({
-          id: appointment.id,
-          change: nextState,
+        if (nextState !== previousState) {
+          await updateAppointmentState({
+            id: appointment.id,
+            change: nextState,
+          });
+        }
+      } catch (error) {
+        if (!fieldsSaved) {
+          // Nothing was persisted: the form stays open with the edited values.
+          setSaveError(getSaveErrorMessage(error));
+          return;
+        }
+        // Partial save: the fields are persisted, only the state change failed.
+        setPartialSave({
+          nextState,
+          stateMessage: getSaveErrorMessage(error),
+          reloadFailed: false,
         });
+        await reloadAfterPartialSave(appointment.id);
+        return;
       }
 
-      await onSave?.();
-    } catch (error) {
-      setSaveError(
-        error instanceof Error
-          ? error.message
-          : "No se pudieron guardar los cambios.",
-      );
+      try {
+        await onSave?.();
+      } catch {
+        // The save succeeded; only the agenda reload failed.
+        setSaveError(SAVED_RELOAD_FAILED_MESSAGE);
+      }
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
+    }
+  }
+
+  async function reloadAfterPartialSave(id) {
+    let ok = true;
+    try {
+      const result = await onPartialSave?.(id);
+      ok = result?.ok !== false;
+    } catch {
+      ok = false;
+    }
+    setPartialSave((current) => (current ? { ...current, reloadFailed: !ok } : current));
+  }
+
+  // Retries only the state change; the field edit is already persisted.
+  async function handleRetryState() {
+    if (!appointment || !partialSave || savingRef.current) return;
+
+    savingRef.current = true;
+    setSaving(true);
+    try {
+      try {
+        await updateAppointmentState({
+          id: appointment.id,
+          change: partialSave.nextState,
+        });
+      } catch (error) {
+        const stateMessage = getSaveErrorMessage(error);
+        setPartialSave((current) => (current ? { ...current, stateMessage } : current));
+        return;
+      }
+
+      setPartialSave(null);
+      try {
+        await onSave?.();
+      } catch {
+        setSaveError(SAVED_RELOAD_FAILED_MESSAGE);
+      }
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
+    }
+  }
+
+  async function handleRetryReload() {
+    if (!appointment || !partialSave || savingRef.current) return;
+
+    savingRef.current = true;
+    setSaving(true);
+    try {
+      await reloadAfterPartialSave(appointment.id);
     } finally {
       savingRef.current = false;
       setSaving(false);
@@ -292,7 +387,7 @@ export default function AppointmentEditDrawer({
                     id="patient-name"
                     type="text"
                     required
-                    disabled={saving}
+                    disabled={fieldsLocked}
                     value={patientName}
                     onChange={(e) => setPatientName(e.target.value)}
                     className={inputClass}
@@ -313,7 +408,7 @@ export default function AppointmentEditDrawer({
                       durationLocked ? 1 : resolveSlotCount(appointment),
                     )}
                     appointmentTime={appointment.appointmentTime}
-                    disabled={saving || durationLocked}
+                    disabled={fieldsLocked || durationLocked}
                     unavailable={durationLocked}
                     startAt={temporal.kind === "ok" ? temporal.startAt : null}
                     endAt={temporal.kind === "ok" ? temporal.endAt : null}
@@ -327,7 +422,7 @@ export default function AppointmentEditDrawer({
                   </label>
                   <select
                     id="appointment-state"
-                    disabled={saving || isCancelled}
+                    disabled={fieldsLocked || isCancelled}
                     value={effectiveState}
                     onChange={(e) => setState(e.target.value)}
                     className={`${inputClass} font-medium ${stateOption.selectClass} ${
@@ -357,7 +452,7 @@ export default function AppointmentEditDrawer({
                   <textarea
                     id="appointment-notes"
                     rows={4}
-                    disabled={saving}
+                    disabled={fieldsLocked}
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     className={`${inputClass} resize-none`}
@@ -399,6 +494,43 @@ export default function AppointmentEditDrawer({
           </div>
 
           <footer className="shrink-0 border-t border-brand-border bg-brand-surface px-5 py-4 sm:px-6">
+            {partialSave ? (
+              <div
+                className="mb-3 rounded-brand border border-brand-danger/30 bg-brand-danger-soft px-3.5 py-2.5 text-xs text-brand-danger"
+                role="alert"
+              >
+                <p className="font-medium">{PARTIAL_SAVE_MESSAGE}</p>
+                <p className="mt-1">{partialSave.stateMessage}</p>
+                {partialStateLabel ? (
+                  <p className="mt-1 opacity-90">Estado solicitado: {partialStateLabel}</p>
+                ) : null}
+                {partialSave.reloadFailed ? (
+                  <p className="mt-2 font-medium">
+                    La vista no pudo actualizarse con los datos guardados.
+                  </p>
+                ) : null}
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={saving}
+                    onClick={handleRetryState}
+                  >
+                    Reintentar cambio de estado
+                  </Button>
+                  {partialSave.reloadFailed ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={saving}
+                      onClick={handleRetryReload}
+                    >
+                      Reintentar lectura
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
             {saveError ? (
               <div
                 className="mb-3 rounded-brand border border-brand-danger/30 bg-brand-danger-soft px-3.5 py-2.5 text-xs text-brand-danger"
@@ -413,7 +545,7 @@ export default function AppointmentEditDrawer({
               </Button>
               <Button
                 type="submit"
-                disabled={!patientName.trim()}
+                disabled={!patientName.trim() || Boolean(partialSave)}
                 loading={saving}
               >
                 <span>{saving ? "Guardando…" : "Guardar cambios"}</span>

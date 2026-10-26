@@ -296,4 +296,186 @@ describe("updateAppointment", () => {
     expect(result).not.toHaveProperty("durationMinutes");
     expect(result).not.toHaveProperty("slotCount");
   });
+
+  async function rejection(promise) {
+    try {
+      await promise;
+    } catch (error) {
+      return error;
+    }
+    throw new Error("Expected updateAppointment to reject");
+  }
+
+  function mockTextResponse(text, { status, statusText = "" }) {
+    return {
+      ok: false,
+      status,
+      statusText,
+      text: async () => text,
+    };
+  }
+
+  const editPayload = { name: "Cliente", slotCount: 3, reason: null };
+
+  it("surfaces the backend message of a 409 overlap instead of Request failed", async () => {
+    apiFetch.mockResolvedValue(
+      mockJsonResponse(
+        {
+          success: false,
+          status: "APPOINTMENT_OVERLAP",
+          error: "APPOINTMENT_OVERLAP",
+          message: "La cita se traslapa con otra cita existente.",
+        },
+        { ok: false, status: 409, statusText: "" },
+      ),
+    );
+
+    const error = await rejection(updateAppointment(1232, editPayload));
+
+    expect(error).toBeInstanceOf(Error);
+    expect(error.message).toBe("La cita se traslapa con otra cita existente.");
+    expect(error.message).not.toMatch(/Request failed/);
+    expect(error.status).toBe(409);
+    expect(error.code).toBe("APPOINTMENT_OVERLAP");
+    expect(error.body).toMatchObject({ success: false });
+  });
+
+  it("maps a 400 OUT_OF_SCHEDULE that only carries `status`", async () => {
+    apiFetch.mockResolvedValue(
+      mockJsonResponse(
+        {
+          success: false,
+          status: "OUT_OF_SCHEDULE",
+          message: "La duración se sale del horario laboral",
+        },
+        { ok: false, status: 400, statusText: "" },
+      ),
+    );
+
+    const error = await rejection(updateAppointment(1232, editPayload));
+
+    expect(error.message).toBe("La duración se sale del horario laboral");
+    expect(error.status).toBe(400);
+    expect(error.code).toBe("OUT_OF_SCHEDULE");
+  });
+
+  it.each([
+    ["APPOINTMENT_OVERLAP", 409, "La cita se traslapa con otra cita existente."],
+    ["SLOT_ALREADY_BOOKED", 409, "La cita se traslapa con otra cita existente."],
+    ["OUT_OF_SCHEDULE", 400, "La cita queda fuera del turno del especialista."],
+    [
+      "UNMIGRATED_BOOKING",
+      409,
+      "Esta cita no tiene una duración histórica registrada y no se puede cambiar su duración.",
+    ],
+    ["INVALID_REASON", 400, "El motivo excede la longitud permitida."],
+  ])("falls back to a Spanish message for %s without a backend message", async (code, status, expected) => {
+    apiFetch.mockResolvedValue(
+      mockJsonResponse({ success: false, status: code }, { ok: false, status }),
+    );
+
+    const error = await rejection(updateAppointment(1, editPayload));
+
+    expect(error.message).toBe(expected);
+    expect(error.code).toBe(code);
+  });
+
+  it("does not treat an unrecognized 409 as an overlap", async () => {
+    apiFetch.mockResolvedValue(
+      mockJsonResponse(
+        { success: false, status: "SOMETHING_ELSE", message: "ORA-00001 internal detail" },
+        { ok: false, status: 409 },
+      ),
+    );
+
+    const error = await rejection(updateAppointment(1, editPayload));
+
+    expect(error.message).toBe("No se pudieron guardar los cambios. Intenta nuevamente.");
+    expect(error.message).not.toMatch(/traslapa/);
+    expect(error.message).not.toMatch(/ORA-/);
+    expect(error.status).toBe(409);
+  });
+
+  it("hides backend details of HTTP 5xx responses", async () => {
+    apiFetch.mockResolvedValue(
+      mockJsonResponse(
+        { success: false, status: "ERROR", message: "Database operation failed" },
+        { ok: false, status: 500 },
+      ),
+    );
+
+    const error = await rejection(updateAppointment(1, editPayload));
+
+    expect(error.message).toBe("No se pudieron guardar los cambios. Intenta nuevamente.");
+    expect(error.status).toBe(500);
+  });
+
+  it("uses the generic message for non-JSON error responses", async () => {
+    apiFetch.mockResolvedValue(
+      mockTextResponse("<html><body>Bad Gateway at /srv/app</body></html>", {
+        status: 502,
+      }),
+    );
+    const bad = await rejection(updateAppointment(1, editPayload));
+    expect(bad.message).toBe("No se pudieron guardar los cambios. Intenta nuevamente.");
+    expect(bad.message).not.toMatch(/html|Request failed/i);
+
+    apiFetch.mockResolvedValue(
+      mockTextResponse("<html>Not JSON</html>", { status: 409 }),
+    );
+    const conflict = await rejection(updateAppointment(1, editPayload));
+    expect(conflict.message).toBe("No se pudieron guardar los cambios. Intenta nuevamente.");
+  });
+
+  it("reports a connection failure", async () => {
+    apiFetch.mockRejectedValue(new TypeError("Failed to fetch"));
+
+    const error = await rejection(updateAppointment(1, editPayload));
+
+    expect(error.message).toBe("No se pudo conectar con el servidor. Intenta nuevamente.");
+    expect(error.status).toBeNull();
+  });
+
+  it("does not rewrite the expired-session error", async () => {
+    apiFetch.mockRejectedValue(new Error("Sesión expirada. Inicia sesión nuevamente."));
+
+    const error = await rejection(updateAppointment(1, editPayload));
+
+    expect(error.message).toBe("Sesión expirada. Inicia sesión nuevamente.");
+  });
+
+  it("does not fail a successful save when the acknowledgement is not JSON", async () => {
+    apiFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      text: async () => "OK",
+    });
+
+    await expect(updateAppointment(1, editPayload)).resolves.toBeNull();
+  });
+});
+
+describe("updateAppointmentState error mapping", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("does not leak raw bodies of unrecognized errors", async () => {
+    apiFetch.mockResolvedValue({
+      ok: false,
+      status: 500,
+      statusText: "",
+      text: async () => '{"trace":"at com.example.Foo","message":"Database operation failed"}',
+    });
+
+    let thrown;
+    try {
+      await updateAppointmentState({ id: 1, change: "CONFIRMED" });
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(thrown.message).toBe("No se pudieron guardar los cambios. Intenta nuevamente.");
+  });
 });

@@ -143,7 +143,13 @@ export default function AppointmentsPage() {
     );
   }
 
-  async function reloadAfterAppointmentSave() {
+  /**
+   * Reloads the agenda after a write. Never rejects: a failed read is shown in
+   * the page banner and reported as `ok: false`. When `appointmentId` is given
+   * and the read succeeded, `appointment` is the freshly loaded row (or null).
+   * @returns {Promise<{ ok: boolean, appointment: object|null }>}
+   */
+  async function reloadAfterAppointmentSave(appointmentId = null) {
     const requestedDate = calendarQueryRef.current.date;
     const requestedFilter = calendarQueryRef.current.filter;
     const requestedView = calendarQueryRef.current.viewType;
@@ -179,8 +185,16 @@ export default function AppointmentsPage() {
 
       if (dayStillCurrent && (dayFailed || (!refreshDay && catalogFailed))) {
         setCalendarRefreshError(SAVED_VIEW_DETAIL);
-        return;
+        return { ok: false, appointment: null };
       }
+
+      const findFresh = (list) =>
+        appointmentId != null && Array.isArray(list)
+          ? list.find((item) => item?.id === appointmentId) ?? null
+          : null;
+      const catalogRows =
+        settledCatalog.status === "fulfilled" ? settledCatalog.value : null;
+      let freshAppointment = findFresh(catalogRows);
 
       if (
         !dayFailed &&
@@ -192,7 +206,9 @@ export default function AppointmentsPage() {
         rememberAppointmentIds(data.map((item) => item.id));
       }
 
-      if (!dayStillCurrent || !refreshDay || settledDay.status !== "fulfilled") return;
+      if (!dayStillCurrent || !refreshDay || settledDay.status !== "fulfilled") {
+        return { ok: true, appointment: freshAppointment };
+      }
 
       const { appointments: rows, summary } = settledDay.value ?? {};
       setCalendarRows(Array.isArray(rows) ? rows : []);
@@ -200,6 +216,8 @@ export default function AppointmentsPage() {
       setCalendarSummary(summary ?? null);
       setCalendarError(null);
       setCalendarRefreshError(null);
+      freshAppointment = findFresh(rows) ?? freshAppointment;
+      return { ok: true, appointment: freshAppointment };
     } finally {
       if (token === dayLoadGeneration.current) {
         setCalendarRefreshing(false);
@@ -724,6 +742,20 @@ export default function AppointmentsPage() {
         onSave={async () => {
           await reloadAfterAppointmentSave();
           setEditingAppointment(null);
+        }}
+        onPartialSave={async (appointmentId) => {
+          // Fields were saved but the state change failed: reload the agenda and
+          // refresh the open editor with the persisted data, without closing it.
+          const { ok, appointment: fresh } =
+            await reloadAfterAppointmentSave(appointmentId);
+          if (fresh) {
+            setEditingAppointment((current) =>
+              current && current.id === appointmentId
+                ? { ...current, ...fresh }
+                : current,
+            );
+          }
+          return { ok };
         }}
         onSendConfirmation={requestSendConfirmation}
         sendingConfirmationId={sendingConfirmationId}

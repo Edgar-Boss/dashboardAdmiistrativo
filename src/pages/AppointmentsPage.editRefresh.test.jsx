@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 vi.mock("../services/appointmentService", async () => {
@@ -28,7 +28,9 @@ import {
   fetchAppointmentsByDate,
   fetchBusinessSchedule,
   updateAppointment,
+  updateAppointmentState,
 } from "../services/appointmentService";
+import { AppointmentApiError } from "../services/appointmentApiError";
 import { fetchSpecialists } from "../services/specialistService";
 import AppointmentsPage from "./AppointmentsPage";
 
@@ -211,6 +213,171 @@ describe("AppointmentsPage edit refresh", () => {
     expect(refreshed).toHaveTextContent(TIME_AFTER);
     expect(cardHeight()).toBeGreaterThan(heightBefore);
     expect(screen.queryByText("No se pudo actualizar la vista.")).not.toBeInTheDocument();
+  });
+
+  it("keeps the editor and the card untouched when the edit is rejected, then saves after a retry", async () => {
+    const user = userEvent.setup();
+    let dayLoads = 0;
+    let saved = false;
+    fetchAppointmentsByDate.mockImplementation(({ date }) => {
+      if (date !== DAY) return Promise.resolve({ appointments: [], summary: null });
+      dayLoads += 1;
+      return Promise.resolve({
+        appointments: [saved ? updatedAppointment : originalAppointment],
+        summary: null,
+      });
+    });
+    updateAppointment.mockRejectedValueOnce(
+      new AppointmentApiError({
+        kind: "business",
+        status: 409,
+        code: "APPOINTMENT_OVERLAP",
+        message: "La cita se traslapa con otra cita existente.",
+      }),
+    );
+
+    await openDay(user);
+    const loadsBeforeEdit = dayLoads;
+    const heightBefore = cardHeight();
+
+    await user.click(screen.getByRole("button", { name: /Cita de Cliente 555/ }));
+    await user.selectOptions(screen.getByLabelText("Duración de la cita"), "2");
+    await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("La cita se traslapa con otra cita existente.");
+    expect(alert).not.toHaveTextContent(/Request failed/);
+    expect(screen.getByRole("dialog", { name: "Editar cita" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Duración de la cita")).toHaveValue("2");
+    expect(screen.getByRole("button", { name: "Guardar cambios" })).toBeEnabled();
+    expect(dayLoads).toBe(loadsBeforeEdit);
+    expect(screen.queryByText("Actualizando la agenda…")).not.toBeInTheDocument();
+
+    const card = screen.getByTestId("appointment-calendar-card");
+    expect(card).toHaveTextContent(TIME_BEFORE);
+    expect(cardHeight()).toBe(heightBefore);
+
+    saved = true;
+    await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog", { name: "Editar cita" })).not.toBeInTheDocument();
+    });
+    const refreshed = await screen.findByTestId("appointment-calendar-card");
+    expect(refreshed).toHaveTextContent(TIME_AFTER);
+    expect(updateAppointment).toHaveBeenCalledTimes(2);
+    expect(dayLoads).toBeGreaterThan(loadsBeforeEdit);
+  });
+
+  describe("partial save (fields saved, state change failed)", () => {
+    const PARTIAL = "Los datos de la cita se guardaron, pero no se pudo cambiar su estado.";
+    const stateError = () =>
+      new AppointmentApiError({
+        kind: "business",
+        status: 400,
+        code: "APPOINTMENT_CANCELLED",
+        message: "No se puede editar una cita cancelada.",
+      });
+
+    async function submitPartialEdit(user) {
+      await user.click(screen.getByRole("button", { name: /Cita de Cliente 555/ }));
+      await user.selectOptions(screen.getByLabelText("Duración de la cita"), "2");
+      await user.selectOptions(screen.getByLabelText("Estado"), "PENDING");
+      await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
+      return screen.getByRole("dialog", { name: "Editar cita" });
+    }
+
+    it("reloads the agenda, keeps the editor open and retries only the state", async () => {
+      const user = userEvent.setup();
+      let saved = false;
+      let dayLoads = 0;
+      fetchAppointmentsByDate.mockImplementation(({ date }) => {
+        if (date !== DAY) return Promise.resolve({ appointments: [], summary: null });
+        dayLoads += 1;
+        return Promise.resolve({
+          appointments: [saved ? updatedAppointment : originalAppointment],
+          summary: null,
+        });
+      });
+      fetchAppointments.mockImplementation(() =>
+        Promise.resolve([saved ? updatedAppointment : originalAppointment]),
+      );
+      updateAppointment.mockImplementation(async () => {
+        saved = true;
+        return { success: true };
+      });
+      updateAppointmentState.mockRejectedValueOnce(stateError());
+
+      await openDay(user);
+      const loadsBefore = dayLoads;
+      const dialog = await submitPartialEdit(user);
+
+      expect(await within(dialog).findByText(PARTIAL)).toBeInTheDocument();
+      expect(dialog).toHaveTextContent("No se puede editar una cita cancelada.");
+      expect(dayLoads).toBeGreaterThan(loadsBefore);
+      expect(screen.getByRole("dialog", { name: "Editar cita" })).toBeInTheDocument();
+      await waitFor(() =>
+        expect(screen.getByTestId("appointment-calendar-card")).toHaveTextContent(TIME_AFTER),
+      );
+      // The editor now shows the persisted data and the real (unchanged) state.
+      expect(within(dialog).getByLabelText("Duración de la cita")).toHaveValue("2");
+      expect(within(dialog).getByLabelText("Estado")).toHaveValue("CONFIRMED");
+      expect(within(dialog).getByText(PARTIAL)).toBeInTheDocument();
+
+      updateAppointmentState.mockResolvedValueOnce({ success: true });
+      await user.click(
+        within(dialog).getByRole("button", { name: "Reintentar cambio de estado" }),
+      );
+
+      await waitFor(() => {
+        expect(screen.queryByRole("dialog", { name: "Editar cita" })).not.toBeInTheDocument();
+      });
+      expect(updateAppointment).toHaveBeenCalledTimes(1);
+      expect(updateAppointmentState).toHaveBeenCalledTimes(2);
+      expect(updateAppointmentState).toHaveBeenLastCalledWith({ id: 555, change: "PENDING" });
+    });
+
+    it("says the view could not be updated and retries only the read", async () => {
+      const user = userEvent.setup();
+      let saved = false;
+      let failReload = false;
+      fetchAppointmentsByDate.mockImplementation(({ date }) => {
+        if (date !== DAY) return Promise.resolve({ appointments: [], summary: null });
+        if (failReload) return Promise.reject(new Error("day down"));
+        return Promise.resolve({
+          appointments: [saved ? updatedAppointment : originalAppointment],
+          summary: null,
+        });
+      });
+      updateAppointment.mockImplementation(async () => {
+        saved = true;
+        failReload = true;
+        return { success: true };
+      });
+      updateAppointmentState.mockRejectedValueOnce(stateError());
+
+      await openDay(user);
+      const dialog = await submitPartialEdit(user);
+
+      expect(await within(dialog).findByText(PARTIAL)).toBeInTheDocument();
+      await waitFor(() =>
+        expect(dialog).toHaveTextContent("La vista no pudo actualizarse"),
+      );
+      expect(screen.getByRole("dialog", { name: "Editar cita" })).toBeInTheDocument();
+
+      failReload = false;
+      await user.click(within(dialog).getByRole("button", { name: "Reintentar lectura" }));
+
+      await waitFor(() =>
+        expect(dialog).not.toHaveTextContent("La vista no pudo actualizarse"),
+      );
+      expect(within(dialog).getByText(PARTIAL)).toBeInTheDocument();
+      await waitFor(() =>
+        expect(screen.getByTestId("appointment-calendar-card")).toHaveTextContent(TIME_AFTER),
+      );
+      expect(updateAppointment).toHaveBeenCalledTimes(1);
+      expect(updateAppointmentState).toHaveBeenCalledTimes(1);
+    });
   });
 
   it("ignores a late daily response after the selected date changes", async () => {
