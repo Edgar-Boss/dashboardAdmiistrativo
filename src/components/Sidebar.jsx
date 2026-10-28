@@ -1,10 +1,10 @@
-import { Bell, LogOut } from "lucide-react";
+import { Bell, CalendarDays, LogOut, Users } from "lucide-react";
 import { useEffect } from "react";
 import { getStoredUser } from "../services/authService";
 
 const ITEMS = [
-  { id: "citas", label: "Citas" },
-  { id: "doctores", label: "Doctores" },
+  { id: "citas", label: "Citas", Icon: CalendarDays },
+  { id: "doctores", label: "Doctores", Icon: Users },
 ];
 
 export default function Sidebar({
@@ -67,21 +67,26 @@ export default function Sidebar({
         </div>
 
         <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
+          <p className="mb-2 px-3 text-[0.6875rem] font-semibold uppercase tracking-wider text-white/50">
+            GESTIÓN
+          </p>
           {ITEMS.map((item) => {
             const isActive = active === item.id;
+            const Icon = item.Icon;
             return (
               <a
                 key={item.id}
                 href={`#${item.id}`}
                 onClick={() => onClose?.()}
-                className={`rounded-brand px-3 py-2.5 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-secondary/50 ${
+                className={`flex items-center gap-3 rounded-brand px-3 py-2.5 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-secondary/50 ${
                   isActive
-                    ? "bg-brand-primary text-brand-ink shadow-brand"
+                    ? "bg-brand-primary text-white shadow-brand"
                     : "text-white/70 hover:bg-white/10 hover:text-white"
                 }`}
                 aria-current={isActive ? "page" : undefined}
               >
-                {item.label}
+                <Icon className="h-4 w-4 shrink-0" aria-hidden />
+                <span className="truncate">{item.label}</span>
               </a>
             );
           })}
