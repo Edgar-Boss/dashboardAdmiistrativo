@@ -15,7 +15,7 @@ function formatDisplay(value) {
   return s || "—";
 }
 
-export default function DoctorCard({ doctor, onEdit }) {
+export default function DoctorCard({ doctor, onEdit, onSchedule }) {
   return (
     <article className="group nb-card p-5 transition hover:-translate-y-0.5 hover:shadow-brand-md">
       <div className="flex items-start justify-between gap-3">
@@ -40,6 +40,9 @@ export default function DoctorCard({ doctor, onEdit }) {
       <div className="mt-4 flex flex-wrap gap-2">
         <Button type="button" variant="outline" size="sm" onClick={() => onEdit?.(doctor)}>
           Editar
+        </Button>
+        <Button type="button" variant="secondary" size="sm" onClick={() => onSchedule?.(doctor)}>
+          Turnos
         </Button>
       </div>
     </article>

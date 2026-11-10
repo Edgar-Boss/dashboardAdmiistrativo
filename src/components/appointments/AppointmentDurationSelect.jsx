@@ -6,6 +6,7 @@ import {
   buildDurationOptions,
   getDurationSummary,
 } from "./appointmentEditHelpers";
+import { formatCivilDateTime } from "./appointmentTemporal";
 
 const selectClass =
   "w-full appearance-none rounded-brand border border-brand-border bg-brand-surface py-2.5 pl-3.5 pr-10 text-sm font-medium text-brand-text shadow-brand transition duration-150 ease-out hover:border-brand-border-strong hover:bg-brand-soft/40 focus:border-brand-primary/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25 disabled:cursor-not-allowed disabled:bg-brand-soft disabled:opacity-60";
@@ -17,6 +18,11 @@ export default function AppointmentDurationSelect({
   appointmentTime,
   disabled = false,
   maxSlotCount = DEFAULT_MAX_SLOT_COUNT,
+  unavailable = false,
+  unavailableReason = "La duración histórica no está disponible, así que no se puede modificar.",
+  startAt = null,
+  endAt = null,
+  recordedDurationLabel = null,
 }) {
   const durationOptions = useMemo(() => {
     const optionCount = Math.max(maxSlotCount, slotCount);
@@ -31,6 +37,26 @@ export default function AppointmentDurationSelect({
   const safeSlotCount = durationOptions.some((o) => o.slotCount === slotCount)
     ? slotCount
     : durationOptions[0]?.slotCount ?? 1;
+  const realStart = formatCivilDateTime(startAt);
+  const realEnd = formatCivilDateTime(endAt);
+
+  if (unavailable) {
+    return (
+      <div className="space-y-2">
+        <select
+          id="appointment-duration"
+          disabled
+          aria-label="Duración de la cita"
+          className={`${selectClass} cursor-not-allowed`}
+          value="unavailable"
+          onChange={() => {}}
+        >
+          <option value="unavailable">Duración no disponible</option>
+        </select>
+        <p className="text-xs leading-snug text-brand-text-muted">{unavailableReason}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-0">
@@ -77,6 +103,24 @@ export default function AppointmentDurationSelect({
             <span className="text-brand-text-muted">Duración total</span>
             <span className="font-medium text-brand-text-muted">{summary.totalLabel}</span>
           </p>
+          {realStart ? (
+            <p className="flex items-baseline justify-between gap-3 text-[11px]">
+              <span className="text-brand-text-muted">Inicio real</span>
+              <span className="font-medium tabular-nums text-brand-text">{realStart}</span>
+            </p>
+          ) : null}
+          {realEnd ? (
+            <p className="flex items-baseline justify-between gap-3 text-[11px]">
+              <span className="text-brand-text-muted">Fin real</span>
+              <span className="font-medium tabular-nums text-brand-text">{realEnd}</span>
+            </p>
+          ) : null}
+          {recordedDurationLabel ? (
+            <p className="flex items-baseline justify-between gap-3 text-[11px]">
+              <span className="text-brand-text-muted">Duración registrada</span>
+              <span className="font-medium text-brand-text">{recordedDurationLabel}</span>
+            </p>
+          ) : null}
         </div>
       ) : null}
     </div>

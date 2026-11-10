@@ -5,7 +5,12 @@ vi.mock("./apiClient", () => ({
 }));
 
 import { apiFetch } from "./apiClient";
-import { sendAppointmentConfirmation, updateAppointmentState, fetchBusinessSchedule } from "./appointmentService";
+import {
+  sendAppointmentConfirmation,
+  updateAppointment,
+  updateAppointmentState,
+  fetchBusinessSchedule,
+} from "./appointmentService";
 
 function mockJsonResponse(body, { ok = true, status = 200, statusText } = {}) {
   return {
@@ -155,6 +160,91 @@ describe("fetchBusinessSchedule", () => {
       startTime: "09:00",
       endTime: "18:00",
       slotMinutes: 30,
+      intervals: null,
+    });
+  });
+
+  it("requests one technician and keeps null scalar hours with intervals", async () => {
+    apiFetch.mockResolvedValue(
+      mockJsonResponse({
+        date: "2026-10-27",
+        open: true,
+        startTime: null,
+        endTime: null,
+        slotMinutes: 30,
+        intervals: [
+          {
+            start: "2026-10-26T19:00:00",
+            end: "2026-10-27T07:00:00",
+            slotMinutes: 30,
+          },
+          {
+            start: "2026-10-27T19:00:00",
+            end: "2026-10-28T07:00:00",
+            slotMinutes: 30,
+          },
+        ],
+      })
+    );
+
+    const result = await fetchBusinessSchedule("2026-10-27", 3);
+
+    const [url] = apiFetch.mock.calls[0];
+    expect(url).toMatch(/date=2026-10-27/);
+    expect(url).toMatch(/doctorId=3/);
+    expect(url).not.toMatch(/tenantId=/);
+    expect(result.startTime).toBeNull();
+    expect(result.endTime).toBeNull();
+    expect(result.intervals).toEqual([
+      {
+        start: "2026-10-26T19:00:00",
+        end: "2026-10-27T07:00:00",
+        slotMinutes: 30,
+      },
+      {
+        start: "2026-10-27T19:00:00",
+        end: "2026-10-28T07:00:00",
+        slotMinutes: 30,
+      },
+    ]);
+  });
+
+  it("keeps a 24 hour business interval when no technician is requested", async () => {
+    apiFetch.mockResolvedValue(
+      mockJsonResponse({
+        date: "2026-10-27",
+        open: true,
+        startTime: null,
+        endTime: null,
+        slotMinutes: 30,
+        intervals: [
+          {
+            start: "2026-10-27T00:00:00",
+            end: "2026-10-28T00:00:00",
+            slotMinutes: 30,
+          },
+        ],
+      })
+    );
+
+    const result = await fetchBusinessSchedule("2026-10-27");
+
+    const [url] = apiFetch.mock.calls[0];
+    expect(url).toMatch(/\/api\/admin\/schedule\?date=2026-10-27$/);
+    expect(url).not.toMatch(/doctorId=/);
+    expect(result).toEqual({
+      date: "2026-10-27",
+      open: true,
+      startTime: null,
+      endTime: null,
+      slotMinutes: 30,
+      intervals: [
+        {
+          start: "2026-10-27T00:00:00",
+          end: "2026-10-28T00:00:00",
+          slotMinutes: 30,
+        },
+      ],
     });
   });
 
@@ -174,5 +264,36 @@ describe("fetchBusinessSchedule", () => {
     expect(result.open).toBe(false);
     expect(result.startTime).toBeNull();
     expect(result.endTime).toBeNull();
+  });
+});
+
+describe("updateAppointment", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns the acknowledgement and does not invent appointment fields", async () => {
+    apiFetch.mockResolvedValue(
+      mockJsonResponse({
+        status: "OK",
+        success: true,
+        message: "Cita actualizada correctamente",
+      }),
+    );
+
+    const result = await updateAppointment(555, {
+      name: "Cliente",
+      slotCount: 2,
+      reason: null,
+    });
+
+    expect(result).toEqual({
+      status: "OK",
+      success: true,
+      message: "Cita actualizada correctamente",
+    });
+    expect(result).not.toHaveProperty("endAt");
+    expect(result).not.toHaveProperty("durationMinutes");
+    expect(result).not.toHaveProperty("slotCount");
   });
 });

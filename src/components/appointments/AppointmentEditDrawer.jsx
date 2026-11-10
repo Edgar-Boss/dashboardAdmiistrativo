@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Calendar,
   Clock,
@@ -17,8 +17,8 @@ import {
   DEFAULT_SLOT_MINUTES,
   STATE_OPTIONS,
   buildUpdateAppointmentPayload,
-  buildUpdatedAppointment,
   formatAppointmentDateLong,
+  formatDurationLabel,
   getAppointmentDateRaw,
   getNotes,
   getPatientName,
@@ -27,6 +27,10 @@ import {
   normalizeAppointmentState,
   isAppointmentEditFormDirty,
 } from "./appointmentEditHelpers";
+import {
+  describeAppointmentTemporal,
+  durationChangeLocked,
+} from "./appointmentTemporal";
 import {
   canSendAppointmentConfirmation,
   isSendingAppointmentConfirmation,
@@ -123,6 +127,7 @@ export default function AppointmentEditDrawer({
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
+  const savingRef = useRef(false);
 
   useEffect(() => {
     if (!appointment || !isOpen) return;
@@ -165,10 +170,19 @@ export default function AppointmentEditDrawer({
     : STATE_OPTIONS;
   const stateOption =
     STATE_OPTIONS.find((o) => o.value === effectiveState) ?? STATE_OPTIONS[0];
+  const temporal = describeAppointmentTemporal(appointment);
+  const durationLocked = durationChangeLocked(appointment);
+  const durationSlotMinutes =
+    temporal.kind === "ok" && temporal.slotMinutesAtBooking
+      ? temporal.slotMinutesAtBooking
+      : DEFAULT_SLOT_MINUTES;
+  const recordedDurationLabel = Number.isFinite(temporal.durationMinutes)
+    ? formatDurationLabel(temporal.durationMinutes, 1)
+    : null;
 
   async function handleSubmit(event) {
     event.preventDefault();
-    if (!appointment || saving) return;
+    if (!appointment || savingRef.current) return;
 
     const trimmedName = patientName.trim();
     if (!trimmedName) return;
@@ -179,6 +193,7 @@ export default function AppointmentEditDrawer({
       return;
     }
 
+    savingRef.current = true;
     setSaving(true);
     setSaveError(null);
 
@@ -192,7 +207,7 @@ export default function AppointmentEditDrawer({
     try {
       await updateAppointment(
         appointment.id,
-        buildUpdateAppointmentPayload(form),
+        buildUpdateAppointmentPayload(form, appointment),
       );
 
       if (nextState !== previousState) {
@@ -202,8 +217,7 @@ export default function AppointmentEditDrawer({
         });
       }
 
-      const updated = buildUpdatedAppointment(appointment, form);
-      onSave?.(updated);
+      await onSave?.();
     } catch (error) {
       setSaveError(
         error instanceof Error
@@ -211,6 +225,7 @@ export default function AppointmentEditDrawer({
           : "No se pudieron guardar los cambios.",
       );
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   }
@@ -293,10 +308,16 @@ export default function AppointmentEditDrawer({
                   <AppointmentDurationSelect
                     slotCount={slotCount}
                     onChange={setSlotCount}
-                    slotMinutes={DEFAULT_SLOT_MINUTES}
-                    maxSlotCount={getEditDurationMaxSlots(resolveSlotCount(appointment))}
+                    slotMinutes={durationSlotMinutes}
+                    maxSlotCount={getEditDurationMaxSlots(
+                      durationLocked ? 1 : resolveSlotCount(appointment),
+                    )}
                     appointmentTime={appointment.appointmentTime}
-                    disabled={saving}
+                    disabled={saving || durationLocked}
+                    unavailable={durationLocked}
+                    startAt={temporal.kind === "ok" ? temporal.startAt : null}
+                    endAt={temporal.kind === "ok" ? temporal.endAt : null}
+                    recordedDurationLabel={recordedDurationLabel}
                   />
                 </div>
 

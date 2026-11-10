@@ -13,6 +13,12 @@ import AppointmentCalendarCard from "./AppointmentCalendarCard";
 import CurrentTimeIndicator from "./CurrentTimeIndicator";
 import DoctorColumnHeader from "./DoctorColumnHeader";
 import { useCurrentTime } from "./useCurrentTime";
+import {
+  formatShiftRange,
+  fullBlocksWithinRanges,
+  nonWorkingRanges,
+} from "./scheduleIntervals";
+import { getDayEndMinutes, getDayStartMinutes } from "./calendarConfig";
 
 function CalendarSkeleton() {
   return (
@@ -46,6 +52,8 @@ export default function MedicalCalendarGrid({
   onAppointmentClick,
   onStateChange,
   savingIds,
+  columnStates = [],
+  onRetrySchedule,
 }) {
   const [openMenuId, setOpenMenuId] = useState(null);
   const calendarConfig = config;
@@ -55,12 +63,15 @@ export default function MedicalCalendarGrid({
     [calendarConfig]
   );
   const columns = useMemo(
-    () => buildDoctorColumns({ specialists, appointments }),
-    [specialists, appointments]
+    () => buildDoctorColumns({ specialists, appointments, columnStates }),
+    [specialists, appointments, columnStates]
   );
   const blocks = useMemo(
-    () => (calendarConfig ? buildAppointmentBlocks(appointments, calendarConfig) : []),
-    [appointments, calendarConfig]
+    () =>
+      calendarConfig
+        ? buildAppointmentBlocks(appointments, calendarConfig, selectedDate)
+        : [],
+    [appointments, calendarConfig, selectedDate]
   );
   const blocksByColumn = useMemo(
     () => groupBlocksByColumn(blocks, columns),
@@ -134,6 +145,8 @@ export default function MedicalCalendarGrid({
                   doctorName={col.doctorName}
                   specialty={col.specialty}
                   themeIndex={col.themeIndex}
+                  shifts={shiftLabels(calendarConfig, col)}
+                  statusLabel={columnStatusLabel(col)}
                 />
               </div>
             ))}
@@ -173,21 +186,85 @@ export default function MedicalCalendarGrid({
                 <div
                   key={col.key}
                   data-testid={`calendar-doctor-col-${col.key}`}
+                  data-availability={col.availability}
                   className={`calendar-doctor-col relative shrink-0 border-r border-[#eceff5] ${theme.column}`}
                 >
+                  {colBlocks
+                    .filter((block) => block.presentation === "list")
+                    .map((block) => (
+                      <button
+                        key={`list-${block.row?.id}`}
+                        type="button"
+                        data-testid="appointment-without-duration"
+                        data-appointment-id={block.row?.id}
+                        onClick={() => onAppointmentClick?.(block.row)}
+                        className="relative z-20 m-2 block w-[calc(100%-1rem)] rounded-2xl border border-dashed border-[#e4e7ee] bg-white px-2.5 py-2 text-left"
+                      >
+                        <span className="block truncate text-xs font-semibold text-brand-text">
+                          {block.row?.name ?? block.row?.patientName ?? "—"}
+                        </span>
+                        {block.timeLabel ? (
+                          <span className="mt-0.5 block text-[11px] text-brand-text-muted">
+                            {block.timeLabel}
+                          </span>
+                        ) : null}
+                        <span className="mt-0.5 block text-[11px] font-medium text-brand-text">
+                          {block.durationLabel}
+                        </span>
+                        {block.continuationLabel ? (
+                          <span className="mt-0.5 block text-[11px] text-brand-text-muted">
+                            {block.continuationLabel}
+                          </span>
+                        ) : null}
+                      </button>
+                    ))}
                   <div className="relative" style={{ height: gridHeight }}>
+                    {offShiftLabelCells(calendarConfig, col).map((cell) => (
+                      <div
+                        key={`${col.key}-off-${cell.start}`}
+                        data-testid="calendar-off-shift"
+                        data-start-minutes={cell.start}
+                        className="calendar-off-shift-cell pointer-events-none absolute left-0 right-0 z-0 flex items-center justify-center border-b border-[#f0f2f6] px-2 text-center"
+                        style={bandStyle(cell.start, cell.end, calendarConfig)}
+                      >
+                        <span data-testid="calendar-off-shift-label">Sin turno</span>
+                      </div>
+                    ))}
+
                     {timeSlots.map((slot) => (
                       <div
                         key={`${col.key}-${slot.minutes}`}
-                        className="absolute left-0 right-0 border-t border-[#f0f2f6]"
+                        data-testid="calendar-grid-line"
+                        className="pointer-events-none absolute left-0 right-0 z-[1] border-t border-[#f0f2f6]"
                         style={{ top: slot.topPx }}
                         aria-hidden
                       />
                     ))}
 
-                    {colBlocks.map((block) => (
+                    {col.availability === "error" ? (
+                      <div
+                        data-testid="calendar-schedule-error"
+                        role="alert"
+                        className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-brand-danger-soft/90 px-3 text-center"
+                      >
+                        <p className="text-[11px] font-medium text-brand-danger">
+                          No se pudo cargar el horario.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => onRetrySchedule?.()}
+                          className="rounded-full border border-brand-danger/30 bg-white px-2 py-1 text-[11px] font-medium text-brand-danger"
+                        >
+                          Reintentar
+                        </button>
+                      </div>
+                    ) : null}
+
+                    {colBlocks
+                      .filter((block) => block.presentation !== "list")
+                      .map((block) => (
                       <AppointmentCalendarCard
-                        key={block.row?.id ?? `${block.startKey}-${col.key}`}
+                        key={`${block.row?.id ?? block.startKey}-${block.startMin ?? ""}`}
                         block={block}
                         onClick={onAppointmentClick}
                         onStateChange={onStateChange}
@@ -218,4 +295,60 @@ export default function MedicalCalendarGrid({
       </div>
     </div>
   );
+}
+
+function columnStatusLabel(column) {
+  if (column.availability === "inactive") return "Especialista inactivo";
+  if (column.availability === "closed") return "Sin turno";
+  if (column.availability === "error") return "No se pudo cargar el horario.";
+  return null;
+}
+
+function shiftLabels(config, column) {
+  return columnShifts(config, column).map(formatShiftRange);
+}
+
+function offShiftRanges(config, column) {
+  const availability = column.availability;
+  if (availability !== "open" && availability !== "loaded" && availability !== "closed") {
+    return [];
+  }
+  const dayStart = getDayStartMinutes(config);
+  const dayEnd = getDayEndMinutes(config);
+  if (availability === "closed" && dayEnd > dayStart) {
+    return [{ start: dayStart, end: dayEnd }];
+  }
+  if (!config?.intervalMode) return [];
+  return nonWorkingRanges(dayStart, dayEnd, columnShifts(config, column));
+}
+
+function offShiftLabelCells(config, column) {
+  return fullBlocksWithinRanges(
+    getDayStartMinutes(config),
+    getDayEndMinutes(config),
+    config?.slotMinutes,
+    offShiftRanges(config, column),
+  );
+}
+
+function columnShifts(config, column) {
+  if (
+    column.availability === "closed" ||
+    column.availability === "error" ||
+    column.availability === "inactive"
+  ) {
+    return [];
+  }
+  if (!config?.intervalMode) return [];
+  if (config.shiftsByDoctor?.has(String(column.doctorId))) {
+    return config.shiftsByDoctor.get(String(column.doctorId)) ?? [];
+  }
+  return config.sharedShifts ?? [];
+}
+
+function bandStyle(start, end, config) {
+  const dayStart = getDayStartMinutes(config);
+  const top = ((start - dayStart) / config.slotMinutes) * config.rowHeightPx;
+  const height = ((end - start) / config.slotMinutes) * config.rowHeightPx;
+  return { top, height };
 }
