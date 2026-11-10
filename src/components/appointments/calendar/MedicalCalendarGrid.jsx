@@ -103,7 +103,7 @@ export default function MedicalCalendarGrid({
   if (columns.length === 0) return <EmptyDoctors />;
 
   return (
-    <div className="overflow-hidden rounded-brand-md border border-brand-border bg-brand-background shadow-brand ring-1 ring-brand-ink/[0.03]">
+    <div className="overflow-hidden rounded-2xl border border-[#e4e7ee] bg-white shadow-sm">
       <div
         ref={scrollRef}
         data-testid="calendar-scroll"
@@ -115,9 +115,9 @@ export default function MedicalCalendarGrid({
         }}
       >
         <div className="calendar-grid-inner relative min-w-max">
-          <div className="sticky top-0 z-40 flex border-b border-brand-border bg-brand-background/90 backdrop-blur-md">
+          <div className="sticky top-0 z-40 flex border-b border-[#eceff5] bg-white">
             <div
-              className="sticky left-0 z-50 shrink-0 border-r border-brand-border bg-brand-background/90 px-2 py-3.5"
+              className="sticky left-0 z-50 shrink-0 border-r border-[#eceff5] bg-white px-2 py-3.5"
               style={{ width: calendarConfig.timeColumnWidthPx }}
             >
               <span className="text-[10px] font-medium uppercase tracking-widest text-brand-text-muted/80">
@@ -141,7 +141,7 @@ export default function MedicalCalendarGrid({
 
           <div className="relative flex w-full">
             <div
-              className="sticky left-0 z-30 shrink-0 border-r border-brand-border bg-brand-background"
+              className="sticky left-0 z-30 shrink-0 border-r border-[#eceff5] bg-white"
               style={{ width: calendarConfig.timeColumnWidthPx }}
             >
               <div className="relative" style={{ height: gridHeight }}>
@@ -173,13 +173,13 @@ export default function MedicalCalendarGrid({
                 <div
                   key={col.key}
                   data-testid={`calendar-doctor-col-${col.key}`}
-                  className={`calendar-doctor-col relative shrink-0 border-r border-brand-border/60 ${theme.column}`}
+                  className={`calendar-doctor-col relative shrink-0 border-r border-[#eceff5] ${theme.column}`}
                 >
                   <div className="relative" style={{ height: gridHeight }}>
                     {timeSlots.map((slot) => (
                       <div
                         key={`${col.key}-${slot.minutes}`}
-                        className="absolute left-0 right-0 border-t border-brand-border/50"
+                        className="absolute left-0 right-0 border-t border-[#f0f2f6]"
                         style={{ top: slot.topPx }}
                         aria-hidden
                       />

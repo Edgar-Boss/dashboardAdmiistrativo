@@ -6,7 +6,7 @@ export default function DoctorColumnHeader({ doctorName, specialty, themeIndex =
 
   return (
     <div
-      className={`sticky top-0 z-30 border-b border-brand-border/60 px-4 py-3 ${theme.header}`}
+      className={`sticky top-0 z-30 border-b border-[#eceff5] bg-white px-4 py-3.5 ${theme.header}`}
     >
       <div className="flex items-center gap-3">
         <div

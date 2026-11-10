@@ -35,8 +35,8 @@ export default function LoginPage({ onSuccess }) {
         <div className="mb-8 text-center">
           <img
             src="/logo-nails-boutique.png"
-            alt="Nails Boutique Puebla"
-            className="mx-auto mb-6 w-[min(100%,26rem)] object-contain"
+            alt="Nails Boutique"
+            className="mx-auto mb-6 w-[min(100%,22rem)] object-contain"
           />
           <p className="text-sm text-brand-text-muted">
             Inicia sesión para continuar

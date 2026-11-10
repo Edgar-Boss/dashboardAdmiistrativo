@@ -376,11 +376,6 @@ export default function AppointmentsPage() {
               <h1 className="font-display text-3xl font-semibold tracking-tight text-brand-text sm:text-4xl">
                 Citas
               </h1>
-              {viewType === "calendar" && (
-                <p className="mt-2 capitalize text-sm text-brand-text-muted">
-                  {formatHeaderDate(selectedDate)}
-                </p>
-              )}
             </div>
             <button
               type="button"
@@ -400,7 +395,7 @@ export default function AppointmentsPage() {
           />
         )}
 
-        <section className="rounded-brand-md border border-brand-border bg-brand-surface p-6 shadow-brand sm:p-8 lg:p-10">
+        <section className="rounded-[28px] border border-[#efe6ea] bg-white p-5 shadow-[0_8px_30px_rgba(44,32,36,0.04)] sm:p-6 lg:p-7">
           {loading && (
             <div
               className="flex min-h-[200px] items-center justify-center text-sm font-medium text-brand-text-muted"
@@ -455,14 +450,14 @@ export default function AppointmentsPage() {
             <>
               <div className="mb-6 flex flex-wrap items-center gap-2 border-b border-brand-border pb-4">
                 <span className="sr-only">Tipo de vista</span>
-                <div className="inline-flex rounded-brand border border-brand-border bg-brand-soft/50 p-0.5">
+                <div className="inline-flex rounded-full border border-[#e4e7ee] bg-white p-1">
                   <button
                     type="button"
                     onClick={() => setViewType("list")}
-                    className={`rounded-[10px] px-3 py-2 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25 ${
+                    className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25 ${
                       viewType === "list"
-                        ? "bg-brand-surface text-brand-text shadow-brand"
-                        : "text-brand-text-muted hover:text-brand-text"
+                        ? "border border-[#d7dce8] bg-white text-brand-text shadow-sm"
+                        : "border border-transparent text-brand-text-muted hover:text-brand-text"
                     }`}
                   >
                     Lista
@@ -470,10 +465,10 @@ export default function AppointmentsPage() {
                   <button
                     type="button"
                     onClick={() => setViewType("calendar")}
-                    className={`rounded-[10px] px-3 py-2 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25 ${
+                    className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25 ${
                       viewType === "calendar"
-                        ? "bg-brand-surface text-brand-text shadow-brand"
-                        : "text-brand-text-muted hover:text-brand-text"
+                        ? "border border-[#d7dce8] bg-white text-brand-text shadow-sm"
+                        : "border border-transparent text-brand-text-muted hover:text-brand-text"
                     }`}
                   >
                     Calendario
@@ -540,7 +535,7 @@ export default function AppointmentsPage() {
 
               {viewType === "calendar" && (
                 <div className="mt-2">
-                  <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
                     <CalendarToolbar
                       selectedDate={selectedDate}
                       onDateChange={setSelectedDate}

@@ -4,34 +4,24 @@ export const STATUS_BADGE_BASE =
 
 const DOCTOR_THEMES = [
   {
-    header: "bg-gradient-to-br from-brand-soft/70 to-brand-muted/40",
-    avatar: "bg-brand-soft text-brand-primary ring-brand-primary/15",
-    column: "bg-brand-soft/[0.18]",
+    header: "bg-white",
+    avatar: "bg-[#fde8ef] text-[#c4476a] ring-[#f3c3d1]",
+    column: "bg-white",
   },
   {
-    header: "bg-gradient-to-br from-brand-secondary/20 to-brand-nude/40",
-    avatar: "bg-brand-secondary/20 text-brand-primary ring-brand-secondary/30",
-    column: "bg-brand-secondary/[0.08]",
+    header: "bg-white",
+    avatar: "bg-[#eceefe] text-[#6d78c8] ring-[#d5daf5]",
+    column: "bg-white",
   },
   {
-    header: "bg-gradient-to-br from-brand-success-soft to-brand-nude/30",
-    avatar: "bg-brand-success-soft text-brand-success ring-brand-success/20",
-    column: "bg-brand-success-soft/[0.35]",
+    header: "bg-white",
+    avatar: "bg-brand-success-soft text-brand-success ring-brand-success/15",
+    column: "bg-white",
   },
   {
-    header: "bg-gradient-to-br from-brand-accent/20 to-brand-nude/50",
-    avatar: "bg-brand-accent/20 text-brand-warning ring-brand-accent/25",
-    column: "bg-brand-accent/[0.08]",
-  },
-  {
-    header: "bg-gradient-to-br from-brand-warning-soft to-brand-nude/30",
-    avatar: "bg-brand-warning-soft text-brand-warning ring-brand-warning/20",
-    column: "bg-brand-warning-soft/[0.35]",
-  },
-  {
-    header: "bg-gradient-to-br from-brand-nude/60 to-brand-soft/30",
-    avatar: "bg-brand-nude text-brand-ink ring-brand-border-strong/60",
-    column: "bg-brand-nude/[0.25]",
+    header: "bg-white",
+    avatar: "bg-brand-warning-soft text-brand-warning ring-brand-accent/20",
+    column: "bg-white",
   },
 ];
 
@@ -48,23 +38,23 @@ export function normalizeCalendarState(state) {
 const STATE_STYLES = {
   CONFIRMED: {
     label: "Confirmada",
-    border: "border-l-brand-success/70",
-    badge: "bg-brand-success-soft text-brand-success ring-1 ring-brand-success/20",
-    card: "bg-brand-surface hover:border-brand-success/40 hover:bg-brand-success-soft/40",
+    border: "border-[#e4e7ee]",
+    badge: "bg-[#e7f6ee] text-[#3d8f62]",
+    card: "bg-white hover:border-[#d5dae6]",
     dot: "bg-brand-success/80",
   },
   PENDING: {
     label: "Pendiente",
-    border: "border-l-brand-accent/70",
-    badge: "bg-brand-warning-soft text-brand-warning ring-1 ring-brand-accent/25",
-    card: "bg-brand-surface hover:border-brand-accent/40 hover:bg-brand-warning-soft/40",
+    border: "border-[#e4e7ee]",
+    badge: "bg-brand-warning-soft text-brand-warning",
+    card: "bg-white hover:border-[#d5dae6]",
     dot: "bg-brand-accent/80",
   },
   CANCELLED: {
     label: "Cancelada",
-    border: "border-l-brand-danger/70",
-    badge: "bg-brand-danger-soft text-brand-danger ring-1 ring-brand-danger/20",
-    card: "bg-brand-surface hover:border-brand-danger/40 hover:bg-brand-danger-soft/40",
+    border: "border-[#e4e7ee]",
+    badge: "bg-brand-danger-soft text-brand-danger",
+    card: "bg-white hover:border-[#d5dae6]",
     dot: "bg-brand-danger/80",
   },
 };

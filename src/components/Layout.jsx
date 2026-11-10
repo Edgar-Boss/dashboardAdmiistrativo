@@ -38,7 +38,7 @@ export default function Layout({
           <div className="min-w-0">
             <img
               src="/logo-nails-boutique.png"
-              alt="Nails Boutique Puebla"
+              alt="Nails Boutique"
               className="h-8 w-auto max-w-[140px] object-contain object-left"
             />
           </div>

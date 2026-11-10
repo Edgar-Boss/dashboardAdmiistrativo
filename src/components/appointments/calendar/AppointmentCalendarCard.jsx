@@ -142,7 +142,7 @@ function LargeCardContent({
 }
 
 const CARD_BASE =
-  "absolute left-1.5 right-1.5 box-border flex cursor-pointer flex-col rounded-brand-md border border-brand-border border-l-2 text-left shadow-brand ring-1 ring-brand-ink/[0.02] transition-all duration-200 ease-out hover:-translate-y-px hover:shadow-brand-md";
+  "absolute left-2 right-2 box-border flex cursor-pointer flex-col rounded-2xl border text-left shadow-[0_1px_2px_rgba(44,32,36,0.04)] transition-all duration-200 ease-out hover:-translate-y-px hover:shadow-[0_8px_20px_rgba(44,32,36,0.06)]";
 
 const VARIANT_STYLES = {
   [CARD_VARIANT.COMPACT]: "px-2.5 py-1.5",
