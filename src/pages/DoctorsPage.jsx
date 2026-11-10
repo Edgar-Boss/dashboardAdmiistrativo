@@ -3,6 +3,7 @@ import DoctorCard from "../components/doctors/DoctorCard";
 import DoctorDrawer from "../components/doctors/DoctorDrawer";
 import DoctorForm from "../components/doctors/DoctorForm";
 import DoctorsFilters from "../components/doctors/DoctorsFilters";
+import TechnicianWeekEditor from "../components/doctors/TechnicianWeekEditor";
 import Button from "../components/ui/Button";
 import {
   createSpecialist,
@@ -20,7 +21,7 @@ function SummaryCard({ label, value, tone = "neutral" }) {
       ? "bg-brand-success-soft text-brand-success"
       : tone === "danger"
         ? "bg-brand-danger-soft text-brand-danger"
-        : "bg-brand-soft text-brand-primary";
+        : "bg-brand-soft text-brand-primary-text";
 
   return (
     <div className="nb-card p-5">
@@ -53,6 +54,7 @@ export default function DoctorsPage() {
   const [specialty, setSpecialty] = useState("all");
   const [status, setStatus] = useState("all");
   const [sort, setSort] = useState("name-asc");
+  const [scheduleDoctor, setScheduleDoctor] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -252,6 +254,17 @@ export default function DoctorsPage() {
           <SummaryCard label="Inactivas" value={summary.inactive} tone="danger" />
         </section>
 
+        {scheduleDoctor ? (
+          <div className="mb-8">
+            <TechnicianWeekEditor
+              key={scheduleDoctor.id}
+              doctorId={scheduleDoctor.id}
+              doctorName={scheduleDoctor.name}
+              onClose={() => setScheduleDoctor(null)}
+            />
+          </div>
+        ) : null}
+
         <div className="mb-6">
           <DoctorsFilters
             query={query}
@@ -300,7 +313,12 @@ export default function DoctorsPage() {
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {filtered.map((doctor) => (
-                <DoctorCard key={doctor.id} doctor={doctor} onEdit={handleEdit} />
+                <DoctorCard
+                  key={doctor.id}
+                  doctor={doctor}
+                  onEdit={handleEdit}
+                  onSchedule={setScheduleDoctor}
+                />
               ))}
             </div>
           )}

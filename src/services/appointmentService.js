@@ -257,9 +257,10 @@ export function toApiStateChange(state) {
 /**
  * Updates editable appointment fields.
  * PATCH /appointments/:id — body: { name, slotCount, reason }
+ * The response is an acknowledgement ({ status, success, message }), not an appointment.
  * @param {number|string} id
  * @param {{ name: string, slotCount: number, reason?: string|null }} payload
- * @returns {Promise<any>}
+ * @returns {Promise<{ status?: string, success?: boolean, message?: string } | null>}
  */
 export async function updateAppointment(id, payload) {
   const response = await apiFetch(`${APPOINTMENT_UPDATE_URL}/${id}`, {
@@ -277,8 +278,8 @@ export async function updateAppointment(id, payload) {
   }
 
   const text = await response.text();
-  const data = text ? JSON.parse(text) : null;
-  return data && typeof data === "object" ? normalizeAppointment(data) : data;
+  if (!text) return null;
+  return JSON.parse(text);
 }
 
 /**
@@ -334,21 +335,20 @@ export async function sendAppointmentConfirmation(appointmentId) {
 }
 
 /**
- * GET /api/admin/schedule?date=YYYY-MM-DD
- * Business hours for the authenticated tenant on that date.
- * Tenant comes from the JWT — do not send tenantId from the client.
+ * GET /api/admin/schedule?date=YYYY-MM-DD[&doctorId=N]
+ * Without doctorId this is the business window. V2 may return intervals with
+ * complete dates when that window crosses midnight, and leaves startTime/endTime
+ * null. With doctorId, V2 returns intervals and leaves startTime/endTime null.
+ * Tenant comes from the JWT.
  * @param {string} date
- * @returns {Promise<{
- *   date: string,
- *   open: boolean,
- *   startTime: string | null,
- *   endTime: string | null,
- *   slotMinutes: number
- * }>}
+ * @param {number|string} [doctorId]
  */
-export async function fetchBusinessSchedule(date) {
+export async function fetchBusinessSchedule(date, doctorId) {
   const qs = new URLSearchParams();
   qs.set("date", String(date ?? "").trim());
+  if (doctorId !== null && doctorId !== undefined && doctorId !== "") {
+    qs.set("doctorId", String(doctorId));
+  }
 
   const response = await apiFetch(`${BUSINESS_SCHEDULE_URL}?${qs.toString()}`, {
     method: "GET",
@@ -368,5 +368,24 @@ export async function fetchBusinessSchedule(date) {
     startTime: data?.startTime ?? data?.start_time ?? null,
     endTime: data?.endTime ?? data?.end_time ?? null,
     slotMinutes: Number(data?.slotMinutes ?? data?.slot_minutes) || 30,
+    intervals: normalizeIntervals(data?.intervals),
   };
+}
+
+function normalizeIntervals(raw) {
+  if (!Array.isArray(raw) || raw.length === 0) return null;
+  const intervals = raw
+    .map((interval) => {
+      const start = interval?.start ?? interval?.startAt ?? null;
+      const end = interval?.end ?? interval?.endAt ?? null;
+      if (!start || !end) return null;
+      const slotMinutes = Number(interval?.slotMinutes ?? interval?.slot_minutes);
+      return {
+        start: String(start),
+        end: String(end),
+        slotMinutes: Number.isFinite(slotMinutes) ? slotMinutes : null,
+      };
+    })
+    .filter(Boolean);
+  return intervals.length > 0 ? intervals : null;
 }

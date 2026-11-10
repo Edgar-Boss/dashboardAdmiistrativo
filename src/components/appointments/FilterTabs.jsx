@@ -19,7 +19,7 @@ export default function FilterTabs({ value, onChange }) {
             onClick={() => onChange?.(tab.id)}
             className={`rounded-brand px-4 py-2.5 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25 ${
               active
-                ? "bg-brand-primary text-white shadow-brand"
+                ? "bg-brand-primary text-brand-ink shadow-brand"
                 : "text-brand-text-muted hover:bg-brand-soft hover:text-brand-text"
             }`}
           >

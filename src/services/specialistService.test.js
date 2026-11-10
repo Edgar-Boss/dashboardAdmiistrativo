@@ -7,8 +7,11 @@ vi.mock("./apiClient", () => ({
 import { apiFetch } from "./apiClient";
 import {
   createSpecialist,
+  fetchActiveSpecialists,
+  fetchSpecialists,
   isSpecialistActiveEntry,
   normalizeSpecialistEntry,
+  specialistActivity,
   updateSpecialist,
 } from "./specialistService";
 
@@ -89,6 +92,59 @@ describe("normalizeSpecialistEntry", () => {
       whatsappPhone: "",
       notificationsEnabled: false,
     });
+  });
+});
+
+describe("specialist activity from GET_ALL_SPECIALISTS", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("uses ACTIVE at tuple index 3 and does not treat the string N as true", () => {
+    expect(Boolean("N")).toBe(true);
+
+    const inactive = [8, "Inés", "Color", "N", "2221234567", "N"];
+    const active = [1, "Ana", "Uñas", "Y", "", "Y"];
+
+    expect(normalizeSpecialistEntry(inactive)).toMatchObject({
+      id: 8,
+      name: "Inés",
+      activeFlag: "N",
+    });
+    expect(normalizeSpecialistEntry(active).activeFlag).toBe("Y");
+    expect(specialistActivity(inactive)).toBe("inactive");
+    expect(specialistActivity(active)).toBe("active");
+    expect(specialistActivity([2, "Sin actividad", "Color"])).toBe("unknown");
+    expect(specialistActivity({ id: 3, name: "Sofía", active: "N" })).toBe("inactive");
+    expect(specialistActivity({ id: 4, name: "Ana", activeFlag: "y" })).toBe("active");
+    expect(isSpecialistActiveEntry(inactive)).toBe(false);
+    expect(isSpecialistActiveEntry(active)).toBe(true);
+  });
+
+  it("keeps inactive specialists in the full list and out of the booking list", async () => {
+    apiFetch.mockResolvedValue(
+      mockJsonResponse([
+        [1, "Ana", "Uñas", "Y", "", "Y"],
+        [2, "Luis", "Color", "N", "", "N"],
+        [8, "Inés", "Spa", "n", "", "N"],
+      ]),
+    );
+
+    await expect(fetchSpecialists()).resolves.toEqual([
+      expect.objectContaining({ id: 1, activeFlag: "Y" }),
+      expect.objectContaining({ id: 2, activeFlag: "N" }),
+      expect.objectContaining({ id: 8, activeFlag: "n" }),
+    ]);
+
+    apiFetch.mockResolvedValue(
+      mockJsonResponse([
+        [1, "Ana", "Uñas", "Y", "", "Y"],
+        [2, "Luis", "Color", "N", "", "N"],
+        [8, "Inés", "Spa", "n", "", "N"],
+      ]),
+    );
+    const bookable = await fetchActiveSpecialists();
+    expect(bookable.map((doctor) => doctor.id)).toEqual([1]);
   });
 });
 

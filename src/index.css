@@ -3,33 +3,36 @@
 @tailwind utilities;
 
 :root {
-  /* Brand tokens — Nails Boutique Puebla */
-  --color-primary: #b53a5b;
-  --color-primary-hover: #9a3150;
-  --color-secondary: #d98ba3;
-  --color-accent: #c9a86a;
-  --color-background: #fffdfb;
+  /* Sampled from Logo_mejorado.jpg: cross #00ADEF, letter navy #172856, ice #DFF6FC */
+  --color-primary: #00adef;
+  --color-primary-hover: #009fdc;
+  --color-primary-text: #0764aa;
+  --color-primary-text-hover: #045fa8;
+  --color-secondary: #0e8ecf;
+  --color-accent: #00adef;
+  --color-background: #dff6fc;
+  --color-calendar: #f8feff;
   --color-surface: #ffffff;
-  --color-surface-soft: #f7e6ec;
-  --color-surface-muted: #f2d4de;
-  --color-nude: #f3e4da;
-  --color-text: #3a2b30;
-  --color-text-muted: #6f5f64;
-  --color-border: #e7d9dd;
-  --color-border-strong: #d7c6cb;
+  --color-surface-soft: #d7f1fa;
+  --color-surface-muted: #c5e7f6;
+  --color-nude: #e7f6fc;
+  --color-text: #172856;
+  --color-text-muted: #3e5f86;
+  --color-border: #c5deea;
+  --color-border-strong: #a9cde0;
   --color-success: #2f6f4e;
   --color-success-soft: #e8f3ec;
-  --color-warning: #a67c3d;
-  --color-warning-soft: #f8f0e4;
-  --color-danger: #9a2f4a;
-  --color-danger-soft: #f8e8ed;
-  --color-ink: #2c2024;
-  --color-ink-soft: #4a3a40;
-  --color-gold-light: #e6d3ab;
+  --color-warning: #8a5a12;
+  --color-warning-soft: #f8f1e3;
+  --color-danger: #b42318;
+  --color-danger-soft: #fdecec;
+  --color-ink: #172856;
+  --color-ink-soft: #1f4693;
+  --color-gold-light: #d2eef9;
 
-  --shadow-sm: 0 4px 14px rgba(181, 58, 91, 0.08);
-  --shadow-md: 0 12px 30px rgba(181, 58, 91, 0.12);
-  --shadow-lg: 0 22px 48px rgba(181, 58, 91, 0.16);
+  --shadow-sm: 0 4px 14px rgba(23, 40, 86, 0.08);
+  --shadow-md: 0 12px 30px rgba(23, 40, 86, 0.12);
+  --shadow-lg: 0 22px 48px rgba(23, 40, 86, 0.16);
 
   --radius-sm: 12px;
   --radius-md: 16px;
@@ -79,7 +82,7 @@
   }
 
   :focus-visible {
-    outline: 2px solid color-mix(in srgb, var(--color-primary) 55%, white);
+    outline: 2px solid var(--color-primary-text);
     outline-offset: 2px;
   }
 }
@@ -111,8 +114,8 @@
 
   .nb-input:focus {
     outline: none;
-    border-color: color-mix(in srgb, var(--color-primary) 45%, var(--color-border));
-    box-shadow: 0 0 0 3px rgba(181, 58, 91, 0.14);
+    border-color: var(--color-primary-text);
+    box-shadow: 0 0 0 3px rgba(7, 100, 170, 0.28);
   }
 
   .nb-label {
@@ -121,13 +124,32 @@
   }
 
   .nb-overlay {
-    background: rgba(44, 32, 36, 0.42);
+    background: rgba(23, 40, 86, 0.46);
+  }
+
+  .nb-sidebar {
+    background-color: var(--color-ink);
+    background-image:
+      linear-gradient(
+        165deg,
+        color-mix(in srgb, var(--color-primary) 34%, transparent) 0%,
+        transparent 46%
+      ),
+      linear-gradient(180deg, var(--color-ink) 0%, var(--color-ink-soft) 100%);
   }
 
   .nb-login-bg {
     background:
-      radial-gradient(ellipse 80% 60% at 50% -10%, var(--color-surface-soft) 0%, transparent 55%),
-      radial-gradient(ellipse 50% 40% at 100% 100%, var(--color-nude) 0%, transparent 45%),
+      radial-gradient(
+        ellipse 72% 58% at 12% -8%,
+        color-mix(in srgb, var(--color-primary) 30%, transparent) 0%,
+        transparent 58%
+      ),
+      radial-gradient(
+        ellipse 48% 42% at 100% 100%,
+        color-mix(in srgb, var(--color-ink) 12%, transparent) 0%,
+        transparent 52%
+      ),
       var(--color-background);
   }
 
@@ -183,4 +205,11 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+.focus-visible\:ring-brand-primary\/20:focus-visible,
+.focus-visible\:ring-brand-primary\/25:focus-visible,
+.focus-visible\:ring-brand-primary\/30:focus-visible,
+.focus-visible\:ring-brand-primary\/35:focus-visible {
+  --tw-ring-color: rgb(7 100 170 / 0.55);
 }

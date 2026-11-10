@@ -1,14 +1,14 @@
 const VARIANTS = {
   primary:
-    "bg-brand-primary text-white shadow-brand hover:bg-brand-primary-hover active:bg-brand-primary-hover focus-visible:ring-brand-primary/35",
+    "bg-brand-primary text-brand-ink shadow-brand hover:bg-brand-primary-hover active:bg-brand-primary-hover focus-visible:ring-brand-primary/35",
   secondary:
-    "bg-brand-soft text-brand-primary hover:bg-brand-muted active:bg-brand-muted focus-visible:ring-brand-primary/25",
+    "bg-brand-soft text-brand-primary-text hover:bg-brand-muted active:bg-brand-muted focus-visible:ring-brand-primary/25",
   outline:
     "border border-brand-border bg-brand-surface text-brand-text hover:border-brand-border-strong hover:bg-brand-soft/60 active:bg-brand-soft focus-visible:ring-brand-primary/25",
   ghost:
     "bg-transparent text-brand-text-muted hover:bg-brand-soft/70 hover:text-brand-text active:bg-brand-soft focus-visible:ring-brand-primary/20",
   text:
-    "bg-transparent text-brand-primary hover:bg-brand-soft/70 hover:text-brand-primary-hover active:bg-brand-soft focus-visible:ring-brand-primary/25",
+    "bg-transparent text-brand-primary-text hover:bg-brand-soft/70 hover:text-brand-primary-text-hover active:bg-brand-soft focus-visible:ring-brand-primary/25",
   danger:
     "bg-brand-danger text-white shadow-brand hover:brightness-95 active:brightness-90 focus-visible:ring-brand-danger/35",
 };

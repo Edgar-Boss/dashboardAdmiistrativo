@@ -7,9 +7,12 @@ export default {
         brand: {
           primary: "var(--color-primary)",
           "primary-hover": "var(--color-primary-hover)",
+          "primary-text": "var(--color-primary-text)",
+          "primary-text-hover": "var(--color-primary-text-hover)",
           secondary: "var(--color-secondary)",
           accent: "var(--color-accent)",
           background: "var(--color-background)",
+          calendar: "var(--color-calendar)",
           surface: "var(--color-surface)",
           soft: "var(--color-surface-soft)",
           muted: "var(--color-surface-muted)",
